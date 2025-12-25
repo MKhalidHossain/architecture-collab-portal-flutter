@@ -27,7 +27,7 @@ class SideMenu extends StatelessWidget {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16.0),
                   child: Row(
                     children: [
                       ClipOval(
@@ -47,7 +47,7 @@ class SideMenu extends StatelessWidget {
                         ),
                       ),
 
-                      const Spacer(),
+                      Spacer(),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: BackdropFilter(
@@ -101,7 +101,6 @@ class SideMenu extends StatelessWidget {
                       'Notifications',
                       MenuType.notifications,
                     ),
-
                     _menuItem(
                       context,
                       Icons.person,

@@ -1,239 +1,16 @@
-// import 'dart:ui';
-// import 'package:dana_bozzetto/moduls/home/common/menu.dart';
-// import 'package:dana_bozzetto/moduls/home/presentation/screens/home_screen.dart';
-// import 'package:dana_bozzetto/moduls/home/presentation/widgets/project_body.dart';
-// import 'package:flutter/material.dart';
-// import '../menu_type.dart';
-
-// class HomeScreentest extends StatefulWidget {
-//   const HomeScreentest({super.key});
-
-//   @override
-//   State<HomeScreentest> createState() => _HomeScreentestState();
-// }
-
-// class _HomeScreentestState extends State<HomeScreentest> {
-//   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-//   MenuType _selectedMenu = MenuType.home;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       key: _scaffoldKey,
-//       endDrawer: SideMenu(
-//         selectedMenu: _selectedMenu,
-//         onSelect: (menu) {
-//           setState(() {
-//             _selectedMenu = menu;
-//           });
-//         },
-//       ),
-//       body: Stack(
-//         children: [
-//           _background(),
-//           Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               _header(context),
-//               const SizedBox(height: 8),
-//               Expanded(child: _buildBody()),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _background() {
-//     return Container(
-//       width: double.infinity,
-//       height: double.infinity,
-//       decoration: const BoxDecoration(
-//         image: DecorationImage(
-//           image: AssetImage('assets/image/ab.png'),
-//           fit: BoxFit.cover,
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _header(BuildContext context) {
-//     return ClipRRect(
-//       borderRadius: BorderRadius.circular(16),
-//       child: BackdropFilter(
-//         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-//         child: Container(
-//           padding: const EdgeInsets.all(16),
-//           decoration: BoxDecoration(
-//             color: Colors.white.withOpacity(0.22),
-//             borderRadius: BorderRadius.circular(16),
-//             border: Border.all(color: Colors.white.withOpacity(0.2)),
-//           ),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               SizedBox(height: MediaQuery.of(context).padding.top),
-
-//               /// 🔹 TOP ROW (Title + Menu)
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   const Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         'Hi, Jhon',
-//                         style: TextStyle(
-//                           color: Colors.white,
-//                           fontSize: 24,
-//                           fontWeight: FontWeight.w600,
-//                         ),
-//                       ),
-//                       SizedBox(height: 4),
-//                       Text(
-//                         'Here’s your project overview',
-//                         style: TextStyle(color: Colors.white70),
-//                       ),
-//                     ],
-//                   ),
-//                   Row(
-//                     children: [
-//                       IconButton(
-//                         icon: const Icon(Icons.notifications_active_outlined, color: Colors.white),
-//                         onPressed: () {}
-//                       ),
-
-//                       IconButton(
-//                         icon: const Icon(Icons.menu, color: Colors.white),
-//                         onPressed: () =>
-//                             _scaffoldKey.currentState?.openEndDrawer(),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-
-//               const SizedBox(height: 16),
-//               ClipRRect(
-//                 borderRadius: BorderRadius.circular(16),
-//                 child: BackdropFilter(
-//                   filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-//                   child: Container(
-//                     height: 48,
-//                     decoration: BoxDecoration(
-//                       color: Colors.white.withOpacity(0.18),
-//                       borderRadius: BorderRadius.circular(16),
-//                       border: Border.all(color: Colors.white.withOpacity(0.2)),
-//                     ),
-//                     child: const TextField(
-//                       style: TextStyle(color: Colors.white),
-//                       decoration: InputDecoration(
-//                         prefixIcon: Icon(Icons.search, color: Colors.white),
-//                         hintText: 'Search projects, documents...',
-//                         hintStyle: TextStyle(color: Colors.white70),
-//                         border: InputBorder.none,
-//                         contentPadding: EdgeInsets.symmetric(vertical: 12),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildBody() {
-//     switch (_selectedMenu) {
-//       case MenuType.home:
-//         return HomeScreenT();
-
-//       case MenuType.projects:
-//         return ProjectBody();
-
-//       case MenuType.messages:
-//         return _simplePage('Messages');
-
-//       case MenuType.notifications:
-//         return _simplePage('Notifications');
-
-//       case MenuType.profile:
-//         return _simplePage('Profile');
-
-//       case MenuType.settings:
-//         return _simplePage('Settings');
-//     }
-//   }
-
-//   // ================= SIMPLE PAGES =================
-//   Widget _simplePage(String title) {
-//     return Center(
-//       child: Text(
-//         title,
-//         style: const TextStyle(
-//           color: Colors.white,
-//           fontSize: 22,
-//           fontWeight: FontWeight.w600,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// class ProjectCard extends StatelessWidget {
-//   const ProjectCard({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: 120,
-//       decoration: BoxDecoration(
-//         color: Colors.white.withOpacity(0.2),
-//         borderRadius: BorderRadius.circular(16),
-//       ),
-//       child: const Center(
-//         child: Text('Project Card', style: TextStyle(color: Colors.white)),
-//       ),
-//     );
-//   }
-// }
-
-// class ActivityTile extends StatelessWidget {
-//   final String title;
-//   final String subtitle;
-//   final String time;
-
-//   const ActivityTile({
-//     super.key,
-//     required this.title,
-//     required this.subtitle,
-//     required this.time,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return ListTile(
-//       title: Text(title, style: const TextStyle(color: Colors.white)),
-//       subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
-//       trailing: Text(time, style: const TextStyle(color: Colors.white54)),
-//     );
-//   }
-// }
-
-
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
 import 'package:dana_bozzetto/moduls/home/presentation/screens/home_screen.dart';
-import 'package:dana_bozzetto/moduls/home/presentation/widgets/project_body.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/project_body.dart';
+import 'package:dana_bozzetto/moduls/message/presentation/screen/message_body.dart';
+import 'package:dana_bozzetto/moduls/notification/presentation/screen/notification_screen.dart';
+import 'package:dana_bozzetto/moduls/profile/presentation/screen/profile_screen.dart';
+import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreentest extends StatefulWidget {
   const HomeScreentest({super.key});
-
   @override
   State<HomeScreentest> createState() => _HomeScreentestState();
 }
@@ -279,8 +56,6 @@ class _HomeScreentestState extends State<HomeScreentest> {
       ),
     );
   }
-
-  // ================= HEADER SWITCH =================
   Widget _buildHeader(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -294,8 +69,6 @@ class _HomeScreentestState extends State<HomeScreentest> {
       },
     );
   }
-
-  // ================= HEADERS =================
 
   Widget _homeHeader() {
     return _glass(
@@ -337,29 +110,33 @@ class _HomeScreentestState extends State<HomeScreentest> {
 
   Widget _messagesHeader() {
     return _glass(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _topRow('Messages', showMenu: false),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            child: const Text(
-              '3',
-              style: TextStyle(color: Colors.white, fontSize: 12),
-            ),
-          ),
-          _menuButton(),
+          _topRow('Messages'),
+          const SizedBox(height: 12),
+          _searchBar(),
         ],
       ),
     );
   }
 
   Widget _notificationsHeader() {
-    return _glass(child: _topRow('Notifications'));
+    return _glass(
+      child: Column(
+        children: [
+          _topRow('Notifications'),
+          const SizedBox(height: 12),
+          Row(
+            children: const [
+              Chip(label: Text('All')),
+              SizedBox(width: 8),
+              Chip(label: Text('Unread')),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _settingsHeader() {
@@ -374,13 +151,14 @@ class _HomeScreentestState extends State<HomeScreentest> {
             children: [
               const CircleAvatar(
                 radius: 26,
+                backgroundColor: Colors.black12,
                 backgroundImage: AssetImage('assets/image/aa.png'),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: const [
                     Text(
                       'John Doe',
                       style: TextStyle(
@@ -389,6 +167,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    SizedBox(height: 2),
                     Text(
                       'Client ID : 353553545',
                       style: TextStyle(color: Colors.white70, fontSize: 12),
@@ -396,16 +175,30 @@ class _HomeScreentestState extends State<HomeScreentest> {
                   ],
                 ),
               ),
+
               _menuButton(),
             ],
           ),
-          const SizedBox(height: 16),
-          const Row(
-            children: [
-              ProfileStat(title: 'Projects', value: '03'),
-              ProfileStat(title: 'Documents', value: '24'),
-              ProfileStat(title: 'Pending', value: '02'),
-            ],
+
+          const SizedBox(height: 18),
+
+          // Stats Container
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.15)),
+            ),
+            child: const Row(
+              children: [
+                ProfileStat(title: 'Projects', value: '03'),
+                _VerticalDivider(),
+                ProfileStat(title: 'Documents', value: '24'),
+                _VerticalDivider(),
+                ProfileStat(title: 'Pending', value: '02'),
+              ],
+            ),
           ),
         ],
       ),
@@ -416,21 +209,19 @@ class _HomeScreentestState extends State<HomeScreentest> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return  HomeScreenT();
+        return HomeScreenT();
       case MenuType.projects:
-        return  ProjectBody();
+        return ProjectBody();
       case MenuType.messages:
-        return _simplePage('Messages');
+        return MessagesScreen();
       case MenuType.notifications:
-        return _simplePage('Notifications');
+        return NotificationScreen();
       case MenuType.profile:
         return ProfileBody();
       case MenuType.settings:
-        return _simplePage('Settings');
+        return SettingsScreen();
     }
   }
-
-  // ================= COMMON WIDGETS =================
 
   Widget _topRow(String title, {bool showMenu = true}) {
     return Row(
@@ -449,38 +240,28 @@ class _HomeScreentestState extends State<HomeScreentest> {
     );
   }
 
-  // Widget _menuButton() {
-  //   return IconButton(
-  //     icon: const Icon(Icons.menu, color: Colors.white),
-  //     onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-  //   );
-  // }
-
   Widget _menuButton() {
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(8),
-    child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-      child: Container(
-        height: 40,
-        width: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.18),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.white,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white),
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
         ),
-        child: IconButton(
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-          onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _glass({required Widget child}) {
     return ClipRRect(
@@ -524,48 +305,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
     );
   }
 
-  Widget _simplePage(String title) {
-    return Center(
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
 }
-
-// ================= PROFILE BODY =================
-class ProfileBody extends StatelessWidget {
-  const ProfileBody({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        ListTile(
-          leading: Icon(Icons.person, color: Colors.white),
-          title: Text('Edit Profile', style: TextStyle(color: Colors.white)),
-        ),
-        ListTile(
-          leading: Icon(Icons.lock, color: Colors.white),
-          title:
-              Text('Change Password', style: TextStyle(color: Colors.white)),
-        ),
-        ListTile(
-          leading: Icon(Icons.logout, color: Colors.white),
-          title: Text('Logout', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    );
-  }
-}
-
-// ================= PROFILE STAT =================
 class ProfileStat extends StatelessWidget {
   final String title;
   final String value;
@@ -582,15 +322,29 @@ class ProfileStat extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             title,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  const _VerticalDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      width: 1,
+      color: Colors.white.withOpacity(0.2),
     );
   }
 }

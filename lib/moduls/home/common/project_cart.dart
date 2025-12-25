@@ -275,7 +275,7 @@
 
 
 import 'dart:ui';
-import 'package:dana_bozzetto/moduls/home/presentation/screens/project_details.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/project_details.dart';
 import 'package:flutter/material.dart';
 import '../model/project_cart_model.dart';
 

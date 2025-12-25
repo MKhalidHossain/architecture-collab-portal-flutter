@@ -1,7 +1,7 @@
 import 'dart:ui';
-import 'package:dana_bozzetto/moduls/home/presentation/widgets/mileston_widget.dart';
-import 'package:dana_bozzetto/moduls/home/presentation/widgets/overview_widget.dart';
-import 'package:dana_bozzetto/moduls/home/presentation/widgets/team_widget.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/widget/mileston_widget.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/widget/overview_widget.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/widget/team_widget.dart';
 import 'package:flutter/material.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -90,7 +90,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ),
                       const Text(
                         "Back to Projects",
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(color: Colors.white, fontSize: 24),
                       ),
                     ],
                   ),
@@ -109,6 +109,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     style: TextStyle(color: Colors.white70),
                   ),
                   const SizedBox(height: 12),
+                  
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -136,7 +137,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           onTap: () => setState(() => _selectedTab = index),
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
                               color: isActive
                                   ? Color(0xFF01676C)
