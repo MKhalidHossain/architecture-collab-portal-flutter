@@ -14,7 +14,7 @@ class OverviewTab extends StatelessWidget {
       children: [
         _progressCard(),
         _infoGrid(),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _quickActions(),
       ],
     );
@@ -23,7 +23,7 @@ class OverviewTab extends StatelessWidget {
   Widget _progressCard() {
     return _glassCard(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
         child: Column(
           children: [
             Column(
@@ -105,7 +105,7 @@ class OverviewTab extends StatelessWidget {
             label,
             style: TextStyle(
               color: completed ? Colors.white : Colors.white60,
-              fontSize: 13,
+              fontSize: 14,
             ),
           ),
         ],

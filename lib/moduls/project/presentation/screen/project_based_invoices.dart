@@ -10,10 +10,9 @@ class ProjectInvoicesScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background image with blur
           Positioned.fill(
             child: Image.asset(
-              'assets/image/ab.png', // ← same background as previous screens
+              'assets/image/ab.png',
               fit: BoxFit.cover,
             ),
           ),
