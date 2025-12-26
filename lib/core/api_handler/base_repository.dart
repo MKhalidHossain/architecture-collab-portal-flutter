@@ -33,8 +33,16 @@ base class BaseRepository {
         ),
       );
     } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final responseMessage = responseData is Map && responseData['message'] != null
+          ? responseData['message'].toString()
+          : responseData is String
+              ? responseData
+              : null;
       debugPrint(".. \n..\n");
-      debugPrint(e.response?.data["message"].toString());
+      if (responseMessage != null) {
+        debugPrint(responseMessage);
+      }
       debugPrint(".. \n..\n");
       //debugger?.dekhao("DioFailure $e");
       switch (e.type) {
@@ -71,7 +79,7 @@ base class BaseRepository {
           return Left(
             DataCRUDFailure(
               failure: Failure.unknownFailure,
-              uiMessage: e.response?.data["message"] ?? "Some error occured.",
+              uiMessage: responseMessage ?? "Some error occured.",
               fullError: 'Some error occured. ${'\n'} Error: ${e.toString()}',
             ),
           );

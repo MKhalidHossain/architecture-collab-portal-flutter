@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/common/common/textfield.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/register_controller.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/email_verify_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -11,10 +14,36 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final controller = TextEditingController();
+  final nameController = TextEditingController();
+  final employeeIdController = TextEditingController();
+  final emailController = TextEditingController();
+  final roleController = TextEditingController();
   final passwordController = TextEditingController();
-  bool rememberMe = false;
-  bool obscurePassword = true;
+  final confirmPasswordController = TextEditingController();
+  late final RegisterScreenController registerController;
+  late final SnackbarNotifier snackbarNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    snackbarNotifier = SnackbarNotifier(context: context);
+    registerController = RegisterScreenController(snackbarNotifier);
+    roleController.text = 'team_member';
+    registerController.role = roleController.text;
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    employeeIdController.dispose();
+    emailController.dispose();
+    roleController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    registerController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,66 +104,104 @@ class _SignupScreenState extends State<SignupScreen> {
                         LabeledTextField(
                           hintText: "Enter Your Name",
                           prefixIcon: Icons.person_outline_rounded,
-                          controller: TextEditingController(),
+                          controller: nameController,
+                          onChanged: (value) => registerController.name = value,
                         ),
                         LabeledTextField(
-                          hintText: "Enter Your Client ID",
+                          hintText: "Enter Your Employee ID",
                           prefixIcon: Icons.person_outline_rounded,
-                          controller: TextEditingController(),
+                          controller: employeeIdController,
+                          onChanged: (value) =>
+                              registerController.employeeId = value,
                         ),
                         LabeledTextField(
-                          hintText: "Enter Email or Phone",
+                          hintText: "Enter Email",
                           prefixIcon: Icons.email_outlined,
-                          controller: TextEditingController(),
+                          controller: emailController,
+                          onChanged: (value) => registerController.email = value,
                         ),
                         LabeledTextField(
-                          hintText: "Enter Address",
-                          prefixIcon: Icons.location_on_outlined,
-                          controller: TextEditingController(),
+                          hintText: "Enter Role",
+                          prefixIcon: Icons.badge_outlined,
+                          controller: roleController,
+                          onChanged: (value) => registerController.role = value,
                         ),
                         LabeledTextField(
                           isPassword: true,
                           hintText: "Create Password",
                           prefixIcon: Icons.lock_open_rounded,
-                          controller: TextEditingController(),
+                          controller: passwordController,
+                          onChanged: (value) =>
+                              registerController.password = value,
                         ),
                         LabeledTextField(
                           hintText: "Confirm Password",
                           prefixIcon: Icons.lock_open_rounded,
-                          controller: TextEditingController(),
+                          controller: confirmPasswordController,
                           isPassword: true,
+                          onChanged: (value) =>
+                              registerController.confirmPassword = value,
                         ),
 
                         const SizedBox(height: 24),
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LoginScreen(),
+                        AnimatedBuilder(
+                          animation: registerController,
+                          builder: (context, child) {
+                            final canSubmit = registerController.canSubmit &&
+                                !registerController.isBusy;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: canSubmit
+                                    ? () async {
+                                        await registerController.register(
+                                          onSuccessNavigate: () {
+                                            if (!mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    EmailVerifyScreen(
+                                                  email: registerController.email,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF01676C),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
-                              );
-                            },
-                            label: const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                child: registerController.isBusy
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Sign Up',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF01676C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                         SizedBox(height: 16),
                         Row(

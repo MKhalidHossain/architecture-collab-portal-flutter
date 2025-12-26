@@ -1,7 +1,11 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/common/common/textfield.dart';
+import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/login_controller.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/forget_password.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/otp_verify_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -13,12 +17,32 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final controller = TextEditingController();
   final passwordController = TextEditingController();
+  final emailOrIdController = TextEditingController();
+  late final LoginsScreenController loginController;
+  late final SnackbarNotifier snackbarNotifier;
   bool rememberMe = false;
-  bool obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    snackbarNotifier = SnackbarNotifier(context: context);
+    loginController = LoginsScreenController(snackbarNotifier);
+  }
+
+  @override
+  void dispose() {
+    emailOrIdController.dispose();
+    passwordController.dispose();
+    loginController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final listenable = Listenable.merge(
+      [loginController, loginController.processStatusNotifier],
+    );
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -77,13 +101,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         LabeledTextField(
                           hintText: "Email or Client ID",
                           prefixIcon: Icons.email_outlined,
-                          controller: TextEditingController(),
+                          controller: emailOrIdController,
+                          onChanged: (value) =>
+                              loginController.emailOrId = value,
                         ),
                         LabeledTextField(
                           hintText: "Password",
                           prefixIcon: Icons.email_outlined,
-                          controller: TextEditingController(),
+                          controller: passwordController,
                           isPassword: true,
+                          onChanged: (value) => loginController.password = value,
                         ),
 
                         Row(
@@ -141,34 +168,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => HomeScreentest(),
+                        AnimatedBuilder(
+                          animation: listenable,
+                          builder: (context, child) {
+                            final isLoading = loginController
+                                .processStatusNotifier
+                                .status is LoadingStatus;
+                            final canSubmit =
+                                loginController.canSubmit && !isLoading;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: canSubmit
+                                    ? () async {
+                                        final success =
+                                            await loginController.login(
+                                          needVerification: () {
+                                            if (!mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    OtpVerifyScreen(
+                                                  contact:
+                                                      loginController.emailOrId,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                        if (!mounted) return;
+                                        if (success) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  HomeScreentest(),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF01676C),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
-                              );
-                            },
-                            label: const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF01676C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 20),

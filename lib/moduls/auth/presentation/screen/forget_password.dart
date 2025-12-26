@@ -1,4 +1,8 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/common/common/textfield.dart';
+import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/forget_password_controller.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/otp_verify_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -10,12 +14,29 @@ class ForgetPassword extends StatefulWidget {
 }
 
 class _ForgetPasswordState extends State<ForgetPassword> {
-  final controller = TextEditingController();
-  final passwordController = TextEditingController();
-  bool rememberMe = false;
-  bool obscurePassword = true;
+  final contactController = TextEditingController();
+  late final ForgetPasswordController forgetController;
+  late final SnackbarNotifier snackbarNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    snackbarNotifier = SnackbarNotifier(context: context);
+    forgetController = ForgetPasswordController(snackbarNotifier);
+  }
+
+  @override
+  void dispose() {
+    contactController.dispose();
+    forgetController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final listenable = Listenable.merge(
+      [forgetController, forgetController.processStatusNotifier],
+    );
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -84,6 +105,16 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
                         const SizedBox(height: 24),
 
+                        LabeledTextField(
+                          hintText: "Email or Phone",
+                          prefixIcon: Icons.email_outlined,
+                          controller: contactController,
+                          onChanged: (value) =>
+                              forgetController.contact = value,
+                        ),
+
+                        const SizedBox(height: 8),
+
                         // ============================
                         //   OPTION 1 — EMAIL
                         // ============================
@@ -109,34 +140,68 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                         const SizedBox(height: 32),
 
                         // Continue Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OtpVerifyScreen(),
+                        AnimatedBuilder(
+                          animation: listenable,
+                          builder: (context, child) {
+                            final isLoading = forgetController
+                                .processStatusNotifier
+                                .status is LoadingStatus;
+                            final canSubmit =
+                                forgetController.canSend() && !isLoading;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: canSubmit
+                                    ? () async {
+                                        await forgetController
+                                            .sendForgetPasswordRequest(
+                                          onSuccess: () {
+                                            if (!mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    OtpVerifyScreen(
+                                                  contact: forgetController
+                                                      .contact,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF01676C),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF01676C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Continue",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
-                            ),
-                            child: Text(
-                              "Continue",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),

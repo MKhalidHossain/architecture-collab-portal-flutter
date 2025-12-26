@@ -1,26 +1,25 @@
-
 import 'dart:ui';
 import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
-import 'package:dana_bozzetto/moduls/auth/controller/verify_email_controller.dart';
-import 'package:dana_bozzetto/moduls/auth/presentation/screen/reset_password-screen.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/email_verify_controller.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:pinput/pinput.dart';
 
-class OtpVerifyScreen extends StatefulWidget {
-  final String contact;
+class EmailVerifyScreen extends StatefulWidget {
+  final String email;
 
-  const OtpVerifyScreen({
+  const EmailVerifyScreen({
     super.key,
-    required this.contact,
+    required this.email,
   });
 
   @override
-  State<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
+  State<EmailVerifyScreen> createState() => _EmailVerifyScreenState();
 }
 
-class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
-  late final VerifyEmailController verifyController;
+class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
+  late final EmailVerifyController verifyController;
   late final SnackbarNotifier snackbarNotifier;
   int resendTime = 45;
 
@@ -28,8 +27,8 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   void initState() {
     super.initState();
     snackbarNotifier = SnackbarNotifier(context: context);
-    verifyController = VerifyEmailController(snackbarNotifier);
-    verifyController.contact = widget.contact;
+    verifyController = EmailVerifyController(snackbarNotifier);
+    verifyController.email = widget.email;
     startTimer();
   }
 
@@ -54,7 +53,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       [verifyController, verifyController.processStatusNotifier],
     );
 
-    /// OTP box style
     final defaultPinTheme = PinTheme(
       width: 50,
       height: 50,
@@ -73,20 +71,17 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
-
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
         title: const Text(
-          "Enter Security Code",
+          "Verify Your Email",
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
       ),
-
       body: Stack(
         children: [
-          /// Background image
           Container(
             width: double.infinity,
             height: double.infinity,
@@ -97,8 +92,6 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
               ),
             ),
           ),
-
-          /// Glassmorphic Card
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -117,22 +110,16 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                         width: 1.2,
                       ),
                     ),
-
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-
                       children: [
-                        /// Subtitle
                         const Text(
-                          "Please check your Email for a message with your code. "
+                          "Please check your email for a message with your code. "
                           "Your code is 6 numbers long.",
                           style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
-
                         const SizedBox(height: 20),
-
-                        /// OTP Input
                         Center(
                           child: Pinput(
                             length: 6,
@@ -143,10 +130,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                                 verifyController.otp = value,
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        /// Timer
                         Center(
                           child: Text(
                             "Resend code in ${resendTime}s",
@@ -156,10 +140,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 30),
-
-                        /// Continue button
                         AnimatedBuilder(
                           animation: listenable,
                           builder: (context, child) {
@@ -175,15 +156,13 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                                 onPressed: canSubmit
                                     ? () async {
                                         await verifyController.verifyEmail(
-                                          onSuccess: (userId) {
+                                          onSuccess: () {
                                             if (!mounted) return;
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    ResetPasswordscreen(
-                                                  userId: userId,
-                                                ),
+                                                    const LoginScreen(),
                                               ),
                                             );
                                           },

@@ -1,22 +1,56 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/common/common/textfield.dart';
+import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/reset_password_controller.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class ResetPasswordscreen extends StatefulWidget {
-  const ResetPasswordscreen({super.key});
+  final String? userId;
+
+  const ResetPasswordscreen({
+    super.key,
+    this.userId,
+  });
 
   @override
   State<ResetPasswordscreen> createState() => _ResetPasswordscreenState();
 }
 
 class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
-  final controller = TextEditingController();
-  final passwordController = TextEditingController();
+  final userIdController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  late final ResetPasswordController resetController;
+  late final SnackbarNotifier snackbarNotifier;
   bool rememberMe = false;
-  bool obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    snackbarNotifier = SnackbarNotifier(context: context);
+    resetController = ResetPasswordController(snackbarNotifier);
+    if (widget.userId != null && widget.userId!.isNotEmpty) {
+      userIdController.text = widget.userId!;
+      resetController.userId = widget.userId!;
+    }
+  }
+
+  @override
+  void dispose() {
+    userIdController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    resetController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final listenable = Listenable.merge(
+      [resetController, resetController.processStatusNotifier],
+    );
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -73,16 +107,27 @@ class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
                         ),
                         SizedBox(height: 16),
                         LabeledTextField(
+                          hintText: "User ID",
+                          prefixIcon: Icons.badge_outlined,
+                          controller: userIdController,
+                          onChanged: (value) =>
+                              resetController.userId = value,
+                        ),
+                        LabeledTextField(
                           isPassword: true,
                           hintText: "New Password",
                           prefixIcon: Icons.lock_open_rounded,
-                          controller: TextEditingController(),
+                          controller: newPasswordController,
+                          onChanged: (value) =>
+                              resetController.newPassword = value,
                         ),
                         LabeledTextField(
                           hintText: "Confirm Password",
                           prefixIcon: Icons.lock_open_rounded,
-                          controller: TextEditingController(),
+                          controller: confirmPasswordController,
                           isPassword: true,
+                          onChanged: (value) =>
+                              resetController.confirmPassword = value,
                         ),
 
                         Row(
@@ -123,34 +168,64 @@ class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
 
                         const SizedBox(height: 24),
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LoginScreen(),
+                        AnimatedBuilder(
+                          animation: listenable,
+                          builder: (context, child) {
+                            final isLoading = resetController
+                                .processStatusNotifier
+                                .status is LoadingStatus;
+                            final canSubmit =
+                                resetController.canReset() && !isLoading;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: canSubmit
+                                    ? () async {
+                                        await resetController.resetPassword(
+                                          onSuccess: () {
+                                            if (!mounted) return;
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LoginScreen(),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF01676C),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
-                              );
-                            },
-                            label: const Text(
-                              'Reset Password',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Reset Password',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF01676C),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),

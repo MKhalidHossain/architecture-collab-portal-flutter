@@ -1,7 +1,12 @@
 import 'package:dana_bozzetto/moduls/onboarding/welcome_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:dana_bozzetto/core/di/external_service_di.dart';
+import 'package:dana_bozzetto/core/di/internal_service_di.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  externalServiceDI();
+  initServices();
   runApp(const MyApp());
 }
 

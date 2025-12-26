@@ -10,7 +10,11 @@ base class ApiEndpoints {
 
   static const String signup = _Auth.signup;
 
+  static const String logout = _Auth.logout;
+
   static const String verifyCode = _Auth.verifyCode;
+
+  static const String verifyEmail = _Auth.verifyEmail;
 
   //static const String registerVerify = _Auth.registerVerify;
 
@@ -19,6 +23,8 @@ base class ApiEndpoints {
   static const String forgetPassword = _Auth.forgetPassword;
 
   static const String changePassword = _Auth.changePassword;
+
+  static const String resetPassword = _Auth.resetPassword;
 
   static const String createNewPassword = _Auth.resetPassword;
 
@@ -32,7 +38,6 @@ base class ApiEndpoints {
   //----------------verification----------------
   /// ### post
   static const String verification = _Verification.verification;
-
 
   //-----------------badges----------------
   static const String getMyBadges = _Badges.getMyBadges;
@@ -130,8 +135,7 @@ base class ApiEndpoints {
 
   ///////////
   ///
-  static String timeExtend(String chatId) =>
-      _Message.timeExtend(chatId);
+  static String timeExtend(String chatId) => _Message.timeExtend(chatId);
 }
 
 //arrow360degree@gmail.com
@@ -143,8 +147,8 @@ class _RemoteServer {
 }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://localhost:5003'; 
-  static const String baseUrl = 'http://localhost:5003/api/v1';
+  static const String socketUrl = 'http://localhost:5003';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
@@ -152,9 +156,11 @@ class _Auth {
   static const String _authRoute = '${ApiEndpoints.baseUrl}/auth';
   static const String login = '$_authRoute/login';
   static const String signup = '$_authRoute/register';
+  static const String logout = '$_authRoute/logout';
   static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/verify-otp';
+  static const String verifyEmail = '$_authRoute/verify-email';
   //static const String registerVerify = '$_authRoute/verify-otp';
   static const String changePassword = '$_authRoute/change-password';
   static const String resetPassword = '$_authRoute/reset-password';
@@ -211,7 +217,6 @@ class _User {
   static const String allUser = '$_userRoute/all-user';
   static const String setVisibility = '$_userRoute/visibility';
   static const String status = '$_userRoute/status';
-
 }
 
 // ---------------------- RIDE -----------------------------
@@ -250,9 +255,6 @@ class _Message {
   /// Post
   static String sendMessage(String chatId) => "$_messageRoute/send-message";
 
-
-
-
   /// Put
   static String messageRead(String messageId) =>
       "$_messageRoute/read/$messageId";
@@ -265,5 +267,6 @@ class _Message {
 
   static String getUselallChat(String chatId) => "$_messageRoute/get-chat";
 
-  static String timeExtend(String chatId) => "$_messageRoute/extend-time/$chatId";
+  static String timeExtend(String chatId) =>
+      "$_messageRoute/extend-time/$chatId";
 }
