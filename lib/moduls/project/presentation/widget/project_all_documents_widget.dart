@@ -35,7 +35,7 @@ class AllTab extends StatelessWidget {
           ),
 
         ...filteredDocs.map(
-          (doc) => _DocumentPreviewCard(
+          (doc) => DocumentPreviewCard(
             title: doc.category,
             subtitle: doc.subtitle,
             size: doc.size,
@@ -83,14 +83,15 @@ final List<DocumentModel> documents = [
 
 /// ------------------ CARD UI ------------------
 
-class _DocumentPreviewCard extends StatelessWidget {
+class DocumentPreviewCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String size;
   final String date;
   final String type;
 
-  const _DocumentPreviewCard({
+  const DocumentPreviewCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.size,
@@ -147,24 +148,24 @@ class _DocumentPreviewCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          _meta(size),
-                          _dot(),
-                          _meta(date),
-                          _dot(),
-                          _meta(type),
+                          meta(size),
+                          dot(),
+                          meta(date),
+                          dot(),
+                          meta(type),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          _actionButton(
+                          actionButton(
                             context,
                             Icons.remove_red_eye,
                             "View",
-                             DocumentDetailScreen(),
+                            DocumentDetailScreen(),
                           ),
                           const SizedBox(width: 12),
-                          _actionButton(
+                          actionButton(
                             context,
                             Icons.download,
                             "Download",
@@ -183,15 +184,15 @@ class _DocumentPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _meta(String text) =>
+  Widget meta(String text) =>
       Text(text, style: const TextStyle(color: Colors.white70));
 
-  Widget _dot() => const Padding(
+  Widget dot() => const Padding(
     padding: EdgeInsets.symmetric(horizontal: 8),
     child: Text("|", style: TextStyle(color: Colors.white70)),
   );
 
-  Widget _actionButton(
+  Widget actionButton(
     BuildContext context,
     IconData icon,
     String label,

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/documents_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/moduls/home/common/project_cart.dart';
 import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
@@ -92,12 +93,9 @@ class HomeScreenT extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: projects.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 24),
+                    separatorBuilder: (_, __) => const SizedBox(height: 24),
                     itemBuilder: (context, index) {
-                      return ProjectCard(
-                        project: projects[index],
-                      );
+                      return ProjectCard(project: projects[index]);
                     },
                   ),
 
@@ -120,21 +118,35 @@ class HomeScreenT extends StatelessWidget {
                     mainAxisSpacing: 12,
                     childAspectRatio: 160 / 120,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    children: const [
+                    children: [
                       QuickAction(
                         icon: Icons.home,
                         title: 'Home Services',
                         number: '03',
+                        onTap: () {
+                          // Home Services action
+                        },
                       ),
                       QuickAction(
                         icon: Icons.car_repair,
                         title: 'Car Repair',
                         number: '12',
+                        onTap: () {
+                          // Car Repair action
+                        },
                       ),
                       QuickAction(
-                        icon: Icons.cleaning_services,
-                        title: 'Cleaning',
+                        icon: Icons.description, // Documents
+                        title: 'Documents',
                         number: '08',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DocumentsScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -180,7 +192,6 @@ class HomeScreenT extends StatelessWidget {
     );
   }
 }
-
 
 class _OverviewCard extends StatelessWidget {
   final String title;
@@ -235,47 +246,55 @@ class QuickAction extends StatelessWidget {
   final IconData icon;
   final String number;
   final String title;
+  final VoidCallback? onTap;
 
   const QuickAction({
     super.key,
     required this.icon,
     required this.number,
     required this.title,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white, width: 1),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: Colors.tealAccent, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                number,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white, width: 1),
               ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: Colors.tealAccent, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    number,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
