@@ -11,6 +11,9 @@ base class Auth{
     required this.data,
   }): _accessToken = accessToken, _refreshToken = refreshToken;
 
+  String? get accessToken => _accessToken;
+  String? get refreshToken => _refreshToken;
+
   bool get isVerified => _accessToken != null && _refreshToken != null;
   
   Auth copyWith({
@@ -70,6 +73,5 @@ base class Auth{
   @override
   int get hashCode => Object.hash(_accessToken, _refreshToken, data);
 }
-
 
 

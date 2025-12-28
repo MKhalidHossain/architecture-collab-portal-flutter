@@ -7,11 +7,11 @@ import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart'
 import 'package:flutter/material.dart';
 
 class ResetPasswordscreen extends StatefulWidget {
-  final String? userId;
+  final String? email;
 
   const ResetPasswordscreen({
     super.key,
-    this.userId,
+    this.email,
   });
 
   @override
@@ -19,7 +19,6 @@ class ResetPasswordscreen extends StatefulWidget {
 }
 
 class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
-  final userIdController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   late final ResetPasswordController resetController;
@@ -31,15 +30,13 @@ class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
     super.initState();
     snackbarNotifier = SnackbarNotifier(context: context);
     resetController = ResetPasswordController(snackbarNotifier);
-    if (widget.userId != null && widget.userId!.isNotEmpty) {
-      userIdController.text = widget.userId!;
-      resetController.userId = widget.userId!;
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      resetController.email = widget.email!;
     }
   }
 
   @override
   void dispose() {
-    userIdController.dispose();
     newPasswordController.dispose();
     confirmPasswordController.dispose();
     resetController.dispose();
@@ -106,13 +103,6 @@ class _ResetPasswordscreenState extends State<ResetPasswordscreen> {
                           ),
                         ),
                         SizedBox(height: 16),
-                        LabeledTextField(
-                          hintText: "User ID",
-                          prefixIcon: Icons.badge_outlined,
-                          controller: userIdController,
-                          onChanged: (value) =>
-                              resetController.userId = value,
-                        ),
                         LabeledTextField(
                           isPassword: true,
                           hintText: "New Password",

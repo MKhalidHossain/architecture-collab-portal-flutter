@@ -10,18 +10,18 @@ class ResetPasswordController extends ChangeNotifier {
   final ProcessStatusNotifier processStatusNotifier = ProcessStatusNotifier();
   final SnackbarNotifier snackbarNotifier;
   
-  String _userId = '';
+  String _email = '';
   String _newPassword = '';
   String _confirmPassword = '';
   
-  String get userId => _userId;
+  String get email => _email;
   String get newPassword => _newPassword;
   String get confirmPassword => _confirmPassword;
 
   ResetPasswordController(this.snackbarNotifier);
 
   bool canReset() {
-    return _userId.isNotEmpty && 
+    return _email.isNotEmpty && 
            _newPassword.isNotEmpty && 
            _newPassword.length >= 6 &&
            _confirmPassword.isNotEmpty &&
@@ -36,9 +36,9 @@ class ResetPasswordController extends ChangeNotifier {
     }
   }
 
-  set userId(String value) {
-    if (value != _userId) {
-      _userId = value.trim();
+  set email(String value) {
+    if (value != _email) {
+      _email = value.trim();
       updateButtonState();
       notifyListeners();
     }
@@ -81,7 +81,7 @@ class ResetPasswordController extends ChangeNotifier {
     await Get.find<AuthInterface>()
         .resetPassword(
           param: ResetPasswordRequestModel(
-            userId: userId, 
+            email: email, 
             newPassword: newPassword,
             confirmPassword: confirmPassword,
           ),

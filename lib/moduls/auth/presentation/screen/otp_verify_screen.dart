@@ -175,14 +175,14 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                                 onPressed: canSubmit
                                     ? () async {
                                         await verifyController.verifyEmail(
-                                          onSuccess: (userId) {
+                                          onSuccess: () {
                                             if (!mounted) return;
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     ResetPasswordscreen(
-                                                  userId: userId,
+                                                  email: widget.contact,
                                                 ),
                                               ),
                                             );

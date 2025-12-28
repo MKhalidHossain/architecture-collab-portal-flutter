@@ -1,6 +1,12 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/auth/model/logout_request_model.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:dana_bozzetto/moduls/profile/presentation/screen/edit_profile.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProfileBody extends StatelessWidget {
   const ProfileBody({super.key});
@@ -123,7 +129,7 @@ class ProfileBody extends StatelessWidget {
 
         const SizedBox(height: 32),
 
-        _logoutButton(),
+        _logoutButton(context),
       ],
     );
   }
@@ -163,10 +169,10 @@ class ProfileBody extends StatelessWidget {
   }
 
   // ================= LOGOUT =================
-  Widget _logoutButton() {
+  Widget _logoutButton(BuildContext context) {
     return Center(
       child: TextButton.icon(
-        onPressed: () {},
+        onPressed: () => _handleLogout(context),
         icon: const Icon(Icons.logout, color: Colors.red),
         label: const Text(
           'Log out',
@@ -177,6 +183,40 @@ class ProfileBody extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final snackbarNotifier = SnackbarNotifier(context: context);
+    final appPigeon = Get.find<AppPigeon>();
+    final authInterface = Get.find<AuthInterface>();
+    final status = await appPigeon.currentAuth();
+    final refreshToken = status is Authenticated
+        ? (status.auth.refreshToken ?? status.auth.accessToken ?? '')
+        : '';
+
+    if (refreshToken.isNotEmpty) {
+      final result = await authInterface.logout(
+        param: LogoutRequestModel(refreshToken: refreshToken),
+      );
+      result.fold(
+        (failure) {
+          snackbarNotifier.notifyError(
+            message:
+                failure.uiMessage.isNotEmpty ? failure.uiMessage : 'Logout failed',
+          );
+        },
+        (_) {},
+      );
+    } else {
+      await appPigeon.logOut();
+    }
+
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 }
