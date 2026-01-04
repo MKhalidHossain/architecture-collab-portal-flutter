@@ -13,6 +13,7 @@ base class ApiEndpoints {
   static const String logout = _Auth.logout;
 
   static const String me = _Auth.me;
+  static const String updateProfile = _Auth.updateProfile;
 
   static const String verifyCode = _Auth.verifyCode;
 
@@ -160,6 +161,7 @@ class _Auth {
   static const String signup = '$_authRoute/register';
   static const String logout = '$_authRoute/logout';
   static const String me = '$_authRoute/me';
+  static const String updateProfile = '$_authRoute/profile';
   static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/verify-otp';
@@ -213,6 +215,7 @@ class _User {
   static const String _userRoute = '${ApiEndpoints.baseUrl}/user';
   static String getuserbyId(String id) => '$_userRoute/single-user/$id';
   static const String getCurrentProfile = '$_userRoute/';
+  static const String updateProfile = '$_userRoute/update-profile';
 
   static const String editProfile = '$_userRoute/update-profile';
   static const String uploadProfileAvatar = '$_userRoute/upload-avatar';

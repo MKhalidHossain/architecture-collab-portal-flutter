@@ -1,4 +1,10 @@
+import 'dart:io';
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/utils/helpers/image_loader.dart';
+import 'package:dana_bozzetto/moduls/profile/controller/profile_controller.dart';
+import 'package:dana_bozzetto/moduls/profile/model/update_profile_request_model.dart';
 import 'package:flutter/material.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -16,10 +22,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController locationController;
   late TextEditingController industryController;
   late TextEditingController bioController;
+  late final ProfileController profileController;
+  late final SnackbarNotifier snackbarNotifier;
+  File? avatarFile;
 
   @override
   void initState() {
     super.initState();
+    snackbarNotifier = SnackbarNotifier(context: context);
+    profileController = ProfileController(snackbarNotifier);
     fullNameController = TextEditingController(text: 'John Doe');
     emailController = TextEditingController(text: 'johndoe@example.com');
     phoneController = TextEditingController(text: '+999359325385');
@@ -36,11 +47,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     locationController.dispose();
     industryController.dispose();
     bioController.dispose();
+    profileController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final listenable = Listenable.merge([
+      profileController.processStatusNotifier,
+    ]);
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
@@ -75,25 +90,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Profile Picture
                 Column(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 42,
                       backgroundColor: Colors.black26,
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.white70,
-                      ),
+                      backgroundImage:
+                          avatarFile != null ? FileImage(avatarFile!) : null,
+                      child: avatarFile == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.white70,
+                            )
+                          : null,
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Profile picture change coming soon!',
-                            ),
-                          ),
+                      onTap: () async {
+                        final imageBytes = await ImageLoader.instance
+                            .pickImage();
+                        if (imageBytes == null) {
+                          return;
+                        }
+                        final file = await ImageLoader.instance
+                            .uint8ListToFile(
+                          imageBytes,
+                          'profile_avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
                         );
+                        if (!mounted) return;
+                        setState(() {
+                          avatarFile = file;
+                        });
                       },
                       child: const Text(
                         'Click to Change Profile Picture',
@@ -142,34 +168,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 28),
 
                       // Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0A6C70),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          onPressed: () {
-                            // Here you can access final values via controllers
-                            // e.g., fullNameController.text
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Profile saved successfully!'),
+                      AnimatedBuilder(
+                        animation: listenable,
+                        builder: (context, child) {
+                          final isLoading = profileController
+                              .processStatusNotifier
+                              .status is LoadingStatus;
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0A6C70),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                               ),
-                            );
-                          },
-                          child: const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                              onPressed: isLoading
+                                  ? null
+                                  : () async {
+                                      final payload =
+                                          UpdateProfileRequestModel(
+                                        name: fullNameController.text.trim(),
+                                        companyName:
+                                            industryController.text.trim(),
+                                        address: locationController.text.trim(),
+                                        email: emailController.text.trim(),
+                                        phoneNumber:
+                                            phoneController.text.trim(),
+                                        avatarPath: avatarFile?.path,
+                                      );
+                                      final success = await profileController
+                                          .updateProfile(
+                                        param: payload,
+                                      );
+                                      if (!mounted) return;
+                                      if (success) {
+                                        Navigator.pop(context, true);
+                                      }
+                                    },
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Save Changes',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ),

@@ -75,11 +75,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                   _MenuRow(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final shouldRefresh = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => EditProfileScreen()),
                       );
+                      if (shouldRefresh == true) {
+                        _reloadProfile();
+                      }
                     },
                   ),
                   SizedBox(height: 16),
