@@ -192,6 +192,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 builder: (context) =>
                                                     EmailVerifyScreen(
                                                   email: email,
+                                                  password:
+                                                      loginController.password,
                                                   onVerified: (verifyContext) {
                                                     Navigator.push(
                                                       verifyContext,

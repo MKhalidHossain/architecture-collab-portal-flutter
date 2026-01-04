@@ -12,6 +12,7 @@ import '../model/register_request_model.dart';
 import '../model/reset_password_request_model.dart';
 import '../model/verify_email_request_model.dart';
 import '../model/verify_email_register_request_model.dart';
+import '../../profile/model/update_profile_request_model.dart';
 
 final class AuthInterfaceImpl extends AuthInterface {
   final AppPigeon appPigeon;
@@ -283,6 +284,39 @@ final class AuthInterfaceImpl extends AuthInterface {
           data: param.toJson(),
         );
         return Success(message: 'Password reset successfully', data: '');
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<String>>> updateProfile({
+    required UpdateProfileRequestModel param,
+  }) async {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final formData = await param.toFormData();
+        final authStatus = await appPigeon.currentAuth();
+        String? accessToken;
+        if (authStatus is Authenticated) {
+          accessToken = authStatus.auth.accessToken;
+        }
+        final headers = <String, dynamic>{};
+        if (accessToken != null && accessToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $accessToken';
+          headers['x-auth-token'] = accessToken;
+        }
+        await appPigeon.put(
+          ApiEndpoints.updateProfile,
+          data: formData,
+          options: Options(
+            contentType: 'multipart/form-data',
+            headers: headers.isNotEmpty ? headers : null,
+          ),
+        );
+        return Success(
+          message: 'Profile Updated Successfully',
+          data: "Profile Updated",
+        );
       },
     );
   }

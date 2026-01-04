@@ -291,7 +291,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
       case MenuType.notifications:
         return NotificationScreen();
       case MenuType.profile:
-        return ProfileBody();
+        return ProfileBody(onProfileUpdated: _reloadProfile);
       case MenuType.settings:
         return SettingsScreen();
     }

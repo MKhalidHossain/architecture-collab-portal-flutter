@@ -20,10 +20,23 @@ final class ProfileInterfaceImpl extends ProfileInterface {
     return asyncTryCatch(
       tryFunc: () async {
         final formData = await param.toFormData();
+        final authStatus = await appPigeon.currentAuth();
+        String? accessToken;
+        if (authStatus is Authenticated) {
+          accessToken = authStatus.auth.accessToken;
+        }
+        final headers = <String, dynamic>{};
+        if (accessToken != null && accessToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $accessToken';
+          headers['x-auth-token'] = accessToken;
+        }
         final response = await appPigeon.put(
           ApiEndpoints.updateProfile,
           data: formData,
-          options: Options(contentType: 'multipart/form-data'),
+          options: Options(
+            contentType: 'multipart/form-data',
+            headers: headers.isNotEmpty ? headers : null,
+          ),
         );
         return Success(
           message: 'Profile Updated Successfully',

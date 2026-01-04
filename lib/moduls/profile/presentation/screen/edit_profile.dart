@@ -3,12 +3,14 @@ import 'dart:ui';
 import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/core/utils/helpers/image_loader.dart';
-import 'package:dana_bozzetto/moduls/profile/controller/profile_controller.dart';
 import 'package:dana_bozzetto/moduls/profile/model/update_profile_request_model.dart';
+import 'package:dana_bozzetto/moduls/auth/controller/update_profile_controller.dart';
 import 'package:flutter/material.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  final Map<String, dynamic>? initialProfile;
+
+  const EditProfileScreen({super.key, this.initialProfile});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -22,21 +24,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController locationController;
   late TextEditingController industryController;
   late TextEditingController bioController;
-  late final ProfileController profileController;
+  late final UpdateProfileController updateProfileController;
   late final SnackbarNotifier snackbarNotifier;
   File? avatarFile;
+  String avatarUrl = '';
 
   @override
   void initState() {
     super.initState();
     snackbarNotifier = SnackbarNotifier(context: context);
-    profileController = ProfileController(snackbarNotifier);
-    fullNameController = TextEditingController(text: 'John Doe');
-    emailController = TextEditingController(text: 'johndoe@example.com');
-    phoneController = TextEditingController(text: '+999359325385');
-    locationController = TextEditingController(text: 'Los Angela’s CA');
-    industryController = TextEditingController(text: 'Residential');
-    bioController = TextEditingController(text: 'We are industry creator');
+    updateProfileController = UpdateProfileController(snackbarNotifier);
+    final profile = widget.initialProfile ?? const <String, dynamic>{};
+
+    String readString(String key) {
+      final value = profile[key];
+      return value?.toString() ?? '';
+    }
+
+    String readAvatarUrl() {
+      final avatar = profile['avatar'];
+      if (avatar is Map) {
+        final url = avatar['url']?.toString() ?? '';
+        if (url.isNotEmpty) {
+          return url;
+        }
+      }
+      return '';
+    }
+
+    fullNameController = TextEditingController(text: readString('name'));
+    emailController = TextEditingController(text: readString('email'));
+    phoneController = TextEditingController(text: readString('phoneNumber'));
+    locationController = TextEditingController(text: readString('address'));
+    industryController = TextEditingController(text: readString('companyName'));
+    bioController = TextEditingController(text: '');
+    avatarUrl = readAvatarUrl();
   }
 
   @override
@@ -47,14 +69,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     locationController.dispose();
     industryController.dispose();
     bioController.dispose();
-    profileController.dispose();
+    updateProfileController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final listenable = Listenable.merge([
-      profileController.processStatusNotifier,
+      updateProfileController.processStatusNotifier,
     ]);
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
@@ -93,9 +115,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     CircleAvatar(
                       radius: 42,
                       backgroundColor: Colors.black26,
-                      backgroundImage:
-                          avatarFile != null ? FileImage(avatarFile!) : null,
-                      child: avatarFile == null
+                      backgroundImage: avatarFile != null
+                          ? FileImage(avatarFile!)
+                          : avatarUrl.isNotEmpty
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                      child: avatarFile == null && avatarUrl.isEmpty
                           ? const Icon(
                               Icons.person,
                               size: 50,
@@ -171,7 +196,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       AnimatedBuilder(
                         animation: listenable,
                         builder: (context, child) {
-                          final isLoading = profileController
+                          final isLoading = updateProfileController
                               .processStatusNotifier
                               .status is LoadingStatus;
                           return SizedBox(
@@ -198,8 +223,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             phoneController.text.trim(),
                                         avatarPath: avatarFile?.path,
                                       );
-                                      final success = await profileController
-                                          .updateProfile(
+                                      final success =
+                                          await updateProfileController
+                                              .updateProfile(
                                         param: payload,
                                       );
                                       if (!mounted) return;
