@@ -47,7 +47,7 @@ class VerifyEmailController extends ChangeNotifier {
   }
 
   Future<void> verifyEmail({
-    required void Function(String userId) onSuccess,
+    required VoidCallback onSuccess,
   }) async {
     if (!canVerify()) {
       snackbarNotifier.notifyError(message: 'Please enter contact and valid OTP');
@@ -68,7 +68,9 @@ class VerifyEmailController extends ChangeNotifier {
         processStatusNotifier: processStatusNotifier,
         successSnackbarNotifier: snackbarNotifier,
         errorSnackbarNotifier: snackbarNotifier,
-        onSuccess: onSuccess,
+        onSuccess: (_) {
+          onSuccess();
+        },
       );
     });
   }

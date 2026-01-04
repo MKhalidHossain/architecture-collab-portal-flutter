@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
 import 'package:dana_bozzetto/moduls/home/presentation/screens/home_screen.dart';
@@ -8,6 +10,7 @@ import 'package:dana_bozzetto/moduls/notification/presentation/screen/notificati
 import 'package:dana_bozzetto/moduls/profile/presentation/screen/profile_screen.dart';
 import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class HomeScreentest extends StatefulWidget {
   const HomeScreentest({super.key});
@@ -19,6 +22,33 @@ class _HomeScreentestState extends State<HomeScreentest> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
+  late Future<Map<String, dynamic>> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _fetchProfile();
+  }
+
+  Future<Map<String, dynamic>> _fetchProfile() async {
+    final appPigeon = Get.find<AppPigeon>();
+    final response = await appPigeon.get(ApiEndpoints.me);
+    final data = response.data;
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      if (map['data'] is Map) {
+        return Map<String, dynamic>.from(map['data']);
+      }
+      return map;
+    }
+    throw Exception('Invalid profile response');
+  }
+
+  void _reloadProfile() {
+    setState(() {
+      _profileFuture = _fetchProfile();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,62 +175,106 @@ class _HomeScreentestState extends State<HomeScreentest> {
 
   Widget _profileHeader() {
     return _glass(
-      child: Column(
-        children: [
-          Row(
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: _profileFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? const <String, dynamic>{};
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          final hasError = snapshot.hasError;
+
+          String readString(String key) {
+            final value = data[key];
+            final text = value?.toString() ?? '';
+            return text.isNotEmpty ? text : '—';
+          }
+
+          String readAvatarUrl() {
+            final avatar = data['avatar'];
+            if (avatar is Map) {
+              final url = avatar['url']?.toString() ?? '';
+              if (url.isNotEmpty) {
+                return url;
+              }
+            }
+            return '';
+          }
+
+          final name = isLoading ? 'Loading...' : readString('name');
+          final employeeId = readString('employeeId');
+          final avatarUrl = readAvatarUrl();
+          final avatarImage = avatarUrl.isNotEmpty
+              ? NetworkImage(avatarUrl)
+              : const AssetImage('assets/image/aa.png') as ImageProvider;
+
+          return Column(
             children: [
-              const CircleAvatar(
-                radius: 26,
-                backgroundColor: Colors.black12,
-                backgroundImage: AssetImage('assets/image/aa.png'),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.black12,
+                    backgroundImage: avatarImage,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Client ID : $employeeId',
+                          style:
+                              const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  _menuButton(),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'John Doe',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Client ID : 353553545',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
+              if (hasError) ...[
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _reloadProfile,
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(color: Color(0xFF00D4AA)),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 18),
+
+              // Stats Container
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.15)),
+                ),
+                child: const Row(
+                  children: [
+                    ProfileStat(title: 'Projects', value: '03'),
+                    _VerticalDivider(),
+                    ProfileStat(title: 'Documents', value: '24'),
+                    _VerticalDivider(),
+                    ProfileStat(title: 'Pending', value: '02'),
                   ],
                 ),
               ),
-
-              _menuButton(),
             ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // Stats Container
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
-            ),
-            child: const Row(
-              children: [
-                ProfileStat(title: 'Projects', value: '03'),
-                _VerticalDivider(),
-                ProfileStat(title: 'Documents', value: '24'),
-                _VerticalDivider(),
-                ProfileStat(title: 'Pending', value: '02'),
-              ],
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

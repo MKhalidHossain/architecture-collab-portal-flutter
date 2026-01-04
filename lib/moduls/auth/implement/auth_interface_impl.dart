@@ -68,9 +68,11 @@ final class AuthInterfaceImpl extends AuthInterface {
         data: param.toJson(),
       );
 
-      if (response.statusCode != 200) {
-        final errorMessage =
-            response.data['message']?.toString() ?? 'Login failed';
+      final statusCode = response.statusCode ?? 0;
+      if (statusCode < 200 || statusCode >= 300) {
+        final errorMessage = response.data is Map
+            ? response.data['message']?.toString() ?? 'Login failed'
+            : 'Login failed';
         return Left(
           DataCRUDFailure(
             failure: Failure.dioFailure,
@@ -80,16 +82,48 @@ final class AuthInterfaceImpl extends AuthInterface {
         );
       }
 
-      final responseData = response.data["data"] ?? {};
-      final userData = (responseData is Map)
-          ? Map<String, dynamic>.from(responseData)
+      final responseBody = response.data is Map
+          ? Map<String, dynamic>.from(response.data)
           : <String, dynamic>{};
+      final responseData = responseBody["data"];
+      final payload = responseData is Map
+          ? Map<String, dynamic>.from(responseData)
+          : responseBody;
+      final userData = payload['user'] is Map
+          ? Map<String, dynamic>.from(payload['user'])
+          : payload;
 
-      final accessToken = userData['accessToken']?.toString() ?? '';
-      final refreshToken = userData['refreshToken']?.toString() ?? '';
-      final role = userData['role']?.toString() ?? '';
+      String readString(dynamic value) => value?.toString() ?? '';
+      String pickFirstString(List<dynamic> values) {
+        for (final value in values) {
+          final stringValue = readString(value);
+          if (stringValue.isNotEmpty) {
+            return stringValue;
+          }
+        }
+        return '';
+      }
 
-      if (accessToken.isEmpty || refreshToken.isEmpty) {
+      final accessToken = pickFirstString([
+        payload['accessToken'],
+        payload['token'],
+        responseBody['accessToken'],
+        responseBody['token'],
+      ]);
+      var refreshToken = pickFirstString([
+        payload['refreshToken'],
+        responseBody['refreshToken'],
+      ]);
+      if (refreshToken.isEmpty) {
+        refreshToken = accessToken;
+      }
+      final role = pickFirstString([
+        userData['role'],
+        payload['role'],
+        responseBody['role'],
+      ]);
+
+      if (accessToken.isEmpty) {
         return Left(
           DataCRUDFailure(
             failure: Failure.dioFailure,
@@ -99,13 +133,22 @@ final class AuthInterfaceImpl extends AuthInterface {
         );
       }
 
+      final userId = pickFirstString([
+        userData['id'],
+        userData['_id'],
+        payload['userId'],
+        payload['_id'],
+        responseBody['userId'],
+        responseBody['_id'],
+      ]);
+
       // Save tokens directly using AppPigeon service
       await appPigeon.saveNewAuth(
         saveAuthParams: SaveNewAuthParams(
           accessToken: accessToken,
           refreshToken: refreshToken,
           data: userData,
-          uid: responseData['user']['id'],
+          uid: userId.isNotEmpty ? userId : null,
         ),
       );
 

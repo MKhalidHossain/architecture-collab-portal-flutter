@@ -1,129 +1,221 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/auth/model/logout_request_model.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:dana_bozzetto/moduls/profile/presentation/screen/edit_profile.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class ProfileBody extends StatelessWidget {
+class ProfileBody extends StatefulWidget {
   const ProfileBody({super.key});
 
   @override
+  State<ProfileBody> createState() => _ProfileBodyState();
+}
+
+class _ProfileBodyState extends State<ProfileBody> {
+  late Future<Map<String, dynamic>> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = _fetchProfile();
+  }
+
+  Future<Map<String, dynamic>> _fetchProfile() async {
+    final appPigeon = Get.find<AppPigeon>();
+    final response = await appPigeon.get(ApiEndpoints.me);
+    final data = response.data;
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      if (map['data'] is Map) {
+        return Map<String, dynamic>.from(map['data']);
+      }
+      return map;
+    }
+    throw Exception('Invalid profile response');
+  }
+
+  void _reloadProfile() {
+    setState(() {
+      _profileFuture = _fetchProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _profileFuture,
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final hasError = snapshot.hasError;
+        final data = snapshot.data ?? const <String, dynamic>{};
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _sectionTitle('Contact Information'),
+            _glassCard(
+              child: _buildProfileInfo(
+                data: data,
+                isLoading: isLoading,
+                hasError: hasError,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            _sectionTitle('Account'),
+            _glassCard(
+              child: Column(
+                children: [
+                  _MenuRow(
+                    icon: Icons.person_outline,
+                    title: 'Edit Profile',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => EditProfileScreen()),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  _MenuRow(
+                    icon: Icons.notifications_none,
+                    title: 'Notifications',
+                    badge: '02',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Scaffold()),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  _MenuRow(
+                    icon: Icons.lock_outline,
+                    title: 'Privacy & Security',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Scaffold()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            _sectionTitle('Support'),
+            _glassCard(
+              child: Column(
+                children: [
+                  _MenuRow(
+                    icon: Icons.help_outline,
+                    title: 'Helps & Support',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Scaffold()),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  _MenuRow(
+                    icon: Icons.privacy_tip_outlined,
+                    title: 'Privacy policy',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Scaffold()),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  _MenuRow(
+                    icon: Icons.description_outlined,
+                    title: 'Terms & Conditions',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Scaffold()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            _logoutButton(context),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileInfo({
+    required Map<String, dynamic> data,
+    required bool isLoading,
+    required bool hasError,
+  }) {
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (hasError) {
+      return Column(
+        children: [
+          const Text(
+            'Failed to load profile. Please try again.',
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _reloadProfile,
+            child: const Text(
+              'Retry',
+              style: TextStyle(color: Color(0xFF00D4AA)),
+            ),
+          ),
+        ],
+      );
+    }
+
+    String readString(String key) {
+      final value = data[key];
+      final text = value?.toString() ?? '';
+      return text.isNotEmpty ? text : '—';
+    }
+
+    final name = readString('name');
+    final email = readString('email');
+    final employeeId = readString('employeeId');
+    final role = readString('role');
+
+    return Column(
       children: [
-        _sectionTitle('Contact Information'),
-        _glassCard(
-          child: Column(
-            children: const [
-              _ContactRow(
-                icon: Icons.email_outlined,
-                text: 'Client@example.com',
-              ),
-              SizedBox(height: 16),
-              _ContactRow(
-                icon: Icons.phone_outlined,
-                text: '+1 (555) 123-4567',
-              ),
-              SizedBox(height: 16),
-              _ContactRow(
-                icon: Icons.location_on_outlined,
-                text: 'Los Angeles, CA',
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        _sectionTitle('Account'),
-        _glassCard(
-          child: Column(
-            children: [
-              _MenuRow(
-                icon: Icons.person_outline,
-                title: 'Edit Profile',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => EditProfileScreen()),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-
-              _MenuRow(
-                icon: Icons.notifications_none,
-                title: 'Notifications',
-                badge: '02',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => Scaffold()),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-
-              _MenuRow(
-                icon: Icons.lock_outline,
-                title: 'Privacy & Security',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => Scaffold()),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        _sectionTitle('Support'),
-        _glassCard(
-          child: Column(
-            children: [
-              _MenuRow(
-                icon: Icons.help_outline,
-                title: 'Helps & Support',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => Scaffold()),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-
-              _MenuRow(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Privacy policy',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => Scaffold()),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-
-              _MenuRow(
-                icon: Icons.description_outlined,
-                title: 'Terms & Conditions',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => Scaffold()),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 32),
-
-        _logoutButton(),
+        _ContactRow(icon: Icons.person_outline, text: name),
+        SizedBox(height: 16),
+        _ContactRow(icon: Icons.email_outlined, text: email),
+        SizedBox(height: 16),
+        _ContactRow(icon: Icons.badge_outlined, text: employeeId),
+        SizedBox(height: 16),
+        _ContactRow(icon: Icons.work_outline, text: role),
       ],
     );
   }
@@ -163,10 +255,10 @@ class ProfileBody extends StatelessWidget {
   }
 
   // ================= LOGOUT =================
-  Widget _logoutButton() {
+  Widget _logoutButton(BuildContext context) {
     return Center(
       child: TextButton.icon(
-        onPressed: () {},
+        onPressed: () => _handleLogout(context),
         icon: const Icon(Icons.logout, color: Colors.red),
         label: const Text(
           'Log out',
@@ -177,6 +269,40 @@ class ProfileBody extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final snackbarNotifier = SnackbarNotifier(context: context);
+    final appPigeon = Get.find<AppPigeon>();
+    final authInterface = Get.find<AuthInterface>();
+    final status = await appPigeon.currentAuth();
+    final refreshToken = status is Authenticated
+        ? (status.auth.refreshToken ?? status.auth.accessToken ?? '')
+        : '';
+
+    if (refreshToken.isNotEmpty) {
+      final result = await authInterface.logout(
+        param: LogoutRequestModel(refreshToken: refreshToken),
+      );
+      result.fold(
+        (failure) {
+          snackbarNotifier.notifyError(
+            message:
+                failure.uiMessage.isNotEmpty ? failure.uiMessage : 'Logout failed',
+          );
+        },
+        (_) {},
+      );
+    } else {
+      await appPigeon.logOut();
+    }
+
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 }

@@ -12,6 +12,8 @@ base class ApiEndpoints {
 
   static const String logout = _Auth.logout;
 
+  static const String me = _Auth.me;
+
   static const String verifyCode = _Auth.verifyCode;
 
   static const String verifyEmail = _Auth.verifyEmail;
@@ -157,6 +159,7 @@ class _Auth {
   static const String login = '$_authRoute/login';
   static const String signup = '$_authRoute/register';
   static const String logout = '$_authRoute/logout';
+  static const String me = '$_authRoute/me';
   static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/verify-otp';
