@@ -3,7 +3,7 @@ import 'package:dana_bozzetto/core/common/common/textfield.dart';
 import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/moduls/auth/controller/login_controller.dart';
-import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
+import 'package:dana_bozzetto/moduls/home/common/menu/home_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/forget_password.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/otp_verify_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/signup_screen.dart';
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  HomeScreentest(),
+                                                  HomeScreen(),
                                             ),
                                           );
                                         }

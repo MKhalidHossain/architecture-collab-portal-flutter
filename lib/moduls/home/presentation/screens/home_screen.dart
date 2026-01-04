@@ -7,8 +7,6 @@ import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
 class HomeScreenT extends StatelessWidget {
   HomeScreenT({super.key});
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
   final List<ProjectModel> projects = [
     ProjectModel(
       id: '1',
@@ -36,159 +34,149 @@ class HomeScreenT extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      body: Stack(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Background
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/image/ab.png'),
-                fit: BoxFit.cover,
-              ),
+          _sectionHeader('Projects Overview'),
+          const SizedBox(height: 12),
+
+          SizedBox(
+            height: 130,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: const [
+                _OverviewCard(
+                  title: 'Active Projects',
+                  value: '03',
+                  icon: Icons.folder_open,
+                ),
+                _OverviewCard(
+                  title: 'Pending Projects',
+                  value: '02',
+                  icon: Icons.pending_actions,
+                ),
+                _OverviewCard(
+                  title: 'Documents',
+                  value: '24',
+                  icon: Icons.description,
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 10),
 
-          /// Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Title
-                  const Text(
-                    'Projects Overview',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  const SizedBox(height: 12),
+          _sectionHeader('New Projects'),
+          const SizedBox(height: 12),
 
-                  /// Overview Cards
-                  SizedBox(
-                    height: 150,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: const [
-                        _OverviewCard(
-                          title: 'Active Projects',
-                          value: '03',
-                          icon: Icons.folder_open,
-                        ),
-                        _OverviewCard(
-                          title: 'Pending Projects',
-                          value: '02',
-                          icon: Icons.pending_actions,
-                        ),
-                        _OverviewCard(
-                          title: 'Documents',
-                          value: '24',
-                          icon: Icons.description,
-                        ),
-                      ],
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: projects.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 24),
+            itemBuilder: (context, index) {
+              return ProjectCard(project: projects[index]);
+            },
+          ),
+
+          const SizedBox(height: 20),
+
+          _sectionHeader('Quick Action'),
+          const SizedBox(height: 12),
+
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.25,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            children: [
+              QuickAction(
+                icon: Icons.description_outlined,
+                title: 'Documents',
+                number: '08',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DocumentsScreen(),
                     ),
-                  ),
-
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: projects.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 24),
-                    itemBuilder: (context, index) {
-                      return ProjectCard(project: projects[index]);
-                    },
-                  ),
-
-                  /// Quick Action
-                  const Text(
-                    'Quick Action',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 160 / 120,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    children: [
-                      QuickAction(
-                        icon: Icons.home,
-                        title: 'Home Services',
-                        number: '03',
-                        onTap: () {
-                          // Home Services action
-                        },
-                      ),
-                      QuickAction(
-                        icon: Icons.car_repair,
-                        title: 'Car Repair',
-                        number: '12',
-                        onTap: () {
-                          // Car Repair action
-                        },
-                      ),
-                      QuickAction(
-                        icon: Icons.description, // Documents
-                        title: 'Documents',
-                        number: '08',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const DocumentsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// Recent Activity
-                  const Text(
-                    'Recent Activity',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const Column(
-                    children: [
-                      ActivityTile(
-                        title: "New document uploaded: Floor Plans",
-                        subtitle: "Rev. 3",
-                        time: "2h ago",
-                        bulletColor: Colors.cyanAccent,
-                      ),
-                      ActivityTile(
-                        title: "Approval required: Design Proposal",
-                        subtitle: "5h ago",
-                        time: "5h ago",
-                        bulletColor: Colors.amberAccent,
-                      ),
-                      ActivityTile(
-                        title: "New message from Sarah Johnson",
-                        subtitle: "1d ago",
-                        time: "1d ago",
-                        bulletColor: Colors.white70,
-                        showDivider: false,
-                      ),
-                    ],
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
+              QuickAction(
+                icon: Icons.fact_check_outlined,
+                title: 'Approvals',
+                number: '12',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Approvals opened')),
+                  );
+                },
+              ),
+              QuickAction(
+                icon: Icons.payments_outlined,
+                title: 'Finance',
+                number: '03',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Finance opened')),
+                  );
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+
+          _sectionHeader('Recent Activity'),
+          const SizedBox(height: 12),
+
+          const Column(
+            children: [
+              ActivityTile(
+                title: "New document uploaded: Floor Plans",
+                subtitle: "Rev. 3",
+                time: "2h ago",
+                bulletColor: Colors.cyanAccent,
+              ),
+              ActivityTile(
+                title: "Approval required: Design Proposal",
+                subtitle: "5h ago",
+                time: "5h ago",
+                bulletColor: Colors.amberAccent,
+              ),
+              ActivityTile(
+                title: "New message from Sarah Johnson",
+                subtitle: "1d ago",
+                time: "1d ago",
+                bulletColor: Colors.white70,
+                showDivider: false,
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Icon(Icons.chevron_right, color: Colors.white70),
+      ],
     );
   }
 }
@@ -207,34 +195,46 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
+      width: 150,
       height: 120,
       margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.22),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white, width: 1),
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.35), width: 1),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.tealAccent),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+          Container(
+            height: 36,
+            width: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF00D4AA).withOpacity(0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.4)),
             ),
+            child: Icon(icon, color: const Color(0xFF00D4AA), size: 20),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
           ),
         ],
       ),
@@ -259,25 +259,36 @@ class QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 1),
+                color: Colors.white.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.35),
+                  width: 1,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(icon, color: Colors.tealAccent, size: 32),
+                  Container(
+                    height: 34,
+                    width: 34,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00D4AA).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: const Color(0xFF00D4AA), size: 18),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     number,
@@ -324,7 +335,11 @@ class ActivityTile extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -369,13 +384,7 @@ class ActivityTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 1.2,
-            color: Colors.white.withOpacity(0.98),
-            indent: 16,
-            endIndent: 16,
-          ),
+          const SizedBox(height: 10),
       ],
     );
   }

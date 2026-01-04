@@ -1,7 +1,8 @@
-import 'package:dana_bozzetto/moduls/onboarding/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/core/di/external_service_di.dart';
 import 'package:dana_bozzetto/core/di/internal_service_di.dart';
+
+import 'moduls/home/common/menu/home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,8 +22,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
-      
-      // home: HomeScreentest(),
+      // home: Center(child: Text("Ki obostha khalid vai"),),
+      home: HomeScreen(),
     );
   }
 }

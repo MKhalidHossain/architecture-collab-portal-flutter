@@ -12,13 +12,13 @@ import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.da
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HomeScreentest extends StatefulWidget {
-  const HomeScreentest({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
   @override
-  State<HomeScreentest> createState() => _HomeScreentestState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreentestState extends State<HomeScreentest> {
+class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
@@ -105,10 +105,34 @@ class _HomeScreentestState extends State<HomeScreentest> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _topRow('Hi, John'),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Hi, Jhon',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              _headerIcon(
+                Icons.notifications_none,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Notifications opened')),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              _menuButton(),
+            ],
+          ),
+          const SizedBox(height: 4),
           const Text(
             'Here’s your project overview',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 16),
           _searchBar(),
@@ -325,7 +349,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.18),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white),
+            border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
@@ -350,7 +374,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
             bottom: 16,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.22),
+            color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
@@ -371,9 +395,32 @@ class _HomeScreentestState extends State<HomeScreentest> {
         style: TextStyle(color: Colors.white),
         decoration: InputDecoration(
           prefixIcon: Icon(Icons.search, color: Colors.white),
-          hintText: 'Search...',
+          hintText: 'Search Projects, Documents...',
           hintStyle: TextStyle(color: Colors.white70),
           border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _headerIcon(IconData icon, {VoidCallback? onTap}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(icon, color: Colors.white, size: 22),
+            onPressed: onTap,
+          ),
         ),
       ),
     );
