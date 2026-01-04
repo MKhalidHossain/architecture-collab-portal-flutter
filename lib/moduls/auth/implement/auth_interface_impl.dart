@@ -3,6 +3,7 @@ import 'package:dana_bozzetto/core/api_handler/success.dart';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import '../interface/auth_interface.dart';
 import '../model/forget_password_request_model.dart';
 import '../model/login_request_model.dart';
@@ -62,6 +63,34 @@ final class AuthInterfaceImpl extends AuthInterface {
   Future<Either<DataCRUDFailure, Success<String>>> login({
     required LoginRequestModel param,
   }) async {
+    Map<String, dynamic> readMap(dynamic data) {
+      return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    }
+
+    DataCRUDFailure? buildForbiddenFailure(Response<dynamic>? response) {
+      if (response == null) {
+        return null;
+      }
+      final responseMap = readMap(response.data);
+      final requiresVerification = responseMap['requiresVerification'] == true;
+      if (response.statusCode != 403 || !requiresVerification) {
+        return null;
+      }
+      final message = responseMap['message']?.toString() ??
+          'Email not verified. Please verify your email.';
+      final email = responseMap['email']?.toString() ?? '';
+      final data = <String, dynamic>{};
+      if (email.isNotEmpty) {
+        data['email'] = email;
+      }
+      return DataCRUDFailure(
+        failure: Failure.forbidden,
+        fullError: message,
+        uiMessage: message,
+        data: data.isEmpty ? null : data,
+      );
+    }
+
     try {
       final response = await appPigeon.post(
         ApiEndpoints.login,
@@ -70,6 +99,10 @@ final class AuthInterfaceImpl extends AuthInterface {
 
       final statusCode = response.statusCode ?? 0;
       if (statusCode < 200 || statusCode >= 300) {
+        final forbiddenFailure = buildForbiddenFailure(response);
+        if (forbiddenFailure != null) {
+          return Left(forbiddenFailure);
+        }
         final errorMessage = response.data is Map
             ? response.data['message']?.toString() ?? 'Login failed'
             : 'Login failed';
@@ -153,6 +186,24 @@ final class AuthInterfaceImpl extends AuthInterface {
       );
 
       return Right(Success(data: role));
+    } on DioException catch (e) {
+      final forbiddenFailure = buildForbiddenFailure(e.response);
+      if (forbiddenFailure != null) {
+        return Left(forbiddenFailure);
+      }
+      final responseData = e.response?.data;
+      final errorMessage = responseData is Map
+          ? responseData['message']?.toString() ?? 'Login failed'
+          : responseData is String
+              ? responseData
+              : e.toString();
+      return Left(
+        DataCRUDFailure(
+          failure: Failure.dioFailure,
+          fullError: errorMessage,
+          uiMessage: 'An error occurred. Please try again.',
+        ),
+      );
     } catch (e) {
       return Left(
         DataCRUDFailure(

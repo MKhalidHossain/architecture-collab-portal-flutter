@@ -47,7 +47,7 @@ class LoginsScreenController extends ChangeNotifier {
   }
 
   Future<bool> login({
-    required VoidCallback needVerification,
+    required ValueChanged<String> needVerification,
   }) async {
     processStatusNotifier.setLoading();
     
@@ -59,7 +59,11 @@ class LoginsScreenController extends ChangeNotifier {
       return await result.fold(
         (failure) {
           if (failure.failure == Failure.forbidden) {
-            needVerification();
+            final emailFromFailure =
+                failure.data?['email']?.toString().trim() ?? '';
+            final verificationEmail =
+                emailFromFailure.isNotEmpty ? emailFromFailure : emailOrId;
+            needVerification(verificationEmail);
           } else {
             final errorMessage = failure.uiMessage.isNotEmpty 
                 ? failure.uiMessage

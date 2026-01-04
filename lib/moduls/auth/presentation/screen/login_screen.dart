@@ -5,7 +5,7 @@ import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/moduls/auth/controller/login_controller.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/forget_password.dart';
-import 'package:dana_bozzetto/moduls/auth/presentation/screen/otp_verify_screen.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/email_verify_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/signup_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -184,15 +184,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? () async {
                                         final success =
                                             await loginController.login(
-                                          needVerification: () {
+                                          needVerification: (email) {
                                             if (!mounted) return;
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    OtpVerifyScreen(
-                                                  contact:
-                                                      loginController.emailOrId,
+                                                    EmailVerifyScreen(
+                                                  email: email,
+                                                  onVerified: (verifyContext) {
+                                                    Navigator.push(
+                                                      verifyContext,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            HomeScreentest(),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                             );

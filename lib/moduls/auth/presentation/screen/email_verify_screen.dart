@@ -8,10 +8,12 @@ import 'package:pinput/pinput.dart';
 
 class EmailVerifyScreen extends StatefulWidget {
   final String email;
+  final ValueChanged<BuildContext>? onVerified;
 
   const EmailVerifyScreen({
     super.key,
     required this.email,
+    this.onVerified,
   });
 
   @override
@@ -158,6 +160,10 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                                         await verifyController.verifyEmail(
                                           onSuccess: () {
                                             if (!mounted) return;
+                                            if (widget.onVerified != null) {
+                                              widget.onVerified!(context);
+                                              return;
+                                            }
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
