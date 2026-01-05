@@ -146,7 +146,7 @@ class OverviewTab extends StatelessWidget {
           _ActionTile(
             title: "Documents",
             count: "24",
-            navigateTo: DocumentsTab(),
+            navigateTo: ProjectBasedDocuments(),
           ),
           SizedBox(height: 8),
           _ActionTile(

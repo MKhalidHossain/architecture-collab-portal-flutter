@@ -2,14 +2,14 @@ import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_documents_widget.dart';
 import 'package:flutter/material.dart';
 
-class DocumentsTab extends StatefulWidget {
-  const DocumentsTab({super.key});
+class ProjectBasedDocuments extends StatefulWidget {
+  const ProjectBasedDocuments({super.key});
 
   @override
-  State<DocumentsTab> createState() => _DocumentsTabState();
+  State<ProjectBasedDocuments> createState() => _ProjectBasedDocumentsState();
 }
 
-class _DocumentsTabState extends State<DocumentsTab> {
+class _ProjectBasedDocumentsState extends State<ProjectBasedDocuments> {
   int _selectedTab = 0;
 
   final titles = [

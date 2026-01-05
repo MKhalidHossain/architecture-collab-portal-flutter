@@ -66,7 +66,7 @@ class DocumentDetailScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const FullScreenImageViewer(
+                                builder: (context) => FullScreenImageViewer(
                                   imagePath: 'assets/image/aa.png',
                                   isAsset: true,
                                 ),
@@ -84,31 +84,10 @@ class DocumentDetailScreen extends StatelessWidget {
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    color: Colors.black.withOpacity(0.0),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.zoom_in_rounded,
-                                      color: Colors.white,
-                                      size: 48,
-                                      shadows: [
-                                        Shadow(
-                                          blurRadius: 12,
-                                          color: Colors.black54,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         Row(
                           children: [
                             Expanded(
@@ -118,7 +97,7 @@ class DocumentDetailScreen extends StatelessWidget {
                                 isPrimary: true,
                                 onTap: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text("Download started..."),
                                     ),
                                   );

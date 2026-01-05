@@ -4,10 +4,65 @@ import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/moduls/home/common/project_cart.dart';
 import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
 
-class HomeScreenT extends StatelessWidget {
-  HomeScreenT({super.key});
+class HomeScreenT extends StatefulWidget {
+  const HomeScreenT({super.key});
 
+  @override
+  State<HomeScreenT> createState() => _HomeScreenTState();
+}
+
+class _HomeScreenTState extends State<HomeScreenT> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController _newProjectsController = ScrollController();
+
+  void _scrollLeft() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset - 160,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _scrollRight() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset + 160,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _scrollLeftNewProjects() {
+    if (_newProjectsController.hasClients) {
+      _newProjectsController.animateTo(
+        _newProjectsController.offset - 160,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _scrollRightNewProjects() {
+    if (_newProjectsController.hasClients) {
+      _newProjectsController.animateTo(
+        _newProjectsController.offset + 160,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _newProjectsController.dispose();
+    super.dispose();
+  }
 
   final List<ProjectModel> projects = [
     ProjectModel(
@@ -32,6 +87,23 @@ class HomeScreenT extends StatelessWidget {
         'assets/avatars/user3.jpg',
       ],
     ),
+    ProjectModel(
+      id: '2',
+      image: 'assets/image/aa.png',
+      status: 'Active',
+      isActive: true,
+      title: 'Beach House Renovation',
+      subtitle: 'Johnson Residence',
+      deadline: DateTime(2025, 12, 15),
+      currentMilestone: 1,
+      totalMilestones: 3,
+      steps: [
+        ProjectStep(label: 'PD', completed: true),
+        ProjectStep(label: 'SD', completed: false),
+        ProjectStep(label: 'DD', completed: false),
+      ],
+      teamAvatars: ['assets/avatars/user4.jpg', 'assets/avatars/user5.jpg'],
+    ),
   ];
 
   @override
@@ -40,34 +112,57 @@ class HomeScreenT extends StatelessWidget {
       key: _scaffoldKey,
       body: Stack(
         children: [
-          /// Background
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/image/ab.png'),
                 fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Colors.black12, BlendMode.darken),
               ),
             ),
           ),
-
-          /// Content
           Padding(
             padding: const EdgeInsets.all(16),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// Title
-                  const Text(
-                    'Projects Overview',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  Row(
+                    children: [
+                      const Text(
+                        'Projects Overview',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: _scrollLeft,
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: _scrollRight,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
-
-                  /// Overview Cards
                   SizedBox(
-                    height: 150,
+                    height: 135,
                     child: ListView(
+                      controller: _scrollController,
                       scrollDirection: Axis.horizontal,
                       children: const [
                         _OverviewCard(
@@ -88,28 +183,65 @@ class HomeScreenT extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: projects.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 24),
-                    itemBuilder: (context, index) {
-                      return ProjectCard(project: projects[index]);
-                    },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Text(
+                        'New Projects',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: _scrollLeftNewProjects,
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: Colors.white,
+                            ),
+                            onPressed: _scrollRightNewProjects,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 585,
+                    child: ListView.builder(
+                      controller: _newProjectsController,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: projects.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: 360,
+                          margin: const EdgeInsets.only(right: 16),
+                          child: ProjectCard(project: projects[index]),
+                        );
+                      },
+                    ),
                   ),
 
-                  /// Quick Action
+                  const SizedBox(height: 16),
                   const Text(
                     'Quick Action',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -120,46 +252,37 @@ class HomeScreenT extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     children: [
                       QuickAction(
-                        icon: Icons.home,
-                        title: 'Home Services',
-                        number: '03',
-                        onTap: () {
-                          // Home Services action
-                        },
-                      ),
-                      QuickAction(
-                        icon: Icons.car_repair,
-                        title: 'Car Repair',
-                        number: '12',
-                        onTap: () {
-                          // Car Repair action
-                        },
-                      ),
-                      QuickAction(
-                        icon: Icons.description, // Documents
+                        icon: Icons.description,
                         title: 'Documents',
-                        number: '08',
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const DocumentsScreen(),
+                              builder: (_) => DocumentsScreen(),
                             ),
                           );
                         },
+                      ),
+                      QuickAction(
+                        icon: Icons.home,
+                        title: 'Home Services',
+                        onTap: () {},
+                      ),
+                      QuickAction(
+                        icon: Icons.car_repair,
+                        title: 'Car Repair',
+                        onTap: () {},
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 24),
-
-                  /// Recent Activity
+                  // ===== Recent Activity =====
                   const Text(
                     'Recent Activity',
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                   const SizedBox(height: 12),
-
                   const Column(
                     children: [
                       ActivityTile(
@@ -193,6 +316,7 @@ class HomeScreenT extends StatelessWidget {
   }
 }
 
+// ===== Overview Card =====
 class _OverviewCard extends StatelessWidget {
   final String title;
   final String value;
@@ -207,20 +331,29 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
-      height: 120,
+      width: 165,
+      height: 140,
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.22),
+        color: const Color(0xFF747572),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white, width: 1),
+        border: Border.all(color: Colors.white60, width: 1),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.tealAccent),
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF01676C),
+              shape: BoxShape.circle,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             value,
@@ -234,7 +367,7 @@ class _OverviewCard extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
@@ -244,14 +377,12 @@ class _OverviewCard extends StatelessWidget {
 
 class QuickAction extends StatelessWidget {
   final IconData icon;
-  final String number;
   final String title;
   final VoidCallback? onTap;
 
   const QuickAction({
     super.key,
     required this.icon,
-    required this.number,
     required this.title,
     this.onTap,
   });
@@ -270,27 +401,27 @@ class QuickAction extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: const Color(0xFF747572),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 1),
+                border: Border.all(color: Colors.white60, width: 1),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(icon, color: Colors.tealAccent, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    number,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(32),
+                      color: const Color(0xFF01676C),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(icon, color: Colors.white, size: 32),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 16),
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
@@ -323,13 +454,13 @@ class ActivityTile extends StatelessWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.12),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          color: Color.fromARGB(255, 255, 255, 255).withOpacity(0.12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: const EdgeInsets.only(top: 6, right: 12),
+                margin: EdgeInsets.only(top: 6, right: 12),
                 width: 10,
                 height: 10,
                 decoration: BoxDecoration(
