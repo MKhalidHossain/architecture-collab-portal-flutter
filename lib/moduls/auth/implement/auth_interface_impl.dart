@@ -54,7 +54,7 @@ final class AuthInterfaceImpl extends AuthInterface {
       },
     );
   }
-
+  
   // @override
   // Stream<AuthStatus> authStream() {
   //   return appPigeon.authStream;
