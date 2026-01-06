@@ -34,6 +34,14 @@ base class ApiEndpoints {
   /// ### post
   static const String refreshToken = _Auth.refreshToken;
 
+  // ---------------------- Client Portal -----------------------------
+  /// ### get
+  static const String clientPortalDashboard = _ClientPortal.dashboard;
+
+  // ---------------------- Projects -----------------------------
+  /// ### get
+  static const String getProjects = _Project.projects;
+
   //------------interest----------------
   /// ### get
   static const String getInterests = _Interest.getallInterests;
@@ -275,4 +283,17 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Client Portal -----------------------------
+class _ClientPortal {
+  static const String _clientPortalRoute =
+      '${ApiEndpoints.baseUrl}/client-portal';
+  static const String dashboard = '$_clientPortalRoute/dashboard';
+}
+
+// ---------------------- Projects -----------------------------
+class _Project {
+  static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
+  static const String projects = '$_projectRoute/';
 }

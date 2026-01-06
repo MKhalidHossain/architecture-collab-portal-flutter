@@ -3,7 +3,11 @@ import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
+import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
+import 'package:dana_bozzetto/moduls/home/model/home_response_model.dart';
 import 'package:dana_bozzetto/moduls/home/presentation/screens/home_screen.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_body.dart';
 import 'package:dana_bozzetto/moduls/message/presentation/screen/message_body.dart';
 import 'package:dana_bozzetto/moduls/notification/presentation/screen/notification_screen.dart';
@@ -22,12 +26,18 @@ class _HomeScreentestState extends State<HomeScreentest> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
+  ProjectFilter _projectFilter = ProjectFilter.all;
   late Future<Map<String, dynamic>> _profileFuture;
+  late Future<HomeDashboardResponse> _dashboardFuture;
+  late Future<ProjectsResponse> _projectsFuture;
+  HomeDashboardResponse _cachedDashboard = HomeDashboardResponse.empty();
 
   @override
   void initState() {
     super.initState();
     _profileFuture = _fetchProfile();
+    _dashboardFuture = _fetchDashboard();
+    _projectsFuture = _fetchProjects();
   }
 
   Future<Map<String, dynamic>> _fetchProfile() async {
@@ -42,6 +52,34 @@ class _HomeScreentestState extends State<HomeScreentest> {
       return map;
     }
     throw Exception('Invalid profile response');
+  }
+
+  Future<HomeDashboardResponse> _fetchDashboard() async {
+    final homeInterface = Get.find<HomeInterface>();
+    final result = await homeInterface.fetchDashboard();
+    return result.fold(
+      (failure) {
+        final message = failure.uiMessage.isNotEmpty
+            ? failure.uiMessage
+            : failure.fullError;
+        throw Exception(message.isNotEmpty ? message : 'Failed to load dashboard');
+      },
+      (success) => success.data ?? HomeDashboardResponse.empty(),
+    );
+  }
+
+  Future<ProjectsResponse> _fetchProjects() async {
+    final projectInterface = Get.find<ProjectInterface>();
+    final result = await projectInterface.fetchProjects();
+    return result.fold(
+      (failure) {
+        final message = failure.uiMessage.isNotEmpty
+            ? failure.uiMessage
+            : failure.fullError;
+        throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
+      },
+      (success) => success.data ?? ProjectsResponse.empty(),
+    );
   }
 
   void _reloadProfile() {
@@ -102,17 +140,29 @@ class _HomeScreentestState extends State<HomeScreentest> {
 
   Widget _homeHeader() {
     return _glass(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _topRow('Hi, John'),
-          const Text(
-            'Here’s your project overview',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          _searchBar(),
-        ],
+      child: FutureBuilder<HomeDashboardResponse>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _cachedDashboard;
+          if (snapshot.hasData) {
+            _cachedDashboard = snapshot.data ?? _cachedDashboard;
+          }
+          final userName = data.userName.trim();
+          final greeting = userName.isNotEmpty ? 'Hi, $userName' : 'Hi, —';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topRow(greeting),
+              const Text(
+                'Here’s your project overview',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              _searchBar(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -125,16 +175,34 @@ class _HomeScreentestState extends State<HomeScreentest> {
           _topRow('Projects'),
           const SizedBox(height: 12),
           Row(
-            children: const [
-              Chip(label: Text('All')),
-              SizedBox(width: 8),
-              Chip(label: Text('Ongoing')),
-              SizedBox(width: 8),
-              Chip(label: Text('Completed')),
+            children: [
+              _projectFilterChip(ProjectFilter.all, 'All'),
+              const SizedBox(width: 8),
+              _projectFilterChip(ProjectFilter.ongoing, 'Ongoing'),
+              const SizedBox(width: 8),
+              _projectFilterChip(ProjectFilter.completed, 'Completed'),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _projectFilterChip(ProjectFilter filter, String label) {
+    final isSelected = _projectFilter == filter;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      showCheckmark: false,
+      selectedColor: Colors.teal,
+      backgroundColor: Colors.white.withOpacity(0.18),
+      labelStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+      ),
+      onSelected: (_) {
+        setState(() => _projectFilter = filter);
+      },
     );
   }
 
@@ -283,9 +351,14 @@ class _HomeScreentestState extends State<HomeScreentest> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return HomeScreenT();
+        return HomeScreenT(
+          dashboardFuture: _dashboardFuture,
+        );
       case MenuType.projects:
-        return ProjectBody();
+        return ProjectBody(
+          projectsFuture: _projectsFuture,
+          filter: _projectFilter,
+        );
       case MenuType.messages:
         return MessagesScreen();
       case MenuType.notifications:
