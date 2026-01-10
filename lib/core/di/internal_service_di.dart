@@ -1,8 +1,12 @@
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/auth/implement/auth_interface_impl.dart';
 import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
+import 'package:dana_bozzetto/moduls/home/service/home_interface_impl.dart';
 import 'package:dana_bozzetto/moduls/profile/interface/profile_interface.dart';
 import 'package:dana_bozzetto/moduls/profile/service/profile_service_interface_impl.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/service/project_interface_impl.dart';
 import 'package:get/get.dart';
 
 void initServices() {
@@ -16,6 +20,18 @@ void initServices() {
   if (!Get.isRegistered<ProfileInterface>()) {
     Get.put<ProfileInterface>(
       ProfileInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
+    );
+  }
+
+  if (!Get.isRegistered<HomeInterface>()) {
+    Get.put<HomeInterface>(
+      HomeInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
+    );
+  }
+
+  if (!Get.isRegistered<ProjectInterface>()) {
+    Get.put<ProjectInterface>(
+      ProjectInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
     );
   }
   

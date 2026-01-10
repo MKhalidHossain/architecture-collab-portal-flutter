@@ -8,6 +8,17 @@ class ProjectCard extends StatelessWidget {
 
   const ProjectCard({super.key, required this.project});
 
+  ImageProvider _resolveImage(String source) {
+    final value = source.trim();
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+    if (value.isNotEmpty) {
+      return AssetImage(value);
+    }
+    return const AssetImage('assets/image/aa.png');
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -27,11 +38,17 @@ class ProjectCard extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      child: Image.asset(
-                        project.image,
+                      child: Image(
+                        image: _resolveImage(project.image),
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/image/aa.png',
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     Positioned(
@@ -140,9 +157,8 @@ class ProjectCard extends StatelessWidget {
                             backgroundColor: Colors.white,
                             child: CircleAvatar(
                               radius: 19,
-                              backgroundImage: AssetImage(
-                                project.teamAvatars[index],
-                              ),
+                              backgroundImage:
+                                  _resolveImage(project.teamAvatars[index]),
                             ),
                           ),
                         );

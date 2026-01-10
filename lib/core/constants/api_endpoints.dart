@@ -34,6 +34,14 @@ base class ApiEndpoints {
   /// ### post
   static const String refreshToken = _Auth.refreshToken;
 
+  // ---------------------- Client Portal -----------------------------
+  /// ### get
+  static const String clientPortalDashboard = _ClientPortal.dashboard;
+
+  // ---------------------- Projects -----------------------------
+  /// ### get
+  static const String getProjects = _Project.projects;
+
   //------------interest----------------
   /// ### get
   static const String getInterests = _Interest.getallInterests;
@@ -151,7 +159,7 @@ class _RemoteServer {
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5003';
-  static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String baseUrl = 'http://10.10.5.46:5007/api';
 }
 
 class _Auth {
@@ -275,4 +283,17 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Client Portal -----------------------------
+class _ClientPortal {
+  static const String _clientPortalRoute =
+      '${ApiEndpoints.baseUrl}/client-portal';
+  static const String dashboard = '$_clientPortalRoute/dashboard';
+}
+
+// ---------------------- Projects -----------------------------
+class _Project {
+  static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
+  static const String projects = '$_projectRoute/';
 }
