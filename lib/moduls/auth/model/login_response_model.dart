@@ -29,13 +29,17 @@ class LoginResponseModel {
         : data;
 
     final accessToken = pickFirstString([
+      data['access_token'],
       data['accessToken'],
       data['token'],
+      json['access_token'],
       json['accessToken'],
       json['token'],
     ]);
     var refreshToken = pickFirstString([
+      data['refresh_token'],
       data['refreshToken'],
+      json['refresh_token'],
       json['refreshToken'],
     ]);
     if (refreshToken.isEmpty) {
