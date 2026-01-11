@@ -176,12 +176,17 @@ final class AuthInterfaceImpl extends AuthInterface {
         responseBody['_id'],
       ]);
 
+      final authData = Map<String, dynamic>.from(userData);
+      if (role.isNotEmpty) {
+        authData['role'] = role;
+      }
+
       // Save tokens directly using AppPigeon service
       await appPigeon.saveNewAuth(
         saveAuthParams: SaveNewAuthParams(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          data: userData,
+          data: authData,
           uid: userId.isNotEmpty ? userId : null,
         ),
       );

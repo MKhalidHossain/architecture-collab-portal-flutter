@@ -1,90 +1,54 @@
-// import 'dart:async';
-// import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
-// import 'package:dana_bozzetto/core/helpers/auth_role.dart';
-// import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get/get_rx/src/rx_workers/utils/debouncer.dart';
-// class AppManager extends GetxController {
-//   AuthStatus _authStatus = AuthLoading();
-//   AuthStatus get currentAuthStatus => _authStatus;
-//   Debouncer authDebouncer = Debouncer(delay: const Duration(milliseconds: 100));
+import 'dart:async';
 
-//   /// Initializes the stream to listen to auth status
-//   AppManager() {
-//     _init();
-//   }
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
+import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
+import 'package:dana_bozzetto/moduls/home/presentation/screens/team_member_home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-//   // listen to auth change
-//   void _init() async {
-//     debugPrint("AppManager initialized");
+class AppManager extends ChangeNotifier {
+  final AppPigeon _appPigeon;
+  late final StreamSubscription<AuthStatus> _subscription;
 
-//     await Get.find<AppPigeon>().currentAuth().then((initialAuthStatus) {
-//       _decideRoute(initialAuthStatus);
-//     });
+  AuthStatus _currentAuthStatus = UnAuthenticated();
+  AuthStatus get currentAuthStatus => _currentAuthStatus;
 
-//     // Start listening to the auth status changes
-//   }
+  AppManager({AppPigeon? appPigeon})
+      : _appPigeon = appPigeon ?? Get.find<AppPigeon>() {
+    _subscription = _appPigeon.authStream.listen(_handleAuthStatus);
+    _loadCurrentAuth();
+  }
 
-//   void _decideRoute(AuthStatus? authStatus) async {
-//     if (authStatus is UnAuthenticated) {
-//       _authStatus = authStatus;
-//       Get.to(() => SignupScreen());
-//       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
-//       //   RouteNames.login,
-//       //   (route) => false,
-//       // );
-//     } else if (authStatus is Authenticated) {
-//       debugPrint(
-//         "currentAuthStatus: $_authStatus, beforeAuthStatus: $authStatus",
-//       );
-//       debugPrint(
-//         "New auth:: ${!(currentAuthStatus is Authenticated && (authStatus).auth.userId != (currentAuthStatus as Authenticated).auth.userId)}",
-//       );
-//       _authStatus = authStatus;
-//       await _initializeControllers();
-//       if (Get.isRegistered<ProfileController>()) {
-//         Get.delete<ProfileController>();
-//       }
-//       Get.put(ProfileController(repo: Get.find()));
-//       Get.to(() => AppGround());
+  Future<void> _loadCurrentAuth() async {
+    _currentAuthStatus = await _appPigeon.currentAuth();
+    notifyListeners();
+  }
 
-//       // navigatorKey.currentState?.pushNamedAndRemoveUntil(
-//       //   RouteNames.home,
-//       //   (route) => false,
-//       // );
-//     }
-//     update();
-//     // if (authStatus != null && authStatus != _authStatus) {
-//     //   debugPrint("(In Appmanager)Auth status: $authStatus");
+  void _handleAuthStatus(AuthStatus status) {
+    _currentAuthStatus = status;
+    notifyListeners();
+  }
 
-//     // }
-//   }
+  Widget get startScreen {
+    final status = _currentAuthStatus;
+    if (status is Authenticated) {
+      switch (status.auth.authRole) {
+        case AuthRole.client:
+          return const ClientHomeScreen();
+        case AuthRole.teamMember:
+          return const TeamMemberHomeScreen();
+        case AuthRole.unknown:
+          break;
+      }
+    }
+    return const LoginScreen();
+  }
 
-//   // initiate controllers on auth change[Authenticated]
-//   Future<void> _initializeControllers() async {
-//     if ((currentAuthStatus as Authenticated).auth.userId.isNotEmpty) {
-//       await Get.find<AppPigeon>()
-//           .socketInit(
-//             SocketConnetParamX(
-//               token: null,
-//               socketUrl: ApiEndpoints.socketUrl,
-//               joinId: (currentAuthStatus as Authenticated).auth.userId,
-//             ),
-//           )
-//           .then((_) async {
-//             Get.find<AppPigeon>().emit(
-//               "join",
-//               ((currentAuthStatus as Authenticated).auth.userId),
-//             );
-//             // if (Get.isRegistered<AppGlobalControllers>()) {
-//             //   await Get.delete<AppGlobalControllers>();
-//             // }
-
-//             // Get.put<AppGlobalControllers>(
-//             //   AppGlobalControllers(),
-//             // );
-//           });
-//     }
-//   }
-// }
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

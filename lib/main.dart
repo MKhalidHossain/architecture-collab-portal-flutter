@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
       home: Onboarding1(),
-      // home: HomeScreentest(),
+      // home: ClientHomeScreen(),
     );
   }
 }

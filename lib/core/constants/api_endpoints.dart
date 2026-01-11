@@ -38,6 +38,10 @@ base class ApiEndpoints {
   /// ### get
   static const String clientPortalDashboard = _ClientPortal.dashboard;
 
+  // ---------------------- Team Portal -----------------------------
+  /// ### get
+  static const String teamMemberDashboard = _TeamPortal.dashboard;
+
   // ---------------------- Projects -----------------------------
   /// ### get
   static const String getProjects = _Project.projects;
@@ -290,6 +294,13 @@ class _ClientPortal {
   static const String _clientPortalRoute =
       '${ApiEndpoints.baseUrl}/client-portal';
   static const String dashboard = '$_clientPortalRoute/dashboard';
+}
+
+// ---------------------- Team Portal -----------------------------
+class _TeamPortal {
+  static const String _teamPortalRoute =
+      '${ApiEndpoints.baseUrl}/team-portal';
+  static const String dashboard = '$_teamPortalRoute/dashboard';
 }
 
 // ---------------------- Projects -----------------------------

@@ -16,13 +16,15 @@ import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.da
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HomeScreentest extends StatefulWidget {
-  const HomeScreentest({super.key});
+class ClientHomeScreen extends StatefulWidget {
+  final Future<HomeDashboardResponse>? dashboardFuture;
+
+  const ClientHomeScreen({super.key, this.dashboardFuture});
   @override
-  State<HomeScreentest> createState() => _HomeScreentestState();
+  State<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
 
-class _HomeScreentestState extends State<HomeScreentest> {
+class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
@@ -36,7 +38,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
   void initState() {
     super.initState();
     _profileFuture = _fetchProfile();
-    _dashboardFuture = _fetchDashboard();
+    _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
     _projectsFuture = _fetchProjects();
   }
 
