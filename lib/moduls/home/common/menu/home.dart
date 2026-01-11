@@ -174,7 +174,45 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _topRow('Projects'),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'My Projects',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Track all your architectural projects',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  _actionButton(
+                    icon: Icons.notifications_none,
+                    onPressed: () {
+                      setState(() => _selectedMenu = MenuType.notifications);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _menuButton(),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _searchBar(hintText: 'Search Projects, Documents....'),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -390,6 +428,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   Widget _menuButton() {
+    return _actionButton(
+      icon: Icons.menu,
+      onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: BackdropFilter(
@@ -404,8 +452,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
-            icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            icon: Icon(icon, color: Colors.white, size: 24),
+            onPressed: onPressed,
           ),
         ),
       ),
@@ -435,19 +483,19 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  Widget _searchBar() {
+  Widget _searchBar({String hintText = 'Search...'}) {
     return Container(
       height: 48,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.18),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const TextField(
-        style: TextStyle(color: Colors.white),
+      child: TextField(
+        style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          prefixIcon: Icon(Icons.search, color: Colors.white),
-          hintText: 'Search...',
-          hintStyle: TextStyle(color: Colors.white70),
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.white70),
           border: InputBorder.none,
         ),
       ),
