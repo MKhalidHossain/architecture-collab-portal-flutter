@@ -2,12 +2,16 @@ import 'dart:ui';
 import 'package:dana_bozzetto/core/common/common/textfield.dart';
 import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
 import 'package:dana_bozzetto/moduls/auth/controller/login_controller.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
+import 'package:dana_bozzetto/moduls/home/presentation/screens/team_member_home_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/forget_password.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/email_verify_screen.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/signup_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -195,13 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                   password:
                                                       loginController.password,
                                                   onVerified: (verifyContext) {
-                                                    Navigator.push(
-                                                      verifyContext,
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            HomeScreentest(),
-                                                      ),
-                                                    );
+                                                    _navigateToRoleHome();
                                                   },
                                                 ),
                                               ),
@@ -210,13 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         );
                                         if (!mounted) return;
                                         if (success) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  HomeScreentest(),
-                                            ),
-                                          );
+                                          await _navigateToRoleHome();
                                         }
                                       }
                                     : null,
@@ -293,6 +285,36 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _navigateToRoleHome() async {
+    final authStatus = await Get.find<AppPigeon>().currentAuth();
+    if (!mounted) return;
+    final target = _resolveRoleHome(authStatus);
+    if (target == null) {
+      snackbarNotifier.notifyError(
+        message: 'Unable to detect your role. Please try again.',
+      );
+      return;
+    }
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => target),
+      (route) => false,
+    );
+  }
+
+  Widget? _resolveRoleHome(AuthStatus authStatus) {
+    if (authStatus is Authenticated) {
+      switch (authStatus.auth.authRole) {
+        case AuthRole.client:
+          return const ClientHomeScreen();
+        case AuthRole.teamMember:
+          return const TeamMemberHomeScreen();
+        case AuthRole.unknown:
+          return null;
+      }
+    }
+    return null;
   }
 }
 

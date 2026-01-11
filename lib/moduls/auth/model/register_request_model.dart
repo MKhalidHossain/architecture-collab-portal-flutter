@@ -13,13 +13,19 @@ class RegisterRequest {
     required this.role,
   });
 
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'email': email,
-    'employeeId': employeeId,
-    'password': password,
-    'role': role,
-  };
+  Map<String, dynamic> toJson() {
+    final payload = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'employeeId': employeeId,
+      'password': password,
+      'role': role,
+    };
+    if (role == 'client') {
+      payload['clientId'] = employeeId;
+    }
+    return payload;
+  }
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
       RegisterRequest(

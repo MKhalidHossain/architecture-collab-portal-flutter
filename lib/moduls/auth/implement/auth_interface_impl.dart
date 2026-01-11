@@ -139,13 +139,17 @@ final class AuthInterfaceImpl extends AuthInterface {
       }
 
       final accessToken = pickFirstString([
+        payload['access_token'],
         payload['accessToken'],
         payload['token'],
+        responseBody['access_token'],
         responseBody['accessToken'],
         responseBody['token'],
       ]);
       var refreshToken = pickFirstString([
+        payload['refresh_token'],
         payload['refreshToken'],
+        responseBody['refresh_token'],
         responseBody['refreshToken'],
       ]);
       if (refreshToken.isEmpty) {
@@ -176,12 +180,17 @@ final class AuthInterfaceImpl extends AuthInterface {
         responseBody['_id'],
       ]);
 
+      final authData = Map<String, dynamic>.from(userData);
+      if (role.isNotEmpty) {
+        authData['role'] = role;
+      }
+
       // Save tokens directly using AppPigeon service
       await appPigeon.saveNewAuth(
         saveAuthParams: SaveNewAuthParams(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          data: userData,
+          data: authData,
           uid: userId.isNotEmpty ? userId : null,
         ),
       );

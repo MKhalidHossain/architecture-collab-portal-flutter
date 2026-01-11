@@ -3,7 +3,11 @@ import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
+import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
+import 'package:dana_bozzetto/moduls/home/model/home_response_model.dart';
 import 'package:dana_bozzetto/moduls/home/presentation/screens/home_screen.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_body.dart';
 import 'package:dana_bozzetto/moduls/message/presentation/screen/message_body.dart';
 import 'package:dana_bozzetto/moduls/notification/presentation/screen/notification_screen.dart';
@@ -12,22 +16,30 @@ import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.da
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HomeScreentest extends StatefulWidget {
-  const HomeScreentest({super.key});
+class ClientHomeScreen extends StatefulWidget {
+  final Future<HomeDashboardResponse>? dashboardFuture;
+
+  const ClientHomeScreen({super.key, this.dashboardFuture});
   @override
-  State<HomeScreentest> createState() => _HomeScreentestState();
+  State<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
 
-class _HomeScreentestState extends State<HomeScreentest> {
+class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
+  ProjectFilter _projectFilter = ProjectFilter.all;
   late Future<Map<String, dynamic>> _profileFuture;
+  late Future<HomeDashboardResponse> _dashboardFuture;
+  late Future<ProjectsResponse> _projectsFuture;
+  HomeDashboardResponse _cachedDashboard = HomeDashboardResponse.empty();
 
   @override
   void initState() {
     super.initState();
     _profileFuture = _fetchProfile();
+    _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
+    _projectsFuture = _fetchProjects();
   }
 
   Future<Map<String, dynamic>> _fetchProfile() async {
@@ -42,6 +54,30 @@ class _HomeScreentestState extends State<HomeScreentest> {
       return map;
     }
     throw Exception('Invalid profile response');
+  }
+
+  Future<HomeDashboardResponse> _fetchDashboard() async {
+    final homeInterface = Get.find<HomeInterface>();
+    final result = await homeInterface.fetchDashboard();
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(
+        message.isNotEmpty ? message : 'Failed to load dashboard',
+      );
+    }, (success) => success.data ?? HomeDashboardResponse.empty());
+  }
+
+  Future<ProjectsResponse> _fetchProjects() async {
+    final projectInterface = Get.find<ProjectInterface>();
+    final result = await projectInterface.fetchProjects();
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
+    }, (success) => success.data ?? ProjectsResponse.empty());
   }
 
   void _reloadProfile() {
@@ -86,6 +122,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
       ),
     );
   }
+
   Widget _buildHeader(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -102,17 +139,29 @@ class _HomeScreentestState extends State<HomeScreentest> {
 
   Widget _homeHeader() {
     return _glass(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _topRow('Hi, John'),
-          const Text(
-            'Here’s your project overview',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          _searchBar(),
-        ],
+      child: FutureBuilder<HomeDashboardResponse>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _cachedDashboard;
+          if (snapshot.hasData) {
+            _cachedDashboard = snapshot.data ?? _cachedDashboard;
+          }
+          final userName = data.userName.trim();
+          final greeting = userName.isNotEmpty ? 'Hi, $userName' : 'Hi, —';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topRow(greeting),
+              const Text(
+                'Here’s your project overview',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              _searchBar(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -122,17 +171,46 @@ class _HomeScreentestState extends State<HomeScreentest> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _topRow('Projects'),
-          const SizedBox(height: 12),
           Row(
-            children: const [
-              Chip(label: Text('All')),
-              SizedBox(width: 8),
-              Chip(label: Text('Ongoing')),
-              SizedBox(width: 8),
-              Chip(label: Text('Completed')),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'My Projects',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Track all your architectural projects',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  _actionButton(
+                    icon: Icons.notifications_none,
+                    onPressed: () {
+                      setState(() => _selectedMenu = MenuType.notifications);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _menuButton(),
+                ],
+              ),
             ],
           ),
+          const SizedBox(height: 12),
+          _searchBar(hintText: 'Search Projects, Documents....'),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -231,8 +309,10 @@ class _HomeScreentestState extends State<HomeScreentest> {
                         const SizedBox(height: 2),
                         Text(
                           'Client ID : $employeeId',
-                          style:
-                              const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -283,9 +363,12 @@ class _HomeScreentestState extends State<HomeScreentest> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return HomeScreenT();
+        return HomeScreenT(dashboardFuture: _dashboardFuture);
       case MenuType.projects:
-        return ProjectBody();
+        return ProjectBody(
+          projectsFuture: _projectsFuture,
+          filter: _projectFilter,
+        );
       case MenuType.messages:
         return MessagesScreen();
       case MenuType.notifications:
@@ -315,6 +398,16 @@ class _HomeScreentestState extends State<HomeScreentest> {
   }
 
   Widget _menuButton() {
+    return _actionButton(
+      icon: Icons.menu,
+      onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+    );
+  }
+
+  Widget _actionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: BackdropFilter(
@@ -329,8 +422,8 @@ class _HomeScreentestState extends State<HomeScreentest> {
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
-            icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            icon: Icon(icon, color: Colors.white, size: 24),
+            onPressed: onPressed,
           ),
         ),
       ),
@@ -360,26 +453,26 @@ class _HomeScreentestState extends State<HomeScreentest> {
     );
   }
 
-  Widget _searchBar() {
+  Widget _searchBar({String hintText = 'Search...'}) {
     return Container(
       height: 48,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.18),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const TextField(
-        style: TextStyle(color: Colors.white),
+      child: TextField(
+        style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          prefixIcon: Icon(Icons.search, color: Colors.white),
-          hintText: 'Search...',
-          hintStyle: TextStyle(color: Colors.white70),
+          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.white70),
           border: InputBorder.none,
         ),
       ),
     );
   }
-
 }
+
 class ProfileStat extends StatelessWidget {
   final String title;
   final String value;
