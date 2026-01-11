@@ -59,29 +59,25 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Future<HomeDashboardResponse> _fetchDashboard() async {
     final homeInterface = Get.find<HomeInterface>();
     final result = await homeInterface.fetchDashboard();
-    return result.fold(
-      (failure) {
-        final message = failure.uiMessage.isNotEmpty
-            ? failure.uiMessage
-            : failure.fullError;
-        throw Exception(message.isNotEmpty ? message : 'Failed to load dashboard');
-      },
-      (success) => success.data ?? HomeDashboardResponse.empty(),
-    );
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(
+        message.isNotEmpty ? message : 'Failed to load dashboard',
+      );
+    }, (success) => success.data ?? HomeDashboardResponse.empty());
   }
 
   Future<ProjectsResponse> _fetchProjects() async {
     final projectInterface = Get.find<ProjectInterface>();
     final result = await projectInterface.fetchProjects();
-    return result.fold(
-      (failure) {
-        final message = failure.uiMessage.isNotEmpty
-            ? failure.uiMessage
-            : failure.fullError;
-        throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
-      },
-      (success) => success.data ?? ProjectsResponse.empty(),
-    );
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
+    }, (success) => success.data ?? ProjectsResponse.empty());
   }
 
   void _reloadProfile() {
@@ -126,6 +122,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       ),
     );
   }
+
   Widget _buildHeader(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -214,35 +211,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           const SizedBox(height: 12),
           _searchBar(hintText: 'Search Projects, Documents....'),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              _projectFilterChip(ProjectFilter.all, 'All'),
-              const SizedBox(width: 8),
-              _projectFilterChip(ProjectFilter.ongoing, 'Ongoing'),
-              const SizedBox(width: 8),
-              _projectFilterChip(ProjectFilter.completed, 'Completed'),
-            ],
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _projectFilterChip(ProjectFilter filter, String label) {
-    final isSelected = _projectFilter == filter;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      showCheckmark: false,
-      selectedColor: Colors.teal,
-      backgroundColor: Colors.white.withOpacity(0.18),
-      labelStyle: TextStyle(
-        color: Colors.white,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-      ),
-      onSelected: (_) {
-        setState(() => _projectFilter = filter);
-      },
     );
   }
 
@@ -339,8 +309,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         const SizedBox(height: 2),
                         Text(
                           'Client ID : $employeeId',
-                          style:
-                              const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -391,9 +363,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return HomeScreenT(
-          dashboardFuture: _dashboardFuture,
-        );
+        return HomeScreenT(dashboardFuture: _dashboardFuture);
       case MenuType.projects:
         return ProjectBody(
           projectsFuture: _projectsFuture,
@@ -501,8 +471,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       ),
     );
   }
-
 }
+
 class ProfileStat extends StatelessWidget {
   final String title;
   final String value;
