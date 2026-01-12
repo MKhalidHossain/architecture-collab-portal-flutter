@@ -1,4 +1,4 @@
-import 'package:dana_bozzetto/moduls/onboarding/onboarding1.dart';
+import 'package:dana_bozzetto/moduls/home/common/menu/home.dart';
 import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/core/di/external_service_di.dart';
 import 'package:dana_bozzetto/core/di/internal_service_di.dart';
@@ -21,8 +21,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
-      home: Onboarding1(),
-      // home: HomeScreentest(),
+      // home: ClientPortalScreen(),
+      home: HomeScreentest(),
     );
   }
 }

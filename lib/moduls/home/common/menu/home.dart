@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/calender/presentation/screens/calender_screen.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
 import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
@@ -57,29 +58,25 @@ class _HomeScreentestState extends State<HomeScreentest> {
   Future<HomeDashboardResponse> _fetchDashboard() async {
     final homeInterface = Get.find<HomeInterface>();
     final result = await homeInterface.fetchDashboard();
-    return result.fold(
-      (failure) {
-        final message = failure.uiMessage.isNotEmpty
-            ? failure.uiMessage
-            : failure.fullError;
-        throw Exception(message.isNotEmpty ? message : 'Failed to load dashboard');
-      },
-      (success) => success.data ?? HomeDashboardResponse.empty(),
-    );
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(
+        message.isNotEmpty ? message : 'Failed to load dashboard',
+      );
+    }, (success) => success.data ?? HomeDashboardResponse.empty());
   }
 
   Future<ProjectsResponse> _fetchProjects() async {
     final projectInterface = Get.find<ProjectInterface>();
     final result = await projectInterface.fetchProjects();
-    return result.fold(
-      (failure) {
-        final message = failure.uiMessage.isNotEmpty
-            ? failure.uiMessage
-            : failure.fullError;
-        throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
-      },
-      (success) => success.data ?? ProjectsResponse.empty(),
-    );
+    return result.fold((failure) {
+      final message = failure.uiMessage.isNotEmpty
+          ? failure.uiMessage
+          : failure.fullError;
+      throw Exception(message.isNotEmpty ? message : 'Failed to load projects');
+    }, (success) => success.data ?? ProjectsResponse.empty());
   }
 
   void _reloadProfile() {
@@ -124,6 +121,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
       ),
     );
   }
+
   Widget _buildHeader(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -131,6 +129,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
         MenuType.home => _homeHeader(),
         MenuType.projects => _projectsHeader(),
         MenuType.messages => _messagesHeader(),
+        MenuType.calendar => _calendarHeader(),
         MenuType.notifications => _notificationsHeader(),
         MenuType.profile => _profileHeader(),
         MenuType.settings => _settingsHeader(),
@@ -219,6 +218,53 @@ class _HomeScreentestState extends State<HomeScreentest> {
     );
   }
 
+  Widget _calendarHeader() {
+    return _glass(
+      child: FutureBuilder<HomeDashboardResponse>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _cachedDashboard;
+          if (snapshot.hasData) {
+            _cachedDashboard = snapshot.data ?? _cachedDashboard;
+          }
+          final userName = data.userName.trim();
+          final greeting = userName.isNotEmpty ? 'Hi, $userName' : 'Hi, —';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topRow(greeting),
+              const Text(
+                "Here's your project Task’s Calendarize",
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    "January 2026",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_down_sharp),
+                    color: Colors.white,
+                    onPressed: () {},
+                    iconSize: 36,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Widget _notificationsHeader() {
     return _glass(
       child: Column(
@@ -299,8 +345,10 @@ class _HomeScreentestState extends State<HomeScreentest> {
                         const SizedBox(height: 2),
                         Text(
                           'Client ID : $employeeId',
-                          style:
-                              const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -351,9 +399,7 @@ class _HomeScreentestState extends State<HomeScreentest> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return HomeScreenT(
-          dashboardFuture: _dashboardFuture,
-        );
+        return HomeScreenT(dashboardFuture: _dashboardFuture);
       case MenuType.projects:
         return ProjectBody(
           projectsFuture: _projectsFuture,
@@ -361,6 +407,8 @@ class _HomeScreentestState extends State<HomeScreentest> {
         );
       case MenuType.messages:
         return MessagesScreen();
+      case MenuType.calendar:
+        return CalendarScreen();
       case MenuType.notifications:
         return NotificationScreen();
       case MenuType.profile:
@@ -451,8 +499,8 @@ class _HomeScreentestState extends State<HomeScreentest> {
       ),
     );
   }
-
 }
+
 class ProfileStat extends StatelessWidget {
   final String title;
   final String value;

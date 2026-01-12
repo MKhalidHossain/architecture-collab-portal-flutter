@@ -91,13 +91,19 @@ class SideMenu extends StatelessWidget {
                     ),
                     _menuItem(
                       context,
-                      Icons.person,
+                      Icons.message,
                       'Messages',
                       MenuType.messages,
                     ),
                     _menuItem(
                       context,
-                      Icons.person,
+                      Icons.calendar_today,
+                      'Calendar',
+                      MenuType.calendar,
+                    ),
+                    _menuItem(
+                      context,
+                      Icons.notifications,
                       'Notifications',
                       MenuType.notifications,
                     ),

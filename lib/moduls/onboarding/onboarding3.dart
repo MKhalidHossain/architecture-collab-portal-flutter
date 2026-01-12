@@ -99,25 +99,30 @@ class Onboarding3 extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
 
-                        const Text(
-                          'Client Portal',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
+                        Column(
+                          children: [
+                            const Text(
+                              'Stay Connected with \nYour Team',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
 
-                        const SizedBox(height: 12),
+                            const SizedBox(height: 12),
 
-                        Text(
-                          'Chat, approve, review—faster than ever.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey[200],
-                          ),
+                            Text(
+                              'Stay Connected with Your \nTeam',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[200],
+                              ),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 48),
