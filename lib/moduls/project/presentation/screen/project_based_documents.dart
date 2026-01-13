@@ -3,6 +3,7 @@ import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_doc
 import 'package:flutter/material.dart';
 
 class ProjectBasedDocuments extends StatefulWidget {
+  
   const ProjectBasedDocuments({super.key});
 
   @override
@@ -127,13 +128,13 @@ class _ProjectBasedDocumentsState extends State<ProjectBasedDocuments> {
                           decoration: BoxDecoration(
                             color: isActive
                                 ? const Color(0xFF01676C)
-                                : Colors.black38,
+                                : Colors.white.withOpacity(0.4),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
                             titles[index],
                             style: TextStyle(
-                              color: Colors.white,
+                              color: isActive? Colors.white: Colors.black,
                               fontWeight: isActive
                                   ? FontWeight.bold
                                   : FontWeight.normal,

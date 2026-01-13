@@ -147,7 +147,8 @@ class DocumentPreviewCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF6B6B68),
+              // color: const Color(0xFF6B6B68),
+              color:  Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white54),
             ),

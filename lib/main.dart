@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/core/di/external_service_di.dart';
 import 'package:dana_bozzetto/core/di/internal_service_di.dart';
 
-import 'moduls/home/common/menu/client_home_screen.dart';
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   externalServiceDI();

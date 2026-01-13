@@ -107,8 +107,8 @@ class DocumentDetailScreen extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _actionButton(
-                                label: "Full Screen",
-                                icon: Icons.fullscreen_rounded,
+                                label: "Preview",
+                                icon: Icons.remove_red_eye_outlined,
                                 isPrimary: false,
                                 onTap: () {
                                   Navigator.push(
