@@ -36,6 +36,8 @@ class ProjectDetailsModel {
   final String id;
   final String projectNo;
   final String name;
+  final String type;
+  final String location;
   final ProjectClient client;
   final List<ProjectTeamMember> teamMembers;
   final String status;
@@ -56,6 +58,8 @@ class ProjectDetailsModel {
     required this.id,
     required this.projectNo,
     required this.name,
+    required this.type,
+    required this.location,
     required this.client,
     required this.teamMembers,
     required this.status,
@@ -78,6 +82,8 @@ class ProjectDetailsModel {
       id: '',
       projectNo: '',
       name: '',
+      type: '',
+      location: '',
       client: const ProjectClient(
         id: '',
         name: '',
@@ -121,6 +127,12 @@ class ProjectDetailsModel {
       id: _readId(json),
       projectNo: _readString(json['projectNo']),
       name: _readString(json['name']),
+      type: _readString(json['type']).isNotEmpty
+          ? _readString(json['type'])
+          : _readString(json['projectType']),
+      location: _readString(json['location']).isNotEmpty
+          ? _readString(json['location'])
+          : _readString(json['address']),
       client: ProjectClient.fromJson(_readMap(json['client'])),
       teamMembers: _readList(json['teamMembers'], (item) {
         return ProjectTeamMember.fromJson(item);
