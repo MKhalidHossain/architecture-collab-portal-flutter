@@ -143,15 +143,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         Image(
           image: _resolveImage(project.coverImage.url),
           width: double.infinity,
-          height: 320,
+          height: 360,
           fit: BoxFit.cover,
         ),
         BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: Container(
-            height: 320,
+            height: 360,
             padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
-            color: Colors.black.withOpacity(0.45),
+            color: Colors.black.withOpacity(0.4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -167,26 +167,32 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     ),
                     const Text(
                       "Back to Projects",
-                      style: TextStyle(color: Colors.white, fontSize: 24),
+                      style: TextStyle(color: Colors.white, fontSize: 22),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+                const Text(
+                  "Track all your architectural projects",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+
+                const SizedBox(height: 18),
 
                 /// TITLE
                 Text(
                   title,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white70),
+                  style: const TextStyle(color: Colors.white70, fontSize: 18),
                 ),
 
                 const SizedBox(height: 12),
@@ -196,12 +202,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF01676C),
+                    color: const Color(0xFF0C7A7E),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     status,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
 
@@ -213,9 +222,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   child: Row(
                     children: List.generate(tabs.length, (index) {
                       final isActive = _selectedTab == index;
+                      final backgroundColor = isActive
+                          ? const Color(0xFF0C7A7E)
+                          : Colors.white.withOpacity(0.4);
+                      final textColor = isActive
+                          ? Colors.white
+                          : const Color(0xFF2B2B2B);
 
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: 10),
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
@@ -223,23 +238,25 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             });
                           },
                           child: Container(
-                            width: 120,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 16),
+                            width: 130,
+                            height: 50,
                             decoration: BoxDecoration(
-                              color: isActive
-                                  ? const Color(0xFF01676C)
-                                  : Colors.black.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(14),
+                              color: backgroundColor,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                              ),
                             ),
-                            child: Text(
-                              tabs[index],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isActive
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                            child: Center(
+                              child: Text(
+                                tabs[index],
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: isActive
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
                               ),
                             ),
                           ),

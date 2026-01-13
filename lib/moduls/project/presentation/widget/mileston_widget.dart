@@ -18,151 +18,178 @@ class MilestonesTab extends StatelessWidget {
     }
 
     final activeIndex = _activeMilestoneIndex(milestones);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Project Milestones",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 20),
-        _glassCard(
-          child: Column(
-            children: List.generate(milestones.length, (index) {
-              final milestone = milestones[index];
-              final isLast = index == milestones.length - 1;
-              final isDone = milestone.isCompleted;
-              final isActive = index == activeIndex && !isDone;
-              final title = milestone.name.trim().isNotEmpty
-                  ? milestone.name.trim()
-                  : 'Milestone';
-              final statusLabel = _statusLabel(milestone, isActive);
+      children: List.generate(milestones.length, (index) {
+        final milestone = milestones[index];
+        final isLast = index == milestones.length - 1;
+        final isDone = milestone.isCompleted;
+        final isActive = index == activeIndex && !isDone;
+        final title = milestone.name.trim().isNotEmpty
+            ? milestone.name.trim()
+            : 'Milestone';
+        final chips = _buildChips(milestone, isDone, isActive);
+        final lineColor =
+            isDone ? const Color(0xFF0C7A7E) : Colors.white24;
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    children: [
-                      _timelineDot(isDone: isDone, isActive: isActive),
-                      if (!isLast)
-                        Container(
-                          width: 2,
-                          height: 42,
-                          color: Colors.white.withOpacity(0.3),
+        return Padding(
+          padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 56,
+                child: Column(
+                  children: [
+                    _timelineDot(isDone: isDone, isActive: isActive),
+                    if (!isLast)
+                      Container(
+                        width: 4,
+                        height: 80,
+                        margin: const EdgeInsets.only(top: 4),
+                        decoration: BoxDecoration(
+                          color: lineColor,
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                    ],
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              color: isActive
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.75),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          _statusChip(statusLabel, isActive, isDone),
-                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
-              );
-            }),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: chips,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      }),
     );
   }
 
-  /// Timeline dot
   Widget _timelineDot({required bool isDone, required bool isActive}) {
     if (isDone) {
       return Container(
-        height: 28,
-        width: 28,
+        height: 44,
+        width: 44,
         decoration: const BoxDecoration(
-          color: Colors.teal,
+          color: Color(0xFF0C7A7E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check, color: Colors.white, size: 16),
+        child: const Icon(Icons.check, color: Colors.white, size: 22),
       );
     }
 
     return Container(
-      height: 28,
-      width: 28,
+      height: 44,
+      width: 44,
       decoration: BoxDecoration(
+        color: Colors.white,
         shape: BoxShape.circle,
         border: Border.all(
-          color: isActive ? Colors.teal : Colors.white54,
+          color: isActive ? const Color(0xFF0C7A7E) : Colors.white70,
           width: 2,
         ),
       ),
       child: isActive
           ? const Center(
-              child: CircleAvatar(radius: 4, backgroundColor: Colors.teal),
+              child: CircleAvatar(radius: 4, backgroundColor: Color(0xFF0C7A7E)),
             )
           : null,
     );
   }
 
-  /// Status chip
-  Widget _statusChip(String text, bool isActive, bool isDone) {
-    Color bg;
-    Color fg;
-
-    if (isDone || text.toLowerCase().contains('complete')) {
-      bg = Colors.teal.withOpacity(0.2);
-      fg = Colors.teal;
-    } else if (isActive || text.toLowerCase().contains('active')) {
-      bg = Colors.blue.withOpacity(0.2);
-      fg = Colors.blueAccent;
-    } else {
-      bg = Colors.orange.withOpacity(0.2);
-      fg = Colors.orange;
+  List<Widget> _buildChips(
+    ProjectMilestone milestone,
+    bool isDone,
+    bool isActive,
+  ) {
+    if (isDone) {
+      return [
+        _statusChip(
+          label: 'View Documents',
+          backgroundColor: const Color(0xFF0C7A7E),
+          textColor: Colors.white,
+        ),
+        _statusChip(
+          label: 'Completed',
+          backgroundColor: Colors.white.withOpacity(0.85),
+          textColor: const Color(0xFF2B2B2B),
+        ),
+      ];
     }
+    if (isActive) {
+      return [
+        _statusChip(
+          label: 'Active',
+          backgroundColor: const Color(0xFF0C7A7E),
+          textColor: Colors.white,
+        ),
+      ];
+    }
+    final statusText = _statusText(milestone);
+    return [
+      _statusChip(
+        label: statusText,
+        backgroundColor: const Color(0xFFFFF1D6),
+        textColor: const Color(0xFF0C7A7E),
+      ),
+    ];
+  }
 
+  Widget _statusChip({
+    required String label,
+    required Color backgroundColor,
+    required Color textColor,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        text,
+        label,
         style: TextStyle(
-          color: fg,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+          color: textColor,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 
-  String _statusLabel(ProjectMilestone milestone, bool isActive) {
+  String _statusText(ProjectMilestone milestone) {
     final trimmed = milestone.status.trim();
     if (trimmed.isNotEmpty) {
+      final normalized = trimmed.toLowerCase();
+      if (normalized == 'pending') {
+        return 'In progress';
+      }
       return trimmed;
     }
-    if (milestone.isCompleted) {
-      return "Completed";
+    if (milestone.progress > 0) {
+      return 'In progress';
     }
-    return isActive ? "Active" : "Pending";
+    return 'Pending';
   }
 
   int _activeMilestoneIndex(List<ProjectMilestone> milestones) {
@@ -172,16 +199,5 @@ class MilestonesTab extends StatelessWidget {
       }
     }
     return milestones.length - 1;
-  }
-
-  /// Glass card
-  Widget _glassCard({required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        child: child,
-      ),
-    );
   }
 }
