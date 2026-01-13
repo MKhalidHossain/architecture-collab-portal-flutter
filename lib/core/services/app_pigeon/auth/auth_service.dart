@@ -67,7 +67,11 @@ class AuthService extends Interceptor {
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     debugPrint("Error >> Method: ${err.requestOptions.method} API: ${err.requestOptions.uri} >> ${err.response}");
     // IF TIMEOUT, then possibly internet is down. Hence reject the request.
-    final status = (await _authStorage.currentAuthStatus());
+    final auth = _cachedAuth ?? await _authStorage.getCurrentAuth();
+    if (auth != null) {
+      _cachedAuth = auth;
+    }
+    final refreshToken = auth?._refreshToken ?? "";
     if(err.type == DioExceptionType.connectionTimeout || err.type == DioExceptionType.receiveTimeout) {
       _authDebugger.dekhao("Timeout error");
       return handler.reject(err);
@@ -81,21 +85,21 @@ class AuthService extends Interceptor {
       return handler.reject(err);
     }
 
-    if (err.response?.statusCode == 401 && (status is Authenticated)) {
+    if (err.response?.statusCode == 401 && refreshToken.isNotEmpty) {
       // get new access token
       RefreshTokenResponse refreshTokenResponse;
       try {
         _refreshingToken = true;
         refreshTokenResponse = await refreshTokenManager.refreshToken(
-          refreshToken: status.auth._refreshToken ?? ""
+          refreshToken: refreshToken
         );
         _refreshingToken = false;
-        await _authStorage.updateCurrentAuth(
-          UpdateAuthParams(
+        await updateCurrentAuth(
+          updateAuthParams: UpdateAuthParams(
             accessToken: refreshTokenResponse.accessToken,
             refreshToken: refreshTokenResponse.refreshToken,
-            data: refreshTokenResponse.data
-          )
+            data: refreshTokenResponse.data,
+          ),
         );
         // Wait a second to receive changes from secure storage.
         await Future.delayed(Duration(seconds: 1)).then((_) async{

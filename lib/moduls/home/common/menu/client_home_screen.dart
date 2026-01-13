@@ -29,6 +29,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
+  bool _calendarExpanded = false;
+  late DateTime _calendarMonth;
+  late DateTime _calendarSelectedDate;
   ProjectFilter _projectFilter = ProjectFilter.all;
   late Future<Map<String, dynamic>> _profileFuture;
   late Future<HomeDashboardResponse> _dashboardFuture;
@@ -38,6 +41,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _calendarMonth = DateTime(now.year, now.month, 1);
+    _calendarSelectedDate = DateTime(now.year, now.month, now.day);
     _profileFuture = _fetchProfile();
     _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
     _projectsFuture = _fetchProjects();
@@ -94,7 +100,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       endDrawer: SideMenu(
         selectedMenu: _selectedMenu,
         onSelect: (menu) {
-          setState(() => _selectedMenu = menu);
+          setState(() {
+            _selectedMenu = menu;
+            _calendarExpanded = menu == MenuType.calendar;
+          });
         },
       ),
       body: Stack(
@@ -255,18 +264,27 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               Row(
                 children: [
                   Text(
-                    "January 2026",
-                    style: TextStyle(
+                    _monthTitle(_calendarMonth),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.keyboard_arrow_down_sharp),
+                    icon: Icon(
+                      _calendarExpanded
+                          ? Icons.keyboard_arrow_up_sharp
+                          : Icons.keyboard_arrow_down_sharp,
+                    ),
                     color: Colors.white,
-                    onPressed: () {},
+                    onPressed: () {
+                      setState(() {
+                        _calendarExpanded = !_calendarExpanded;
+                        _selectedMenu = MenuType.calendar;
+                      });
+                    },
                     iconSize: 36,
                   ),
                 ],
@@ -421,7 +439,23 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       case MenuType.messages:
         return MessagesScreen();
       case MenuType.calendar:
-        return CalendarScreen();
+        return CalendarScreen(
+          showCalendarCard: _calendarExpanded,
+          initialMonth: _calendarMonth,
+          initialSelectedDate: _calendarSelectedDate,
+          onMonthChanged: (month) {
+            setState(() {
+              _calendarMonth = DateTime(month.year, month.month, 1);
+            });
+          },
+          onDateSelected: (date) {
+            setState(() {
+              _calendarSelectedDate =
+                  DateTime(date.year, date.month, date.day);
+              _calendarMonth = DateTime(date.year, date.month, 1);
+            });
+          },
+        );
       case MenuType.notifications:
         return NotificationScreen();
       case MenuType.profile:
@@ -453,6 +487,25 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       icon: Icons.menu,
       onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
     );
+  }
+
+  String _monthTitle(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final monthName = months[date.month - 1];
+    return '$monthName ${date.year}';
   }
 
   Widget _actionButton({

@@ -113,6 +113,12 @@ class SideMenu extends StatelessWidget {
                               ),
                               _menuItem(
                                 context,
+                                Icons.calendar_today_outlined,
+                                'Calendar',
+                                MenuType.calendar,
+                              ),
+                              _menuItem(
+                                context,
                                 Icons.notifications_none,
                                 'Notification',
                                 MenuType.notifications,

@@ -2,7 +2,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/rendering.dart';
 
-import '../../utils/helpers/format_response_data.dart';
 import '../debug/debug_service.dart';
 
 base class RefreshTokenResponse {
@@ -43,13 +42,54 @@ class RefreshTokenManager implements RefreshTokenManagerInterface{
       "refreshToken": refreshToken,
     });
     debugPrint("Refresh token response: ${response.data}");
-    final data = extractBodyData(response);
+    final raw = response.data;
+    final payload = raw is Map && raw["data"] is Map
+        ? Map<String, dynamic>.from(raw["data"])
+        : raw is Map
+            ? Map<String, dynamic>.from(raw)
+            : <String, dynamic>{};
+
+    String readString(dynamic value) => value?.toString() ?? '';
+    String pickFirstString(List<dynamic> values) {
+      for (final value in values) {
+        final stringValue = readString(value);
+        if (stringValue.isNotEmpty) {
+          return stringValue;
+        }
+      }
+      return '';
+    }
+
+    final accessToken = pickFirstString([
+      payload["accessToken"],
+      payload["access_token"],
+      payload["token"],
+      raw is Map ? raw["accessToken"] : null,
+      raw is Map ? raw["access_token"] : null,
+      raw is Map ? raw["token"] : null,
+    ]);
+    var nextRefreshToken = pickFirstString([
+      payload["refreshToken"],
+      payload["refresh_token"],
+      raw is Map ? raw["refreshToken"] : null,
+      raw is Map ? raw["refresh_token"] : null,
+    ]);
+    if (nextRefreshToken.isEmpty) {
+      nextRefreshToken = accessToken;
+    }
+    if (accessToken.isEmpty) {
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        error: "Invalid refresh token response",
+      );
+    }
     return RefreshTokenResponse(
-      accessToken: data["accessToken"], 
-      refreshToken: data["refreshToken"],
-      data: (data["userId"] != null) ? 
+      accessToken: accessToken,
+      refreshToken: nextRefreshToken,
+      data: (payload["userId"] != null)
         {
-          "userId": data["userId"],
+          "userId": payload["userId"],
         } : null
     );
   }
@@ -66,5 +106,3 @@ class RefreshTokenManager implements RefreshTokenManagerInterface{
     return request.path.contains(url);
   }
 }
-
-
