@@ -45,6 +45,8 @@ base class ApiEndpoints {
   // ---------------------- Projects -----------------------------
   /// ### get
   static const String getProjects = _Project.projects;
+  static String getProjectById(String projectId) =>
+      _Project.projectById(projectId);
 
   //------------interest----------------
   /// ### get
@@ -162,8 +164,9 @@ class _RemoteServer {
 }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://localhost:5003';
-  static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String socketUrl = 'http://localhost:5000';
+  // static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String baseUrl = 'http://10.10.5.85:5000/api';
 }
 
 class _Auth {
@@ -307,4 +310,5 @@ class _TeamPortal {
 class _Project {
   static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
   static const String projects = '$_projectRoute/';
+  static String projectById(String projectId) => '$_projectRoute/$projectId';
 }

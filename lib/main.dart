@@ -21,7 +21,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
       ),
-      home: Onboarding1(),
+      // home: Center(child: Text("Ki obostha khalid vai"),),
+       home: Onboarding1(),
       // home: ClientHomeScreen(),
     );
   }

@@ -1,11 +1,16 @@
 import 'dart:ui';
+
+import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/mileston_widget.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/overview_widget.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/team_widget.dart';
 import 'package:flutter/material.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
-  const ProjectDetailScreen({super.key});
+  final String projectId;
+
+  const ProjectDetailScreen({super.key, required this.projectId});
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
@@ -14,33 +19,68 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   int _selectedTab = 0;
   final bool isClient = true;
+  late final ProjectDetailsController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ProjectDetailsController();
+    _controller.fetchProjectDetails(widget.projectId);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tabs = _tabsList();
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final tabs = _tabsList();
+        final project = _controller.details.project;
+        final hasData = project.id.isNotEmpty || project.name.isNotEmpty;
+        final showLoading = _controller.isLoading && !hasData;
+        final showError = _controller.errorMessage.isNotEmpty && !hasData;
 
-    return Scaffold(
-      body: Column(
-        children: [
-          _header(context, tabs),
-          Expanded(
-            child: Stack(
-              children: [
-                Image.asset(
-                  'assets/image/ab.png',
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
+        return Scaffold(
+          body: Column(
+            children: [
+              _header(context, tabs, project),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Image.asset(
+                      'assets/image/ab.png',
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                    if (showLoading)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white70,
+                        ),
+                      )
+                    else if (showError)
+                      _buildMessage(
+                        _controller.errorMessage,
+                        onRetry: _retry,
+                      )
+                    else
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: _buildTabContent(tabs, project),
+                      ),
+                  ],
                 ),
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: _buildTabContent(tabs),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -57,12 +97,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   // ================= TAB CONTENT =================
 
-  Widget _buildTabContent(List<String> tabs) {
+  Widget _buildTabContent(List<String> tabs, ProjectDetailsModel project) {
     final currentTab = tabs[_selectedTab];
 
     switch (currentTab) {
       case "Overview":
-        return const OverviewTab();
+        return OverviewTab(project: project);
       case "Tasks":
         return const Center(
           child: Text(
@@ -71,9 +111,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           ),
         );
       case "Team":
-        return const TeamTab();
+        return TeamTab(teamMembers: project.teamMembers);
       case "Milestones":
-        return const MilestonesTab();
+        return MilestonesTab(milestones: project.milestones);
       default:
         return const SizedBox();
     }
@@ -81,11 +121,27 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
   // ================= HEADER =================
 
-  Widget _header(BuildContext context, List<String> tabs) {
+  Widget _header(
+    BuildContext context,
+    List<String> tabs,
+    ProjectDetailsModel project,
+  ) {
+    final title = project.name.trim().isNotEmpty
+        ? project.name.trim()
+        : 'Project';
+    final subtitle = project.client.name.trim().isNotEmpty
+        ? project.client.name.trim()
+        : project.projectNo.trim().isNotEmpty
+            ? project.projectNo.trim()
+            : '-';
+    final status = project.status.trim().isNotEmpty
+        ? project.status.trim()
+        : 'Unknown';
+
     return Stack(
       children: [
-        Image.asset(
-          'assets/image/aa.png',
+        Image(
+          image: _resolveImage(project.coverImage.url),
           width: double.infinity,
           height: 320,
           fit: BoxFit.cover,
@@ -103,14 +159,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios,
-                          color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const Text(
                       "Back to Projects",
-                      style:
-                          TextStyle(color: Colors.white, fontSize: 24),
+                      style: TextStyle(color: Colors.white, fontSize: 24),
                     ),
                   ],
                 ),
@@ -118,8 +175,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 const SizedBox(height: 16),
 
                 /// TITLE
-                const Text(
-                  "Modern Villa Design",
+                Text(
+                  title,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
@@ -127,9 +184,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "Smith Residence",
-                  style: TextStyle(color: Colors.white70),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70),
                 ),
 
                 const SizedBox(height: 12),
@@ -142,9 +199,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     color: const Color(0xFF01676C),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    "Active",
-                    style: TextStyle(color: Colors.white),
+                  child: Text(
+                    status,
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
 
@@ -197,5 +254,48 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         ),
       ],
     );
+  }
+
+  Widget _buildMessage(String message, {VoidCallback? onRetry}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message.isNotEmpty ? message : 'Failed to load project details.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: onRetry,
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: Color(0xFF00D4AA)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _retry() {
+    _controller.fetchProjectDetails(widget.projectId);
+  }
+
+  ImageProvider _resolveImage(String source) {
+    final value = source.trim();
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+    if (value.isNotEmpty) {
+      return AssetImage(value);
+    }
+    return const AssetImage('assets/image/aa.png');
   }
 }

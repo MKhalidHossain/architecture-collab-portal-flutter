@@ -418,7 +418,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.18),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white),
+            border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
@@ -443,7 +443,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             bottom: 16,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.22),
+            color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
