@@ -1,17 +1,25 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/notifiers/button_status_notifier.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/auth/model/login_request_model.dart';
+import 'package:dana_bozzetto/core/helpers/handle_fold.dart';
 import 'package:dana_bozzetto/moduls/auth/controller/email_verify_controller.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
 
 class EmailVerifyScreen extends StatefulWidget {
   final String email;
+  final ValueChanged<BuildContext>? onVerified;
+  final String? password;
 
   const EmailVerifyScreen({
     super.key,
     required this.email,
+    this.onVerified,
+    this.password,
   });
 
   @override
@@ -45,6 +53,29 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
   void dispose() {
     verifyController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _loginAfterVerify() async {
+    final password = widget.password?.trim() ?? '';
+    if (password.isEmpty) {
+      return true;
+    }
+
+    verifyController.processStatusNotifier.setLoading();
+    final result = await Get.find<AuthInterface>().login(
+      param: LoginRequestModel(emailOrId: widget.email, password: password),
+    );
+    var isSuccess = false;
+    handleFold(
+      either: result,
+      processStatusNotifier: verifyController.processStatusNotifier,
+      successSnackbarNotifier: snackbarNotifier,
+      errorSnackbarNotifier: snackbarNotifier,
+      onSuccess: (_) {
+        isSuccess = true;
+      },
+    );
+    return isSuccess;
   }
 
   @override
@@ -158,13 +189,21 @@ class _EmailVerifyScreenState extends State<EmailVerifyScreen> {
                                         await verifyController.verifyEmail(
                                           onSuccess: () {
                                             if (!mounted) return;
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    const LoginScreen(),
-                                              ),
-                                            );
+                                            _loginAfterVerify().then((value) {
+                                              if (!mounted) return;
+                                              if (!value) return;
+                                              if (widget.onVerified != null) {
+                                                widget.onVerified!(context);
+                                                return;
+                                              }
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const LoginScreen(),
+                                                ),
+                                              );
+                                            });
                                           },
                                         );
                                       }

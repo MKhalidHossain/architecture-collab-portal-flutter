@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ProfileBody extends StatefulWidget {
-  const ProfileBody({super.key});
+  final VoidCallback? onProfileUpdated;
+
+  const ProfileBody({super.key, this.onProfileUpdated});
 
   @override
   State<ProfileBody> createState() => _ProfileBodyState();
@@ -18,6 +20,7 @@ class ProfileBody extends StatefulWidget {
 
 class _ProfileBodyState extends State<ProfileBody> {
   late Future<Map<String, dynamic>> _profileFuture;
+  Map<String, dynamic> _cachedProfile = const <String, dynamic>{};
 
   @override
   void initState() {
@@ -53,6 +56,9 @@ class _ProfileBodyState extends State<ProfileBody> {
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
         final hasError = snapshot.hasError;
         final data = snapshot.data ?? const <String, dynamic>{};
+        if (data.isNotEmpty) {
+          _cachedProfile = data;
+        }
 
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -75,11 +81,18 @@ class _ProfileBodyState extends State<ProfileBody> {
                   _MenuRow(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final shouldRefresh = await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => EditProfileScreen()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              EditProfileScreen(initialProfile: _cachedProfile),
+                        ),
                       );
+                      if (shouldRefresh == true) {
+                        _reloadProfile();
+                        widget.onProfileUpdated?.call();
+                      }
                     },
                   ),
                   SizedBox(height: 16),

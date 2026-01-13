@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/common/common/textfield.dart';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/theme/app_colors.dart';
 import 'package:dana_bozzetto/moduls/auth/controller/register_controller.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/email_verify_screen.dart';
-import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -20,6 +20,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final roleController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final List<String> _roleOptions = const ['client', 'team_member'];
+  final List<String> _idTypeOptions = const ['Employee ID', 'Client ID'];
+  String? _selectedRole;
+  String? _selectedIdType;
   late final RegisterScreenController registerController;
   late final SnackbarNotifier snackbarNotifier;
 
@@ -28,8 +32,31 @@ class _SignupScreenState extends State<SignupScreen> {
     super.initState();
     snackbarNotifier = SnackbarNotifier(context: context);
     registerController = RegisterScreenController(snackbarNotifier);
-    roleController.text = 'team_member';
-    registerController.role = roleController.text;
+    _selectedRole = 'team_member';
+    _selectedIdType = 'Employee ID';
+    roleController.text = _selectedRole!;
+    registerController.role = _selectedRole!;
+  }
+
+  void _setRole(String? value) {
+    if (value == null || value.isEmpty) return;
+    setState(() {
+      _selectedRole = value;
+      _selectedIdType = value == 'client' ? 'Client ID' : 'Employee ID';
+    });
+    roleController.text = value;
+    registerController.role = value;
+  }
+
+  void _setIdType(String? value) {
+    if (value == null || value.isEmpty) return;
+    final role = value == 'Client ID' ? 'client' : 'team_member';
+    setState(() {
+      _selectedIdType = value;
+      _selectedRole = role;
+    });
+    roleController.text = role;
+    registerController.role = role;
   }
 
   @override
@@ -107,8 +134,32 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: nameController,
                           onChanged: (value) => registerController.name = value,
                         ),
+                        LabeledDropdown(
+                          hintText: "Select ID Type",
+                          items: _idTypeOptions,
+                          value: _selectedIdType,
+                          onChanged: _setIdType,
+                          textSize: 18,
+                          textColor: AppColors.white,
+                          borderColor: AppColors.textFieldBorder,
+                          focusedBorderColor: AppColors.white,
+                          borderRadius: 12,
+                          backgroundColor: Colors.transparent,
+                          hintTextColor: AppColors.textFieldTextiHint,
+                          hintTextSize: 18,
+                          hintTextWeight: FontWeight.w400,
+                          itemTextSize: 18,
+                          itemTextColor: Colors.black,
+                          selectedItemTextColor: AppColors.white,
+                          height: 48,
+                          prefixIcon: Icons.badge_outlined,
+                          prefixIconColor: Colors.grey,
+                          prefixIconSize: 28,
+                        ),
                         LabeledTextField(
-                          hintText: "Enter Your Employee ID",
+                          hintText: _selectedIdType == 'Client ID'
+                              ? "Enter Client ID"
+                              : "Enter Your Employee ID",
                           prefixIcon: Icons.person_outline_rounded,
                           controller: employeeIdController,
                           onChanged: (value) =>
@@ -120,11 +171,27 @@ class _SignupScreenState extends State<SignupScreen> {
                           controller: emailController,
                           onChanged: (value) => registerController.email = value,
                         ),
-                        LabeledTextField(
-                          hintText: "Enter Role",
+                        LabeledDropdown(
+                          hintText: "Select Role",
+                          items: _roleOptions,
+                          value: _selectedRole,
+                          onChanged: _setRole,
+                          textSize: 18,
+                          textColor: AppColors.white,
+                          borderColor: AppColors.textFieldBorder,
+                          focusedBorderColor: AppColors.white,
+                          borderRadius: 12,
+                          backgroundColor: Colors.transparent,
+                          hintTextColor: AppColors.textFieldTextiHint,
+                          hintTextSize: 18,
+                          hintTextWeight: FontWeight.w400,
+                          itemTextSize: 18,
+                          itemTextColor: Colors.black,
+                          selectedItemTextColor: AppColors.white,
+                          height: 48,
                           prefixIcon: Icons.badge_outlined,
-                          controller: roleController,
-                          onChanged: (value) => registerController.role = value,
+                          prefixIconColor: Colors.grey,
+                          prefixIconSize: 28,
                         ),
                         LabeledTextField(
                           isPassword: true,

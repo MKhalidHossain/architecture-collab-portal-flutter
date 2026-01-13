@@ -13,6 +13,7 @@ base class ApiEndpoints {
   static const String logout = _Auth.logout;
 
   static const String me = _Auth.me;
+  static const String updateProfile = _Auth.updateProfile;
 
   static const String verifyCode = _Auth.verifyCode;
 
@@ -32,6 +33,18 @@ base class ApiEndpoints {
 
   /// ### post
   static const String refreshToken = _Auth.refreshToken;
+
+  // ---------------------- Client Portal -----------------------------
+  /// ### get
+  static const String clientPortalDashboard = _ClientPortal.dashboard;
+
+  // ---------------------- Team Portal -----------------------------
+  /// ### get
+  static const String teamMemberDashboard = _TeamPortal.dashboard;
+
+  // ---------------------- Projects -----------------------------
+  /// ### get
+  static const String getProjects = _Project.projects;
 
   //------------interest----------------
   /// ### get
@@ -149,8 +162,9 @@ class _RemoteServer {
 }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://localhost:5003';
-  static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String socketUrl = 'http://localhost:5000';
+  // static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String baseUrl = 'http://10.10.5.85:5000/api';
 }
 
 class _Auth {
@@ -160,6 +174,7 @@ class _Auth {
   static const String signup = '$_authRoute/register';
   static const String logout = '$_authRoute/logout';
   static const String me = '$_authRoute/me';
+  static const String updateProfile = '$_authRoute/profile';
   static const String forgetPassword = '$_authRoute/forgot-password';
   static const String refreshToken = '$_authRoute/refresh-token';
   static const String verifyCode = '$_authRoute/verify-otp';
@@ -213,6 +228,7 @@ class _User {
   static const String _userRoute = '${ApiEndpoints.baseUrl}/user';
   static String getuserbyId(String id) => '$_userRoute/single-user/$id';
   static const String getCurrentProfile = '$_userRoute/';
+  static const String updateProfile = '$_userRoute/update-profile';
 
   static const String editProfile = '$_userRoute/update-profile';
   static const String uploadProfileAvatar = '$_userRoute/upload-avatar';
@@ -272,4 +288,24 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Client Portal -----------------------------
+class _ClientPortal {
+  static const String _clientPortalRoute =
+      '${ApiEndpoints.baseUrl}/client-portal';
+  static const String dashboard = '$_clientPortalRoute/dashboard';
+}
+
+// ---------------------- Team Portal -----------------------------
+class _TeamPortal {
+  static const String _teamPortalRoute =
+      '${ApiEndpoints.baseUrl}/team-portal';
+  static const String dashboard = '$_teamPortalRoute/dashboard';
+}
+
+// ---------------------- Projects -----------------------------
+class _Project {
+  static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
+  static const String projects = '$_projectRoute/';
 }

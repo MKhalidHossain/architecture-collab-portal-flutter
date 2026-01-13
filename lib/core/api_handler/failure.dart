@@ -5,8 +5,14 @@ class DataCRUDFailure {
   /// Defaults to `fullError`
   final String uiMessage;
   final String fullError;
+  final Map<String, dynamic>? data;
 
-  DataCRUDFailure({required this.failure, String? uiMessage, required this.fullError}):uiMessage = uiMessage ?? fullError;
+  DataCRUDFailure({
+    required this.failure,
+    String? uiMessage,
+    required this.fullError,
+    this.data,
+  }) : uiMessage = uiMessage ?? fullError;
 
   @override
   String toString() {

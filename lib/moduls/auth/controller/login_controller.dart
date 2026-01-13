@@ -3,12 +3,9 @@ import 'package:get/get.dart';
 import '../../../core/api_handler/failure.dart';
 import '../../../core/notifiers/button_status_notifier.dart';
 import '../../../core/notifiers/snackbar_notifier.dart';
-import '../../../core/services/app_pigeon/app_pigeon.dart';
-
 import '../interface/auth_interface.dart';
 import '../model/login_request_model.dart';
-import '../model/logout_request_model.dart';
-import '../presentation/screen/login_screen.dart';
+
 
 class LoginsScreenController extends ChangeNotifier {
   final ProcessStatusNotifier processStatusNotifier = ProcessStatusNotifier();
@@ -47,7 +44,7 @@ class LoginsScreenController extends ChangeNotifier {
   }
 
   Future<bool> login({
-    required VoidCallback needVerification,
+    required ValueChanged<String> needVerification,
   }) async {
     processStatusNotifier.setLoading();
     
@@ -59,7 +56,11 @@ class LoginsScreenController extends ChangeNotifier {
       return await result.fold(
         (failure) {
           if (failure.failure == Failure.forbidden) {
-            needVerification();
+            final emailFromFailure =
+                failure.data?['email']?.toString().trim() ?? '';
+            final verificationEmail =
+                emailFromFailure.isNotEmpty ? emailFromFailure : emailOrId;
+            needVerification(verificationEmail);
           } else {
             final errorMessage = failure.uiMessage.isNotEmpty 
                 ? failure.uiMessage

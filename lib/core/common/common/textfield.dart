@@ -29,6 +29,13 @@ class LabeledDropdown extends StatelessWidget {
   final double itemTextSize;
   final Color itemTextColor;
   final FontWeight itemTextWeight;
+  final Color? selectedItemTextColor;
+
+  // Prefix icon
+  final IconData? prefixIcon;
+  final Color prefixIconColor;
+  final double prefixIconSize;
+  final EdgeInsets prefixIconPadding;
 
   final double height;
 
@@ -52,7 +59,12 @@ class LabeledDropdown extends StatelessWidget {
     this.itemTextSize = 16,
     this.itemTextColor = Colors.black,
     this.itemTextWeight = FontWeight.w500,
+    this.selectedItemTextColor,
     this.height = 48, // default height
+    this.prefixIcon,
+    this.prefixIconColor = Colors.grey,
+    this.prefixIconSize = 28,
+    this.prefixIconPadding = const EdgeInsets.symmetric(horizontal: 8),
   });
 
   @override
@@ -81,7 +93,7 @@ class LabeledDropdown extends StatelessWidget {
               style: TextStyle(
                 fontSize: itemTextSize,
                 fontWeight: itemTextWeight,
-                color: itemTextColor,
+                color: selectedItemTextColor ?? itemTextColor,
               ),
               
               decoration: InputDecoration(
@@ -99,6 +111,16 @@ class LabeledDropdown extends StatelessWidget {
                   horizontal: 12,
                   vertical: (height - textSize) / 2 - 6,
                 ),
+                prefixIcon: prefixIcon != null
+                    ? Padding(
+                        padding: prefixIconPadding,
+                        child: Icon(
+                          prefixIcon,
+                          color: prefixIconColor,
+                          size: prefixIconSize,
+                        ),
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(borderRadius),
                 ),

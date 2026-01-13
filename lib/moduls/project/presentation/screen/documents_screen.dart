@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_documents_widget.dart';
 import 'package:flutter/material.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -11,63 +13,117 @@ class DocumentsScreen extends StatefulWidget {
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
   String selectedTab = "All";
+  String searchQuery = "";
+
+  final TextEditingController searchController = TextEditingController();
 
   final List<DocumentModel> documents = [
     DocumentModel(
       subtitle: "Modern Villa Design",
       size: "2.1 MB",
       date: "11/10/2025",
-      category: '',
-      type: '',
+      category: "Pre-Design",
+      type: "PNG File",
     ),
     DocumentModel(
       subtitle: "Modern Villa Design",
-      size: "2.1 MB",
-      date: "11/10/2025",
-      category: '',
-      type: '',
+      size: "2.4 MB",
+      date: "12/10/2025",
+      category: "Schematic Design",
+      type: "PDF File",
     ),
     DocumentModel(
       subtitle: "Modern Villa Design",
-      size: "2.1 MB",
-      date: "11/10/2025",
-      category: '',
-      type: '',
+      size: "3.2 MB",
+      date: "13/10/2025",
+      category: "Construction Design",
+      type: "JPG File",
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    /// 🔹 TAB + SEARCH FILTER
+    final filteredDocs = documents.where((doc) {
+      final matchesTab = selectedTab == "All" || doc.category == selectedTab;
+
+      final query = searchQuery.toLowerCase();
+
+      final matchesSearch =
+          doc.category.toLowerCase().contains(query) ||
+          (doc.subtitle ?? "").toLowerCase().contains(query) ||
+          doc.type.toLowerCase().contains(query);
+
+      return matchesTab && matchesSearch;
+    }).toList();
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              "assets/image/ab.png",
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset("assets/image/ab.png", fit: BoxFit.cover),
           ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _header(),
+              const SizedBox(height: 12),
 
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _appBar(),
-                _searchBar(),
-                _tabs(),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: documents.length,
-                    itemBuilder: (_, i) =>
-                        _DocumentCard(document: documents[i]),
-                  ),
-                ),
-              ],
-            ),
+              /// ---------------- LIST ----------------
+              Expanded(
+                child: filteredDocs.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No documents found",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: filteredDocs.length,
+                        itemBuilder: (_, i) => DocumentPreviewCard(
+                          title: filteredDocs[i].category,
+                          subtitle: filteredDocs[i].subtitle ?? "",
+                          size: filteredDocs[i].size,
+                          date: filteredDocs[i].date,
+                          type: filteredDocs[i].type,
+                          onView: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProjectBasedDocuments(),
+                              ),
+                            );
+                          },
+                          onDownload: () {},
+                        ),
+                      ),
+              ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  /// ---------------- HEADER ----------------
+  Widget _header() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF4F504C), Color(0xFF7E7E7B)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 50),
+          _appBar(),
+          _searchBar(),
+          _tabs(),
         ],
       ),
     );
@@ -79,7 +135,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Icon(Icons.arrow_back_ios, color: Colors.white),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          ),
           const SizedBox(width: 8),
           const Text(
             "Documents",
@@ -94,7 +153,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  /// ---------------- SEARCH ----------------
+  /// ---------------- SEARCH BAR (ACTIVE) ----------------
   Widget _searchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -109,15 +168,20 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               color: Colors.white.withOpacity(.2),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: Colors.white54),
-                SizedBox(width: 8),
-                Text(
-                  "Search Projects, Documents....",
-                  style: TextStyle(color: Colors.white54),
-                ),
-              ],
+            child: TextField(
+              controller: searchController,
+              style: const TextStyle(color: Colors.white),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                icon: Icon(Icons.search, color: Colors.white54),
+                hintText: "Search Projects, Documents....",
+                hintStyle: TextStyle(color: Colors.white54),
+              ),
             ),
           ),
         ),
@@ -125,140 +189,49 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  /// ---------------- TABS ----------------
   Widget _tabs() {
+    final tabs = [
+      "All",
+      "Pre-Design",
+      "Schematic Design",
+      "Design Development",
+      "Construction Design",
+    ];
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          _tab("All (24)", true),
-          const SizedBox(width: 10),
-          _tab("Pre-Design (3)", false),
-          const SizedBox(width: 10),
-          _tab("Schematic", false),
-        ],
-      ),
-    );
-  }
-
-  Widget _tab(String text, bool active) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: active ? const Color(0xFF006B6F) : Colors.white.withOpacity(.2),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Text(text, style: const TextStyle(color: Colors.white)),
-    );
-  }
-}
-
-class _DocumentCard extends StatelessWidget {
-  final DocumentModel document;
-
-  const _DocumentCard({required this.document});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF006B6F),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.description, color: Colors.white),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            document.type,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            document.subtitle,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _meta(document.size),
-                    _dot(),
-                    _meta(document.date),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    _action(Icons.remove_red_eye, "View"),
-                    const SizedBox(width: 12),
-                    _action(Icons.download, "Download"),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _meta(String text) =>
-      Text(text, style: const TextStyle(color: Colors.white60, fontSize: 12));
-
-  Widget _dot() => const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 8),
-    child: Text("|", style: TextStyle(color: Colors.white54)),
-  );
-
-  Widget _action(IconData icon, String text) {
-    return Expanded(
-      child: Container(
-        height: 42,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white38),
-        ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(width: 6),
-            Text(text, style: const TextStyle(color: Colors.white)),
-          ],
+          children: tabs.map((tab) {
+            final active = selectedTab == tab;
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTab = tab;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? const Color(0xFF006B6F)
+                        : Colors.white.withOpacity(.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    tab,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );

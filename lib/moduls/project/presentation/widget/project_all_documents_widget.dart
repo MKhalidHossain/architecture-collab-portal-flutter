@@ -13,6 +13,7 @@ class AllTab extends StatelessWidget {
     final filteredDocs = selectedCategory == "All"
         ? documents
         : documents.where((doc) => doc.category == selectedCategory).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -27,20 +28,27 @@ class AllTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
         if (filteredDocs.isEmpty)
           const Text(
             "No documents found",
             style: TextStyle(color: Colors.white70),
           ),
-
         ...filteredDocs.map(
           (doc) => DocumentPreviewCard(
             title: doc.category,
-            subtitle: doc.subtitle,
+            subtitle: doc.subtitle ?? "",
             size: doc.size,
             date: doc.date,
             type: doc.type,
+            onView: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DocumentDetailScreen()),
+              );
+            },
+            onDownload: () {
+              // Add download logic here
+            },
           ),
         ),
       ],
@@ -48,9 +56,36 @@ class AllTab extends StatelessWidget {
   }
 }
 
-/// ------------------ DATA SOURCE ------------------
-
+// Sample documents
 final List<DocumentModel> documents = [
+  DocumentModel(
+    category: "Pre-Design",
+    subtitle: "Modern Villa Design",
+    size: "2.1 MB",
+    date: "11/10/2025",
+    type: "PNG File",
+  ),
+  DocumentModel(
+    category: "Schematic Design",
+    subtitle: "Modern Villa Design",
+    size: "2.4 MB",
+    date: "12/10/2025",
+    type: "PDF File",
+  ),
+  DocumentModel(
+    category: "Construction Design",
+    subtitle: "Modern Villa Design",
+    size: "3.2 MB",
+    date: "13/10/2025",
+    type: "JPG File",
+  ),
+  DocumentModel(
+    category: "Design Development",
+    subtitle: "Modern Villa Design",
+    size: "1.8 MB",
+    date: "10/10/2025",
+    type: "PNG File",
+  ),
   DocumentModel(
     category: "Pre-Design",
     subtitle: "Modern Villa Design",
@@ -81,14 +116,14 @@ final List<DocumentModel> documents = [
   ),
 ];
 
-/// ------------------ CARD UI ------------------
-
 class DocumentPreviewCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String size;
   final String date;
   final String type;
+  final VoidCallback? onView;
+  final VoidCallback? onDownload;
 
   const DocumentPreviewCard({
     super.key,
@@ -97,6 +132,8 @@ class DocumentPreviewCard extends StatelessWidget {
     required this.size,
     required this.date,
     required this.type,
+    this.onView,
+    this.onDownload,
   });
 
   @override
@@ -148,28 +185,28 @@ class DocumentPreviewCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          meta(size),
-                          dot(),
-                          meta(date),
-                          dot(),
-                          meta(type),
+                          _meta(size),
+                          _dot(),
+                          _meta(date),
+                          _dot(),
+                          _meta(type),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          actionButton(
+                          _actionButton(
                             context,
                             Icons.remove_red_eye,
                             "View",
-                            DocumentDetailScreen(),
+                            onView,
                           ),
                           const SizedBox(width: 12),
-                          actionButton(
+                          _actionButton(
                             context,
                             Icons.download,
                             "Download",
-                            const Scaffold(),
+                            onDownload,
                           ),
                         ],
                       ),
@@ -184,29 +221,24 @@ class DocumentPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget meta(String text) =>
+  Widget _meta(String text) =>
       Text(text, style: const TextStyle(color: Colors.white70));
 
-  Widget dot() => const Padding(
+  Widget _dot() => const Padding(
     padding: EdgeInsets.symmetric(horizontal: 8),
     child: Text("|", style: TextStyle(color: Colors.white70)),
   );
 
-  Widget actionButton(
+  Widget _actionButton(
     BuildContext context,
     IconData icon,
     String label,
-    Widget targetScreen,
+    VoidCallback? onTap,
   ) {
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => targetScreen),
-          );
-        },
+        onTap: onTap,
         child: Container(
           height: 42,
           decoration: BoxDecoration(
