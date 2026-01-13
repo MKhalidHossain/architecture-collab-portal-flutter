@@ -19,6 +19,7 @@ class AuthService extends Interceptor {
   final RefreshTokenManagerInterface refreshTokenManager;
   final Debugger _authDebugger = AuthDebugger();
   late final _AuthStorage _authStorage;
+  Auth? _cachedAuth;
   AuthService(this._secureStorage, this.dio, this.refreshTokenManager){
     _authStorage = _AuthStorage(secureStorage: _secureStorage);
   }
@@ -40,10 +41,14 @@ class AuthService extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     
-    final auth = await _authStorage.getCurrentAuth();
+    final auth = _cachedAuth ?? await _authStorage.getCurrentAuth();
+    if (auth != null) {
+      _cachedAuth = auth;
+    }
     final accessToken = auth?._accessToken;
-    if (accessToken != null) {
+    if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
+      options.headers['x-auth-token'] = accessToken;
     }
     _authDebugger.dekhao("${options.uri.toString()} ${options.method}");    
     _authDebugger.dekhao("${options.data.toString()} ");
@@ -113,7 +118,6 @@ class AuthService extends Interceptor {
           }
         });
       } catch (e) {
-        _authStorage.clearCurrentAuthRecord();
         _refreshingToken = false;
         return handler.reject(e as DioException);
       }
@@ -128,10 +132,27 @@ class AuthService extends Interceptor {
   /// Saves the new auth as currentAuth.
   /// Throws Exception, if user is still logged in.
   /// Must logout first.
-  Future<void> saveNewAuth({required SaveNewAuthParams saveNewAuthParams}) async => _authStorage.saveNewAuth( saveNewAuthParams);
+  Future<void> saveNewAuth({required SaveNewAuthParams saveNewAuthParams}) async {
+    await _authStorage.saveNewAuth(saveNewAuthParams);
+    _cachedAuth = Auth._internal(
+      accessToken: saveNewAuthParams.accessToken,
+      refreshToken: saveNewAuthParams.refreshToken,
+      data: saveNewAuthParams.data,
+    );
+  }
 
-  Future<void> updateCurrentAuth({required UpdateAuthParams updateAuthParams}) async => _authStorage.updateCurrentAuth(updateAuthParams);
+  Future<void> updateCurrentAuth({required UpdateAuthParams updateAuthParams}) async {
+    await _authStorage.updateCurrentAuth(updateAuthParams);
+    _cachedAuth = Auth._internal(
+      accessToken: updateAuthParams.accessToken,
+      refreshToken: updateAuthParams.refreshToken,
+      data: updateAuthParams.data ?? _cachedAuth?.data ?? <String, dynamic>{},
+    );
+  }
 
-  Future<void> clearCurrentAuthRecord() async => await _authStorage.clearCurrentAuthRecord();
+  Future<void> clearCurrentAuthRecord() async {
+    await _authStorage.clearCurrentAuthRecord();
+    _cachedAuth = null;
+  }
 
 }

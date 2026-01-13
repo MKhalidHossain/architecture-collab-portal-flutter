@@ -60,7 +60,7 @@ class ClientPortalScreen extends StatelessWidget {
                         const SizedBox(height: 32),
 
                         const Text(
-                          'Client Portal',
+                          'CROQUIS',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,

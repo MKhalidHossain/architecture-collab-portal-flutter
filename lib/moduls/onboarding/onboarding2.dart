@@ -100,25 +100,31 @@ class Onboarding2 extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
 
-                        const Text(
-                          'Client Portal',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Organize Files in One \nPlace',
+                              textAlign: TextAlign.center, // ✅ added
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
 
-                        const SizedBox(height: 12),
+                            const SizedBox(height: 12),
 
-                        Text(
-                          'Chat, approve, review—faster than ever.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey[200],
-                          ),
+                            Text(
+                              'Upload, view & manage\n documents',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey[200],
+                              ),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 48),

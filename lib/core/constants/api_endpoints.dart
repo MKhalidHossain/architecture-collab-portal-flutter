@@ -165,7 +165,6 @@ class _RemoteServer {
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  // static const String baseUrl = 'http://10.10.5.94:5000/api';
   static const String baseUrl = 'http://10.10.5.85:5000/api';
 }
 

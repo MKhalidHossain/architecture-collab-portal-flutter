@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/calender/presentation/screens/calender_screen.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
 import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
@@ -130,6 +131,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         MenuType.home => _homeHeader(),
         MenuType.projects => _projectsHeader(),
         MenuType.messages => _messagesHeader(),
+        MenuType.calendar => _calendarHeader(),
         MenuType.notifications => _notificationsHeader(),
         MenuType.profile => _profileHeader(),
         MenuType.settings => _settingsHeader(),
@@ -225,6 +227,53 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           const SizedBox(height: 12),
           _searchBar(),
         ],
+      ),
+    );
+  }
+
+  Widget _calendarHeader() {
+    return _glass(
+      child: FutureBuilder<HomeDashboardResponse>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _cachedDashboard;
+          if (snapshot.hasData) {
+            _cachedDashboard = snapshot.data ?? _cachedDashboard;
+          }
+          final userName = data.userName.trim();
+          final greeting = userName.isNotEmpty ? 'Hi, $userName' : 'Hi, —';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topRow(greeting),
+              const Text(
+                "Here's your project Task’s Calendarize",
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    "January 2026",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.keyboard_arrow_down_sharp),
+                    color: Colors.white,
+                    onPressed: () {},
+                    iconSize: 36,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -371,6 +420,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         );
       case MenuType.messages:
         return MessagesScreen();
+      case MenuType.calendar:
+        return CalendarScreen();
       case MenuType.notifications:
         return NotificationScreen();
       case MenuType.profile:
