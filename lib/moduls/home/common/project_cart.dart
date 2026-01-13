@@ -177,7 +177,7 @@ class ProjectCard extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            ProjectDetailScreen(),
+                            ProjectDetailScreen(projectId: project.id),
                       ),
                     );
                   },

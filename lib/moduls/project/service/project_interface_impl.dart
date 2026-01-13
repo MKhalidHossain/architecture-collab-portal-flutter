@@ -3,6 +3,7 @@ import 'package:dana_bozzetto/core/api_handler/success.dart';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dartz/dartz.dart';
 
@@ -18,6 +19,18 @@ final class ProjectInterfaceImpl extends ProjectInterface {
       tryFunc: () async {
         final response = await appPigeon.get(ApiEndpoints.getProjects);
         return Success(data: ProjectsResponse.fromJson(response.data));
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<ProjectDetailsResponse>>>
+      fetchProjectDetails({required String projectId}) async {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response =
+            await appPigeon.get(ApiEndpoints.getProjectById(projectId));
+        return Success(data: ProjectDetailsResponse.fromJson(response.data));
       },
     );
   }

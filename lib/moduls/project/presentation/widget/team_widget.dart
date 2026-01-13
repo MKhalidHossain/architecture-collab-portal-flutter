@@ -1,33 +1,23 @@
 import 'dart:ui';
+
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:flutter/material.dart';
 
 class TeamTab extends StatelessWidget {
-  const TeamTab({super.key});
+  final List<ProjectTeamMember> teamMembers;
+
+  const TeamTab({super.key, required this.teamMembers});
 
   @override
   Widget build(BuildContext context) {
-    final team = [
-      {
-        "name": "Michael Chen",
-        "role": "Residential Design Lead Architect",
-        "image": "assets/image/user1.png",
-      },
-      {
-        "name": "Guy Hawkins",
-        "role": "Interior Designer",
-        "image": "assets/image/user2.png",
-      },
-      {
-        "name": "Leslie Alexander",
-        "role": "Project Manager",
-        "image": "assets/image/user3.png",
-      },
-      {
-        "name": "Bessie Cooper",
-        "role": "Residential Design Lead Architect",
-        "image": "assets/image/user4.png",
-      },
-    ];
+    if (teamMembers.isEmpty) {
+      return const Center(
+        child: Text(
+          "No team members found.",
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,59 +32,69 @@ class TeamTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        ...team.map(
-          (member) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _glassCard(
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundImage: AssetImage(member["image"]!),
-                  ),
-                  const SizedBox(width: 14),
+        ...teamMembers.map(
+          (member) {
+            final name = member.user.name.trim().isNotEmpty
+                ? member.user.name.trim()
+                : 'Team Member';
+            final role = member.role.trim().isNotEmpty
+                ? member.role.trim()
+                : member.user.role.trim().isNotEmpty
+                    ? member.user.role.trim()
+                    : '-';
+            final avatarUrl = member.user.avatar.url.trim();
 
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          member["name"]!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _glassCard(
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundImage: _resolveAvatar(avatarUrl),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          member["role"]!,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 13,
+                          const SizedBox(height: 4),
+                          Text(
+                            role,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 13,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-
-                  Container(
-                    height: 36,
-                    width: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
+                    Container(
+                      height: 36,
+                      width: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat_bubble_outline,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.chat_bubble_outline,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );
@@ -118,5 +118,15 @@ class TeamTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  ImageProvider _resolveAvatar(String source) {
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+      return NetworkImage(source);
+    }
+    if (source.isNotEmpty) {
+      return AssetImage(source);
+    }
+    return const AssetImage('assets/image/aa.png');
   }
 }
