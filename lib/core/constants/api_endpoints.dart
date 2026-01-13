@@ -45,6 +45,8 @@ base class ApiEndpoints {
   // ---------------------- Projects -----------------------------
   /// ### get
   static const String getProjects = _Project.projects;
+  static String getProjectById(String projectId) =>
+      _Project.projectById(projectId);
 
   //------------interest----------------
   /// ### get
@@ -308,4 +310,5 @@ class _TeamPortal {
 class _Project {
   static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
   static const String projects = '$_projectRoute/';
+  static String projectById(String projectId) => '$_projectRoute/$projectId';
 }

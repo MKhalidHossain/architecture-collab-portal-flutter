@@ -1,4 +1,7 @@
 import 'dart:ui';
+
+import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_base_Approval.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_invoices.dart';
@@ -6,7 +9,9 @@ import 'package:dana_bozzetto/moduls/project/presentation/widget/circular_progre
 import 'package:flutter/material.dart';
 
 class OverviewTab extends StatelessWidget {
-  const OverviewTab({super.key});
+  final ProjectDetailsModel project;
+
+  const OverviewTab({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +26,14 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _progressCard() {
+    final milestones = project.milestones;
+    final activeMilestone = _activeMilestone(milestones);
+    final progressSubtitle = activeMilestone?.name.trim().isNotEmpty == true
+        ? '${activeMilestone!.name} in progress'
+        : project.status.trim().isNotEmpty
+            ? project.status.trim()
+            : 'Project status';
+
     return _glassCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -38,8 +51,8 @@ class OverviewTab extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  "Construction Documents in progress",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  progressSubtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
@@ -48,7 +61,7 @@ class OverviewTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CircularProgressPercent(
-                  percent: 0.6,
+                  percent: _progressPercent(),
                   size: 100,
                   progressColor: Colors.teal.shade400,
                   backgroundColor: Colors.white.withOpacity(0.12),
@@ -60,18 +73,21 @@ class OverviewTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
-                      _progressItem("Pre-Design", Colors.teal, true),
-                      _progressItem("Schematic Design", Colors.teal, true),
-                      _progressItem(
-                        "Design Development",
-                        Colors.redAccent,
-                        false,
-                      ),
-                      _progressItem(
-                        "Construction Documents",
-                        Colors.redAccent,
-                        false,
-                      ),
+                      if (milestones.isEmpty)
+                        const Text(
+                          'No milestones available.',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        )
+                      else
+                        ...milestones.take(4).map((milestone) {
+                          final completed = milestone.isCompleted;
+                          final color =
+                              completed ? Colors.teal : Colors.redAccent;
+                          final label = milestone.name.trim().isNotEmpty
+                              ? milestone.name.trim()
+                              : 'Milestone';
+                          return _progressItem(label, color, completed);
+                        }),
                     ],
                   ),
                 ),
@@ -114,6 +130,13 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _infoGrid() {
+    final budget = project.financials.totalBudget > 0
+        ? project.financials.totalBudget
+        : project.budget;
+    final totalPaid = project.financials.totalPaid > 0
+        ? project.financials.totalPaid
+        : project.totalPaid;
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -121,20 +144,36 @@ class OverviewTab extends StatelessWidget {
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       children: [
-        _InfoTile(title: "Start Date", value: "Dec 01, 2025"),
-        _InfoTile(title: "End Date", value: "Dec 01, 2025"),
-        _InfoTile(title: "Type", value: "Residential"),
-        _InfoTile(title: "Location", value: "Los Angeles, CA"),
+        _InfoTile(
+          title: "Start Date",
+          value: _formatDate(project.startDate),
+        ),
+        _InfoTile(
+          title: "End Date",
+          value: _formatDate(project.endDate),
+        ),
+        _InfoTile(
+          title: "Budget",
+          value: _formatNumber(budget),
+        ),
+        _InfoTile(
+          title: "Paid",
+          value: _formatNumber(totalPaid),
+        ),
       ],
     );
   }
 
   Widget _quickActions() {
+    final documentsCount = project.documents.length;
+    final approvalsCount = 0;
+    final invoicesCount = 0;
+
     return _glassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
+        children: [
+          const Text(
             "Quick Actions",
             style: TextStyle(
               color: Colors.white,
@@ -142,23 +181,23 @@ class OverviewTab extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           _ActionTile(
             title: "Documents",
-            count: "24",
-            navigateTo: ProjectBasedDocuments(),
+            count: documentsCount.toString(),
+            navigateTo: const ProjectBasedDocuments(),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           _ActionTile(
             title: "Approvals",
-            count: "02",
-            navigateTo: ProjectBaseApproval(),
+            count: approvalsCount.toString(),
+            navigateTo: const ProjectBaseApproval(),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           _ActionTile(
             title: "Invoices",
-            count: "02",
-            navigateTo: ProjectInvoicesScreen(),
+            count: invoicesCount.toString(),
+            navigateTo: const ProjectInvoicesScreen(),
           ),
         ],
       ),
@@ -177,6 +216,53 @@ class OverviewTab extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  double _progressPercent() {
+    final overall = project.overallProgress;
+    if (overall > 0) {
+      return overall.clamp(0, 100) / 100;
+    }
+    final milestones = project.milestones;
+    if (milestones.isEmpty) return 0;
+    final completed = milestones.where((m) => m.isCompleted).length;
+    return completed / milestones.length;
+  }
+
+  ProjectMilestone? _activeMilestone(List<ProjectMilestone> milestones) {
+    for (final milestone in milestones) {
+      if (!milestone.isCompleted) {
+        return milestone;
+      }
+    }
+    return milestones.isNotEmpty ? milestones.last : null;
+  }
+
+  String _formatDate(DateTime? value) {
+    if (value == null) return '-';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final monthIndex = value.month - 1;
+    final month = monthIndex >= 0 && monthIndex < months.length
+        ? months[monthIndex]
+        : value.month.toString().padLeft(2, '0');
+    return '$month ${value.day}, ${value.year}';
+  }
+
+  String _formatNumber(int value) {
+    return value.toString();
   }
 }
 

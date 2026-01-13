@@ -1,37 +1,23 @@
-import 'dart:ui';
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:flutter/material.dart';
 
 class MilestonesTab extends StatelessWidget {
-  const MilestonesTab({super.key});
+  final List<ProjectMilestone> milestones;
+
+  const MilestonesTab({super.key, required this.milestones});
 
   @override
   Widget build(BuildContext context) {
-    final milestones = [
-      {
-        "title": "Pre-Design",
-        "status": "Completed",
-        "isActive": false,
-        "isDone": true,
-      },
-      {
-        "title": "Schematic Design",
-        "status": "Active",
-        "isActive": true,
-        "isDone": false,
-      },
-      {
-        "title": "Design Development",
-        "status": "In progress",
-        "isActive": false,
-        "isDone": false,
-      },
-      {
-        "title": "Construction Design",
-        "status": "In progress",
-        "isActive": false,
-        "isDone": false,
-      },
-    ];
+    if (milestones.isEmpty) {
+      return const Center(
+        child: Text(
+          "No milestones available.",
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+
+    final activeIndex = _activeMilestoneIndex(milestones);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,22 +31,24 @@ class MilestonesTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-
         _glassCard(
           child: Column(
             children: List.generate(milestones.length, (index) {
-              final m = milestones[index];
+              final milestone = milestones[index];
               final isLast = index == milestones.length - 1;
+              final isDone = milestone.isCompleted;
+              final isActive = index == activeIndex && !isDone;
+              final title = milestone.name.trim().isNotEmpty
+                  ? milestone.name.trim()
+                  : 'Milestone';
+              final statusLabel = _statusLabel(milestone, isActive);
 
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Column(
                     children: [
-                      _timelineDot(
-                        isDone: m["isDone"] as bool,
-                        isActive: m["isActive"] as bool,
-                      ),
+                      _timelineDot(isDone: isDone, isActive: isActive),
                       if (!isLast)
                         Container(
                           width: 2,
@@ -70,8 +58,6 @@ class MilestonesTab extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(width: 14),
-
-                  /// Content
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 18),
@@ -79,9 +65,9 @@ class MilestonesTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            m["title"] as String,
+                            title,
                             style: TextStyle(
-                              color: m["isActive"] as bool
+                              color: isActive
                                   ? Colors.white
                                   : Colors.white.withOpacity(0.75),
                               fontSize: 15,
@@ -89,7 +75,7 @@ class MilestonesTab extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          _statusChip(m["status"] as String),
+                          _statusChip(statusLabel, isActive, isDone),
                         ],
                       ),
                     ),
@@ -136,22 +122,19 @@ class MilestonesTab extends StatelessWidget {
   }
 
   /// Status chip
-  Widget _statusChip(String text) {
+  Widget _statusChip(String text, bool isActive, bool isDone) {
     Color bg;
     Color fg;
 
-    switch (text) {
-      case "Completed":
-        bg = Colors.teal.withOpacity(0.2);
-        fg = Colors.teal;
-        break;
-      case "Active":
-        bg = Colors.blue.withOpacity(0.2);
-        fg = Colors.blueAccent;
-        break;
-      default:
-        bg = Colors.orange.withOpacity(0.2);
-        fg = Colors.orange;
+    if (isDone || text.toLowerCase().contains('complete')) {
+      bg = Colors.teal.withOpacity(0.2);
+      fg = Colors.teal;
+    } else if (isActive || text.toLowerCase().contains('active')) {
+      bg = Colors.blue.withOpacity(0.2);
+      fg = Colors.blueAccent;
+    } else {
+      bg = Colors.orange.withOpacity(0.2);
+      fg = Colors.orange;
     }
 
     return Container(
@@ -171,19 +154,32 @@ class MilestonesTab extends StatelessWidget {
     );
   }
 
+  String _statusLabel(ProjectMilestone milestone, bool isActive) {
+    final trimmed = milestone.status.trim();
+    if (trimmed.isNotEmpty) {
+      return trimmed;
+    }
+    if (milestone.isCompleted) {
+      return "Completed";
+    }
+    return isActive ? "Active" : "Pending";
+  }
+
+  int _activeMilestoneIndex(List<ProjectMilestone> milestones) {
+    for (var i = 0; i < milestones.length; i++) {
+      if (!milestones[i].isCompleted) {
+        return i;
+      }
+    }
+    return milestones.length - 1;
+  }
+
   /// Glass card
   Widget _glassCard({required Widget child}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(18),
-        // decoration: BoxDecoration(
-        //   color: Colors.white.withOpacity(0.18),
-        //   borderRadius: BorderRadius.circular(24),
-        //   border: Border.all(
-        //     color: Colors.white.withOpacity(0.25),
-        //   ),
-        // ),
         child: child,
       ),
     );
