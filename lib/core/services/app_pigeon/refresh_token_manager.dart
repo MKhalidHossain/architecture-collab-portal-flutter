@@ -87,10 +87,11 @@ class RefreshTokenManager implements RefreshTokenManagerInterface{
     return RefreshTokenResponse(
       accessToken: accessToken,
       refreshToken: nextRefreshToken,
-      data: (payload["userId"] != null)
-        {
-          "userId": payload["userId"],
-        } : null
+      data: payload["userId"] != null
+          ? {
+              "userId": payload["userId"],
+            }
+          : null,
     );
   }
   
