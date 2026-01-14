@@ -70,6 +70,9 @@ class _TeamMemberHomeScreenState extends State<TeamMemberHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ClientHomeScreen(dashboardFuture: _dashboardFuture);
+    return ClientHomeScreen(
+      dashboardFuture: _dashboardFuture,
+      showCalendarMenu: true,
+    );
   }
 }

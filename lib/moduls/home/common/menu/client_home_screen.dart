@@ -19,8 +19,13 @@ import 'package:get/get.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final Future<HomeDashboardResponse>? dashboardFuture;
+  final bool showCalendarMenu;
 
-  const ClientHomeScreen({super.key, this.dashboardFuture});
+  const ClientHomeScreen({
+    super.key,
+    this.dashboardFuture,
+    this.showCalendarMenu = false,
+  });
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
@@ -99,6 +104,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       key: _scaffoldKey,
       endDrawer: SideMenu(
         selectedMenu: _selectedMenu,
+        showCalendar: widget.showCalendarMenu,
         onSelect: (menu) {
           setState(() {
             _selectedMenu = menu;
