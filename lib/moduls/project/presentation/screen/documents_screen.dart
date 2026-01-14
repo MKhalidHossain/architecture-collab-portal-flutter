@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_documents_widget.dart';
@@ -14,8 +15,11 @@ class DocumentsScreen extends StatefulWidget {
 class _DocumentsScreenState extends State<DocumentsScreen> {
   String selectedTab = "All";
   String searchQuery = "";
+ 
 
+  final  _projectDetailsController = ProjectDetailsController ;
   final TextEditingController searchController = TextEditingController();
+
 
   final List<DocumentModel> documents = [
     DocumentModel(
