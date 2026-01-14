@@ -1,6 +1,8 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter/rendering.dart';
+import 'package:dana_bozzetto/moduls/auth/model/refresh_token_request_model.dart';
+import 'package:dana_bozzetto/moduls/auth/model/refresh_token_response_model.dart';
 
 import '../debug/debug_service.dart';
 
@@ -38,45 +40,15 @@ class RefreshTokenManager implements RefreshTokenManagerInterface{
   @override
   Future<RefreshTokenResponse> refreshToken({required String refreshToken}) async{
     AuthDebugger().dekhao("Refreshing token with url: $url, refreshToken: $refreshToken");
-    final response = await _dio.post(url, data: {
-      "refreshToken": refreshToken,
-    });
+    final request = RefreshTokenRequestModel(refreshToken: refreshToken);
+    final response = await _dio.post(url, data: request.toJson());
     debugPrint("Refresh token response: ${response.data}");
-    final raw = response.data;
-    final payload = raw is Map && raw["data"] is Map
-        ? Map<String, dynamic>.from(raw["data"])
-        : raw is Map
-            ? Map<String, dynamic>.from(raw)
-            : <String, dynamic>{};
-
-    String readString(dynamic value) => value?.toString() ?? '';
-    String pickFirstString(List<dynamic> values) {
-      for (final value in values) {
-        final stringValue = readString(value);
-        if (stringValue.isNotEmpty) {
-          return stringValue;
-        }
-      }
-      return '';
-    }
-
-    final accessToken = pickFirstString([
-      payload["accessToken"],
-      payload["access_token"],
-      payload["token"],
-      raw is Map ? raw["accessToken"] : null,
-      raw is Map ? raw["access_token"] : null,
-      raw is Map ? raw["token"] : null,
-    ]);
-    var nextRefreshToken = pickFirstString([
-      payload["refreshToken"],
-      payload["refresh_token"],
-      raw is Map ? raw["refreshToken"] : null,
-      raw is Map ? raw["refresh_token"] : null,
-    ]);
-    if (nextRefreshToken.isEmpty) {
-      nextRefreshToken = accessToken;
-    }
+    final raw = response.data is Map
+        ? Map<String, dynamic>.from(response.data as Map)
+        : <String, dynamic>{};
+    final payload = RefreshTokenResponseModel.fromJson(raw);
+    final accessToken = payload.token;
+    final nextRefreshToken = refreshToken;
     if (accessToken.isEmpty) {
       throw DioException(
         requestOptions: response.requestOptions,
@@ -87,11 +59,7 @@ class RefreshTokenManager implements RefreshTokenManagerInterface{
     return RefreshTokenResponse(
       accessToken: accessToken,
       refreshToken: nextRefreshToken,
-      data: payload["userId"] != null
-          ? {
-              "userId": payload["userId"],
-            }
-          : null,
+      data: null,
     );
   }
   

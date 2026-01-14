@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 void externalServiceDI() {
   // Initialize other external services here
   Get.put(AppPigeon(
-    RefreshTokenManager(ApiEndpoints.refreshToken),
+    refreshTokenManager: RefreshTokenManager(ApiEndpoints.refreshToken),
     baseUrl: ApiEndpoints.baseUrl,
   ));
 }

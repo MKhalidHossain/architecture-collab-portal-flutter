@@ -177,7 +177,7 @@ class _Auth {
   static const String me = '$_authRoute/me';
   static const String updateProfile = '$_authRoute/profile';
   static const String forgetPassword = '$_authRoute/forgot-password';
-  static const String refreshToken = '$_authRoute/refresh-token';
+  static const String refreshToken = '$_authRoute/refresh';
   static const String verifyCode = '$_authRoute/verify-otp';
   static const String verifyEmail = '$_authRoute/verify-email';
   //static const String registerVerify = '$_authRoute/verify-otp';

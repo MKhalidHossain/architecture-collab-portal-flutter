@@ -34,8 +34,8 @@ class AppPigeon {
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   final RefreshTokenManagerInterface refreshTokenManager;
   final String baseUrl;
-  AppPigeon(
-    this.refreshTokenManager, {
+  AppPigeon({
+    required this.refreshTokenManager,
     required this.baseUrl,
   }) {
     // Set base url
