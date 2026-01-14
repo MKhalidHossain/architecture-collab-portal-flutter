@@ -9,14 +9,13 @@ class ProjectDetailsController extends ChangeNotifier {
   bool _isLoading = false;
   String _errorMessage = '';
   ProjectDetailsResponse _details = ProjectDetailsResponse.empty();
-  ClientGetDocumentsResponseModel _documents =
-      ClientGetDocumentsResponseModel.empty();
+  List<ClientGetDocumentsResponseModel> _documents = <ClientGetDocumentsResponseModel>[];
   
 
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
   ProjectDetailsResponse get details => _details;
-  ClientGetDocumentsResponseModel get documents => _documents;
+  List<ClientGetDocumentsResponseModel> get documents => _documents;
 
   Future<void> fetchProjectDetails(String projectId) async {
     if (projectId.trim().isEmpty) {
@@ -61,7 +60,7 @@ class ProjectDetailsController extends ChangeNotifier {
             : failure.fullError;
       },
       (success) {
-        _documents = success.data ?? ClientGetDocumentsResponseModel.empty();
+        _documents = success.data ?? <ClientGetDocumentsResponseModel>[];
       },
     );
 
@@ -74,7 +73,7 @@ class ProjectDetailsController extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = '';
     _details = ProjectDetailsResponse.empty();
-    _documents = ClientGetDocumentsResponseModel.empty();
+    _documents = <ClientGetDocumentsResponseModel>[];
     super.dispose();
   }
 }
