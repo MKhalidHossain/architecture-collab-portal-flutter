@@ -19,6 +19,7 @@ class AuthService extends Interceptor {
   final RefreshTokenManagerInterface refreshTokenManager;
   final Debugger _authDebugger = AuthDebugger();
   late final _AuthStorage _authStorage;
+  Auth? _cachedAuth;
   AuthService(this._secureStorage, this.dio, this.refreshTokenManager){
     _authStorage = _AuthStorage(secureStorage: _secureStorage);
   }
@@ -40,10 +41,14 @@ class AuthService extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     
-    final auth = await _authStorage.getCurrentAuth();
+    final auth = _cachedAuth ?? await _authStorage.getCurrentAuth();
+    if (auth != null) {
+      _cachedAuth = auth;
+    }
     final accessToken = auth?._accessToken;
-    if (accessToken != null) {
+    if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
+      options.headers['x-auth-token'] = accessToken;
     }
     _authDebugger.dekhao("${options.uri.toString()} ${options.method}");    
     _authDebugger.dekhao("${options.data.toString()} ");
@@ -62,7 +67,11 @@ class AuthService extends Interceptor {
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     debugPrint("Error >> Method: ${err.requestOptions.method} API: ${err.requestOptions.uri} >> ${err.response}");
     // IF TIMEOUT, then possibly internet is down. Hence reject the request.
-    final status = (await _authStorage.currentAuthStatus());
+    final auth = _cachedAuth ?? await _authStorage.getCurrentAuth();
+    if (auth != null) {
+      _cachedAuth = auth;
+    }
+    final refreshToken = auth?._refreshToken ?? "";
     if(err.type == DioExceptionType.connectionTimeout || err.type == DioExceptionType.receiveTimeout) {
       _authDebugger.dekhao("Timeout error");
       return handler.reject(err);
@@ -76,21 +85,21 @@ class AuthService extends Interceptor {
       return handler.reject(err);
     }
 
-    if (err.response?.statusCode == 401 && (status is Authenticated)) {
+    if (err.response?.statusCode == 401 && refreshToken.isNotEmpty) {
       // get new access token
       RefreshTokenResponse refreshTokenResponse;
       try {
         _refreshingToken = true;
         refreshTokenResponse = await refreshTokenManager.refreshToken(
-          refreshToken: status.auth._refreshToken ?? ""
+          refreshToken: refreshToken
         );
         _refreshingToken = false;
-        await _authStorage.updateCurrentAuth(
-          UpdateAuthParams(
+        await updateCurrentAuth(
+          updateAuthParams: UpdateAuthParams(
             accessToken: refreshTokenResponse.accessToken,
             refreshToken: refreshTokenResponse.refreshToken,
-            data: refreshTokenResponse.data
-          )
+            data: refreshTokenResponse.data,
+          ),
         );
         // Wait a second to receive changes from secure storage.
         await Future.delayed(Duration(seconds: 1)).then((_) async{
@@ -113,7 +122,6 @@ class AuthService extends Interceptor {
           }
         });
       } catch (e) {
-        _authStorage.clearCurrentAuthRecord();
         _refreshingToken = false;
         return handler.reject(e as DioException);
       }
@@ -128,10 +136,27 @@ class AuthService extends Interceptor {
   /// Saves the new auth as currentAuth.
   /// Throws Exception, if user is still logged in.
   /// Must logout first.
-  Future<void> saveNewAuth({required SaveNewAuthParams saveNewAuthParams}) async => _authStorage.saveNewAuth( saveNewAuthParams);
+  Future<void> saveNewAuth({required SaveNewAuthParams saveNewAuthParams}) async {
+    await _authStorage.saveNewAuth(saveNewAuthParams);
+    _cachedAuth = Auth._internal(
+      accessToken: saveNewAuthParams.accessToken,
+      refreshToken: saveNewAuthParams.refreshToken,
+      data: saveNewAuthParams.data,
+    );
+  }
 
-  Future<void> updateCurrentAuth({required UpdateAuthParams updateAuthParams}) async => _authStorage.updateCurrentAuth(updateAuthParams);
+  Future<void> updateCurrentAuth({required UpdateAuthParams updateAuthParams}) async {
+    await _authStorage.updateCurrentAuth(updateAuthParams);
+    _cachedAuth = Auth._internal(
+      accessToken: updateAuthParams.accessToken,
+      refreshToken: updateAuthParams.refreshToken,
+      data: updateAuthParams.data ?? _cachedAuth?.data ?? <String, dynamic>{},
+    );
+  }
 
-  Future<void> clearCurrentAuthRecord() async => await _authStorage.clearCurrentAuthRecord();
+  Future<void> clearCurrentAuthRecord() async {
+    await _authStorage.clearCurrentAuthRecord();
+    _cachedAuth = null;
+  }
 
 }

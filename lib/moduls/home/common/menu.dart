@@ -5,11 +5,13 @@ import 'menu_type.dart';
 class SideMenu extends StatelessWidget {
   final MenuType selectedMenu;
   final Function(MenuType) onSelect;
+  final bool showCalendar;
 
   const SideMenu({
     super.key,
     required this.selectedMenu,
     required this.onSelect,
+    this.showCalendar = true,
   });
 
   @override
@@ -111,6 +113,13 @@ class SideMenu extends StatelessWidget {
                                 MenuType.messages,
                                 badge: '3',
                               ),
+                              if (showCalendar)
+                                _menuItem(
+                                  context,
+                                  Icons.calendar_today_outlined,
+                                  'Calendar',
+                                  MenuType.calendar,
+                                ),
                               _menuItem(
                                 context,
                                 Icons.notifications_none,

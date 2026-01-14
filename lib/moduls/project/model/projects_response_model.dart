@@ -198,12 +198,16 @@ class ProjectUser {
   final String id;
   final String name;
   final String role;
+  final String email;
+  final String employeeId;
   final ProjectImage avatar;
 
   const ProjectUser({
     required this.id,
     required this.name,
     required this.role,
+    required this.email,
+    required this.employeeId,
     required this.avatar,
   });
 
@@ -212,6 +216,8 @@ class ProjectUser {
       id: _readId(json),
       name: _readString(json['name']),
       role: _readString(json['role']),
+      email: _readString(json['email']),
+      employeeId: _readString(json['employeeId']),
       avatar: ProjectImage.fromDynamic(json['avatar']),
     );
   }
@@ -221,6 +227,8 @@ class ProjectUser {
       '_id': id,
       'name': name,
       'role': role,
+      'email': email,
+      'employeeId': employeeId,
       'avatar': avatar.toJson(),
     };
   }

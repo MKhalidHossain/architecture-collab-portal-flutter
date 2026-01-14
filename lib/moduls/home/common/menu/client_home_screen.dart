@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/calender/presentation/screens/calender_screen.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu.dart';
 import 'package:dana_bozzetto/moduls/home/common/menu_type.dart';
 import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
@@ -18,8 +19,13 @@ import 'package:get/get.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final Future<HomeDashboardResponse>? dashboardFuture;
+  final bool showCalendarMenu;
 
-  const ClientHomeScreen({super.key, this.dashboardFuture});
+  const ClientHomeScreen({
+    super.key,
+    this.dashboardFuture,
+    this.showCalendarMenu = false,
+  });
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
 }
@@ -28,6 +34,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MenuType _selectedMenu = MenuType.home;
+  bool _calendarExpanded = false;
+  late DateTime _calendarMonth;
+  late DateTime _calendarSelectedDate;
   ProjectFilter _projectFilter = ProjectFilter.all;
   late Future<Map<String, dynamic>> _profileFuture;
   late Future<HomeDashboardResponse> _dashboardFuture;
@@ -37,6 +46,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _calendarMonth = DateTime(now.year, now.month, 1);
+    _calendarSelectedDate = DateTime(now.year, now.month, now.day);
     _profileFuture = _fetchProfile();
     _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
     _projectsFuture = _fetchProjects();
@@ -92,8 +104,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       key: _scaffoldKey,
       endDrawer: SideMenu(
         selectedMenu: _selectedMenu,
+        showCalendar: widget.showCalendarMenu,
         onSelect: (menu) {
-          setState(() => _selectedMenu = menu);
+          setState(() {
+            _selectedMenu = menu;
+            _calendarExpanded = menu == MenuType.calendar;
+          });
         },
       ),
       body: Stack(
@@ -130,6 +146,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         MenuType.home => _homeHeader(),
         MenuType.projects => _projectsHeader(),
         MenuType.messages => _messagesHeader(),
+        MenuType.calendar => _calendarHeader(),
         MenuType.notifications => _notificationsHeader(),
         MenuType.profile => _profileHeader(),
         MenuType.settings => _settingsHeader(),
@@ -225,6 +242,62 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           const SizedBox(height: 12),
           _searchBar(),
         ],
+      ),
+    );
+  }
+
+  Widget _calendarHeader() {
+    return _glass(
+      child: FutureBuilder<HomeDashboardResponse>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          final data = snapshot.data ?? _cachedDashboard;
+          if (snapshot.hasData) {
+            _cachedDashboard = snapshot.data ?? _cachedDashboard;
+          }
+          final userName = data.userName.trim();
+          final greeting = userName.isNotEmpty ? 'Hi, $userName' : 'Hi, —';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _topRow(greeting),
+              const Text(
+                "Here's your project Task’s Calendarize",
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                    _monthTitle(_calendarMonth),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(
+                      _calendarExpanded
+                          ? Icons.keyboard_arrow_up_sharp
+                          : Icons.keyboard_arrow_down_sharp,
+                    ),
+                    color: Colors.white,
+                    onPressed: () {
+                      setState(() {
+                        _calendarExpanded = !_calendarExpanded;
+                        _selectedMenu = MenuType.calendar;
+                      });
+                    },
+                    iconSize: 36,
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -371,6 +444,24 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         );
       case MenuType.messages:
         return MessagesScreen();
+      case MenuType.calendar:
+        return CalendarScreen(
+          showCalendarCard: _calendarExpanded,
+          initialMonth: _calendarMonth,
+          initialSelectedDate: _calendarSelectedDate,
+          onMonthChanged: (month) {
+            setState(() {
+              _calendarMonth = DateTime(month.year, month.month, 1);
+            });
+          },
+          onDateSelected: (date) {
+            setState(() {
+              _calendarSelectedDate =
+                  DateTime(date.year, date.month, date.day);
+              _calendarMonth = DateTime(date.year, date.month, 1);
+            });
+          },
+        );
       case MenuType.notifications:
         return NotificationScreen();
       case MenuType.profile:
@@ -402,6 +493,25 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       icon: Icons.menu,
       onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
     );
+  }
+
+  String _monthTitle(DateTime date) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final monthName = months[date.month - 1];
+    return '$monthName ${date.year}';
   }
 
   Widget _actionButton({

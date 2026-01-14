@@ -42,8 +42,24 @@ base class _AuthStorage {
   Future<Auth?> getCurrentAuth() async{
     // First read uid of the current auth
     final uidOfCurrentAuth = await _currentAuthUidManager.read();
-    if(uidOfCurrentAuth == null) {
-      return null;
+    if(uidOfCurrentAuth == null || uidOfCurrentAuth.isEmpty) {
+      final all = await _secureStorage.readAll();
+      final fallback = all.entries.firstWhere(
+        (entry) => entry.key.startsWith('auth_'),
+        orElse: () => const MapEntry('', ''),
+      );
+      if (fallback.key.isEmpty || fallback.value.isEmpty) {
+        return null;
+      }
+      final auth = Auth._tryFromJsonString(fallback.value);
+      if (auth == null) {
+        return null;
+      }
+      final uid = fallback.key.replaceFirst('auth_', '');
+      if (uid.isNotEmpty) {
+        await _currentAuthUidManager.saveCurrentAuthRef(uid);
+      }
+      return auth;
     }
     // Read the auth with the uid
     return await _authManager.read(uId: uidOfCurrentAuth);
