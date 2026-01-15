@@ -1,3 +1,5 @@
+import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/home/interface/home_interface.dart';
 import 'package:dana_bozzetto/moduls/home/model/home_response_model.dart';
 import 'package:dana_bozzetto/moduls/home/model/team_member_home_response_model.dart';
@@ -7,7 +9,8 @@ import 'package:get/get.dart';
 import '../../common/menu/client_home_screen.dart';
 
 class TeamMemberHomeScreen extends StatefulWidget {
-  const TeamMemberHomeScreen({super.key});
+  final String userId;
+  const TeamMemberHomeScreen({super.key, required this.userId});
 
   @override
   State<TeamMemberHomeScreen> createState() => _TeamMemberHomeScreenState();
@@ -30,7 +33,9 @@ class _TeamMemberHomeScreenState extends State<TeamMemberHomeScreen> {
         final message = failure.uiMessage.isNotEmpty
             ? failure.uiMessage
             : failure.fullError;
-        throw Exception(message.isNotEmpty ? message : 'Failed to load dashboard');
+        throw Exception(
+          message.isNotEmpty ? message : 'Failed to load dashboard',
+        );
       },
       (success) => _mapToClientDashboard(
         success.data ?? TeamMemberDashboardResponse.empty(),
@@ -71,6 +76,7 @@ class _TeamMemberHomeScreenState extends State<TeamMemberHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return ClientHomeScreen(
+      userId: widget.userId,
       dashboardFuture: _dashboardFuture,
       showCalendarMenu: true,
     );

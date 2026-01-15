@@ -4,6 +4,10 @@ import 'package:dana_bozzetto/moduls/project/presentation/screen/documents_scree
 import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/moduls/home/common/project_cart.dart';
 import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
+import 'package:get/get.dart';
+
+import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/services/app_pigeon/app_pigeon.dart';
 
 class HomeScreenT extends StatefulWidget {
   final Future<HomeDashboardResponse> dashboardFuture;
@@ -20,6 +24,11 @@ class _HomeScreenTState extends State<HomeScreenT> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _newProjectsController = ScrollController();
   HomeDashboardResponse? _cachedDashboard;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   void _scrollLeft() {
     if (_scrollController.hasClients) {

@@ -26,7 +26,10 @@ enum AuthRole {
 }
 
 extension ExtraAuth on Auth {
-  String get userId => data['userId'];
+  String get userId {
+    final dynamic value = data['userId'] ?? data['_id'] ?? data['id'];
+    return value?.toString() ?? '';
+  }
 
   AuthRole get authRole {
     try {

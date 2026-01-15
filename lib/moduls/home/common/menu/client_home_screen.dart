@@ -20,11 +20,12 @@ import 'package:get/get.dart';
 class ClientHomeScreen extends StatefulWidget {
   final Future<HomeDashboardResponse>? dashboardFuture;
   final bool showCalendarMenu;
+  final String userId;
 
   const ClientHomeScreen({
     super.key,
     this.dashboardFuture,
-    this.showCalendarMenu = false,
+    this.showCalendarMenu = false, required this.userId,
   });
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
@@ -52,6 +53,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     _profileFuture = _fetchProfile();
     _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
     _projectsFuture = _fetchProjects();
+
+    Get.find<AppPigeon>().socketInit(
+      SocketConnetParamX(
+        token: null,
+        socketUrl: ApiEndpoints.socketUrl,
+        joinId: widget.userId,
+      ),
+    );
   }
 
   Future<Map<String, dynamic>> _fetchProfile() async {
@@ -456,8 +465,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           },
           onDateSelected: (date) {
             setState(() {
-              _calendarSelectedDate =
-                  DateTime(date.year, date.month, date.day);
+              _calendarSelectedDate = DateTime(date.year, date.month, date.day);
               _calendarMonth = DateTime(date.year, date.month, 1);
             });
           },
