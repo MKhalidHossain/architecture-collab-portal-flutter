@@ -37,11 +37,15 @@ final class ProjectInterfaceImpl extends ProjectInterface {
   }
 
   @override
-  Future<Either<DataCRUDFailure, Success<ClientGetDocumentsResponseModel>>> fetchClientDocuments() {
-   return asyncTryCatch(
-     tryFunc: () async {
-       final response = await appPigeon.get(ApiEndpoints.getClientDocuments);
-       return Success(data: ClientGetDocumentsResponseModel.fromJson(response.data));
-     },
-   ); }
+  Future<Either<DataCRUDFailure, Success<List<ClientGetDocumentsResponseModel>>>>
+      fetchClientDocuments() {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getClientDocuments);
+        return Success(
+          data: ClientGetDocumentsResponseModel.fromJsonList(response.data),
+        );
+      },
+    );
+  }
 }

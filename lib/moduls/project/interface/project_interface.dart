@@ -13,7 +13,7 @@ abstract base class ProjectInterface extends BaseRepository {
       fetchProjectDetails({required String projectId});
 
 
-Future<Either<DataCRUDFailure, Success<ClientGetDocumentsResponseModel>>>
+  Future<Either<DataCRUDFailure, Success<List<ClientGetDocumentsResponseModel>>>>
       fetchClientDocuments();
 
 }

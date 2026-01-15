@@ -70,16 +70,24 @@ base class ApiEndpoints {
   //------------notification----------------
   /// ### get
   static const String getAllNotifications = _Notification.getAllNotifications;
+  static const String marksRead = _Notification.marksRead;
+  static const String markAllRead = _Notification.markAllRead;
+  static  String deleteNotification(String notificationId) => _Notification.deleteNotification(notificationId);
+
+
 
   /// ### post
-  static const String readAllNotifications = _Notification.readAllNotifications;
+  // static const String readAllNotifications = _Notification.readAllNotifications;
 
   /// ### patch
   static String markNotificationAsRead({required String notificationId}) =>
       _Notification.markNotificationAsRead(notificationId);
 
+
+  // static const String markAllRead = '$_notificationRoute/read-all';
+  // static const String deleteNotification = '$_notificationRoute/$notificationId';
   /// ### patch
-  static const String markAllAsRead = _Notification.markAllAsRead;
+  // static const String markAllRead = _Notification.markAllAsRead;
 
   // ---------------------- USER -----------------------------
 
@@ -166,7 +174,7 @@ class _RemoteServer {
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String baseUrl = 'http://10.10.5.85:5000/api';
 }
 
 class _Auth {
@@ -216,13 +224,16 @@ class _Report {
 // ---------------------- Notification -----------------------------
 class _Notification {
   static const String _notificationRoute =
-      '${ApiEndpoints.baseUrl}/notification';
-  static String markNotificationAsRead(String notificationId) =>
-      '$_notificationRoute/mark-as-read/$notificationId';
-  static const String readAllNotifications =
-      '$_notificationRoute/mark-all-as-read';
-  static const String markAllAsRead = '$_notificationRoute/mark-all-as-read';
+      '${ApiEndpoints.baseUrl}/notifications';
   static const String getAllNotifications = '$_notificationRoute/';
+  static String markNotificationAsRead(String notificationId) =>
+      '$_notificationRoute/$notificationId/read/';
+  // static const String readAllNotifications =
+  //     '$_notificationRoute/mark-all-as-read';
+  static const String marksRead = '$_notificationRoute/read-all';
+  static const String markAllRead = '$_notificationRoute/read-all';
+  static  String deleteNotification (String notificationId) => '$_notificationRoute/$notificationId';
+
 }
 
 // ---------------------- USER -----------------------------
