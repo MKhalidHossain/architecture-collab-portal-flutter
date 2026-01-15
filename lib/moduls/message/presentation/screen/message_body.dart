@@ -274,6 +274,74 @@ class ProjectChatScreen extends StatelessWidget {
     ),
   ];
 
+  void _showChatMenu(BuildContext context) {
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Chat Menu',
+      barrierColor: Colors.black.withOpacity(0.12),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 10, 16, 0),
+              child: Material(
+                color: Colors.transparent,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      width: 240,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.22),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.18),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          _MenuOption(text: 'Mute Notifications'),
+                          _MenuOption(text: 'Clear Chat'),
+                          _MenuOption(text: 'Media, Links, and Docs'),
+                          _MenuOption(text: 'Reports'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -301,7 +369,11 @@ class ProjectChatScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                _ChatHeader(title: title, avatarUrl: avatarUrl),
+                _ChatHeader(
+                  title: title,
+                  avatarUrl: avatarUrl,
+                  onMenuTap: () => _showChatMenu(context),
+                ),
                 const SizedBox(height: 10),
                 Expanded(
                   child: ListView.separated(
@@ -341,10 +413,15 @@ class ProjectChatScreen extends StatelessWidget {
 }
 
 class _ChatHeader extends StatelessWidget {
-  const _ChatHeader({required this.title, required this.avatarUrl});
+  const _ChatHeader({
+    required this.title,
+    required this.avatarUrl,
+    required this.onMenuTap,
+  });
 
   final String title;
   final String avatarUrl;
+  final VoidCallback onMenuTap;
 
   @override
   Widget build(BuildContext context) {
@@ -396,7 +473,7 @@ class _ChatHeader extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: onMenuTap,
                   icon: const Icon(Icons.more_vert, color: Colors.white),
                 ),
               ],
@@ -404,6 +481,33 @@ class _ChatHeader extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MenuOption extends StatelessWidget {
+  const _MenuOption({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Divider(height: 1, color: Colors.white.withOpacity(0.14)),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
