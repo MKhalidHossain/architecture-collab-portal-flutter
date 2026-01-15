@@ -117,7 +117,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         onSelect: (menu) {
           setState(() {
             _selectedMenu = menu;
-            _calendarExpanded = menu == MenuType.calendar;
+            if (menu == MenuType.calendar) {
+              _calendarExpanded = false;
+            }
           });
         },
       ),
