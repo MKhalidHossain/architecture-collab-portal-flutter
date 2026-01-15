@@ -11,8 +11,8 @@ class DeleteDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: EdgeInsets.all(24.0),
+        child: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -72,7 +72,7 @@ class DeleteDialog extends StatelessWidget {
                       onConfirm();
                     },
                     child: Text(
-                      "Log Out",
+                      "Delete",
                       style: AppText.mdMedium_16_500.copyWith(
                         color: Colors.white,
                       ),
