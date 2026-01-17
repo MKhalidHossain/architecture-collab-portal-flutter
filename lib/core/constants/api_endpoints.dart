@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 base class ApiEndpoints {
   static const String socketUrl = _LocalHostWifi.socketUrl;
 
-  static const String baseUrl = _LocalHostWifi.baseUrl;
+  static const String baseUrl = _RemoteServer.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -170,7 +170,7 @@ base class ApiEndpoints {
 class _RemoteServer {
   static const String socketUrl = 'https://ursffiver-backend.onrender.com';
 
-  static const String baseUrl = 'https://ursffiver-backend.onrender.com/api/v1';
+  static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
 }
 
 class _LocalHostWifi {
@@ -317,7 +317,7 @@ class _ClientPortal {
 class _TeamPortal {
   static const String _teamPortalRoute = '${ApiEndpoints.baseUrl}/team-portal';
   static const String dashboard = '$_teamPortalRoute/dashboard';
-  static const String getTeamMemberDocuments = '$_teamPortalRoute/team-portal/documents';
+  static const String getTeamMemberDocuments = '$_teamPortalRoute/documents';
 }
 
 // ---------------------- Projects -----------------------------
