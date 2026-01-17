@@ -1,12 +1,12 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
-import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
 import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
 // import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_documents_widget.dart';
 import 'package:flutter/material.dart';
 
 import '../widget/project_all_documents_widget.dart';
+import 'view_documents.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -58,6 +58,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     type: doc.type?.trim().isNotEmpty == true
                         ? doc.type!
                         : (doc.file?.format ?? 'Document'),
+                    status: doc.status,
+                    uploadedBy: doc.uploadedBy?.name,
+                    commentsCount: doc.comments.length,
+                    url: doc.file?.url,
                   ),
                 )
                 .toList()
@@ -76,6 +80,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     type: doc.type?.trim().isNotEmpty == true
                         ? doc.type!
                         : 'Document',
+                    status: doc.status,
+                    uploadedBy: doc.uploadedBy,
+                    commentsCount: doc.commentsCount,
+                    url: doc.url,
                   ),
                 )
                 .toList();
@@ -150,7 +158,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                ProjectBasedDocuments(),
+                                                DocumentDetailScreen(
+                                              document: filteredDocs[i],
+                                            ),
                                           ),
                                         );
                                       },
@@ -328,21 +338,32 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     return project.isNotEmpty ? project : "Unknown";
   }
 
-  String _formatBytes(int? size) {
-    if (size == null || size <= 0) {
+  String _formatBytes(Object? size) {
+    if (size == null) {
+      return "-";
+    }
+    if (size is String) {
+      final value = size.trim();
+      return value.isEmpty ? "-" : value;
+    }
+    if (size is! num) {
+      return "-";
+    }
+    final bytes = size.toInt();
+    if (bytes <= 0) {
       return "-";
     }
     const kilo = 1024;
     const mega = kilo * 1024;
-    if (size >= mega) {
-      final value = size / mega;
+    if (bytes >= mega) {
+      final value = bytes / mega;
       return "${value.toStringAsFixed(1)} MB";
     }
-    if (size >= kilo) {
-      final value = size / kilo;
+    if (bytes >= kilo) {
+      final value = bytes / kilo;
       return "${value.toStringAsFixed(1)} KB";
     }
-    return "$size B";
+    return "$bytes B";
   }
 
   String _formatDate(DateTime? date) {

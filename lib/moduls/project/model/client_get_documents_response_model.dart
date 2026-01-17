@@ -4,7 +4,7 @@ class ClientGetDocumentsResponseModel {
   String? projectName;
   String? milestoneName;
   String? type;
-  int? size;
+  Object? size;
   String? url;
   String? uploadedBy;
   DateTime? uploadedDate;
@@ -36,7 +36,7 @@ class ClientGetDocumentsResponseModel {
       projectName: json['projectName'] as String?,
       milestoneName: json['milestoneName'] as String?,
       type: json['type'] as String?,
-      size: (json['size'] as num?)?.toInt(),
+      size: json['size'],
       url: json['url'] as String?,
       uploadedBy: json['uploadedBy'] as String?,
       uploadedDate: json['uploadedDate'] != null

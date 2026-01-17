@@ -5,6 +5,10 @@ class DocumentModel {
   final String size;
   final String date;
   final String type;
+  final String? status;
+  final String? uploadedBy;
+  final int? commentsCount;
+  final String? url;
 
   DocumentModel({
     required this.category,
@@ -13,5 +17,9 @@ class DocumentModel {
     required this.size,
     required this.date,
     required this.type,
+    this.status,
+    this.uploadedBy,
+    this.commentsCount,
+    this.url,
   });
 }

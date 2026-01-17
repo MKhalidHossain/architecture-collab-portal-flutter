@@ -44,7 +44,9 @@ class AllTab extends StatelessWidget {
             onView: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const DocumentDetailScreen()),
+                MaterialPageRoute(
+                  builder: (_) => DocumentDetailScreen(document: doc),
+                ),
               );
             },
             onDownload: () {
