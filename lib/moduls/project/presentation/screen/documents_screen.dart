@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
+import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
 // import 'package:dana_bozzetto/moduls/project/presentation/widget/project_all_documents_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -25,7 +26,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   void initState() {
     super.initState();
     _controller = ProjectDetailsController();
-    _controller.getClientDocuments();
+    _controller.getDocuments();
   }
 
   @override
@@ -40,24 +41,44 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final documents = _controller.documents
-            .map(
-              (doc) => DocumentModel(
-                category: _resolveCategory(
-                  doc.milestoneName,
-                  doc.projectName,
-                ),
-                subtitle: doc.name?.trim().isNotEmpty == true
-                    ? doc.name
-                    : (doc.projectName ?? '-'),
-                size: _formatBytes(doc.size),
-                date: _formatDate(doc.uploadedDate),
-                type: doc.type?.trim().isNotEmpty == true
-                    ? doc.type!
-                    : 'Document',
-              ),
-            )
-            .toList();
+        final isTeamMember = _controller.authRole == AuthRole.teamMember;
+        final documents = isTeamMember
+            ? _controller.teamMemberDocuments
+                .map(
+                  (doc) => DocumentModel(
+                    category: _resolveCategory(
+                      doc.project?.name,
+                      doc.name,
+                    ),
+                    subtitle: doc.name?.trim().isNotEmpty == true
+                        ? doc.name
+                        : (doc.project?.name ?? '-'),
+                    size: _formatBytes(doc.file?.size),
+                    date: _formatDate(doc.createdAt),
+                    type: doc.type?.trim().isNotEmpty == true
+                        ? doc.type!
+                        : (doc.file?.format ?? 'Document'),
+                  ),
+                )
+                .toList()
+            : _controller.clientDocuments
+                .map(
+                  (doc) => DocumentModel(
+                    category: _resolveCategory(
+                      doc.milestoneName,
+                      doc.projectName,
+                    ),
+                    subtitle: doc.name?.trim().isNotEmpty == true
+                        ? doc.name
+                        : (doc.projectName ?? '-'),
+                    size: _formatBytes(doc.size),
+                    date: _formatDate(doc.uploadedDate),
+                    type: doc.type?.trim().isNotEmpty == true
+                        ? doc.type!
+                        : 'Document',
+                  ),
+                )
+                .toList();
 
         /// 🔹 TAB + SEARCH FILTER
         final filteredDocs = documents.where((doc) {
@@ -104,7 +125,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         : showError
                             ? _buildMessage(
                                 _controller.errorMessage,
-                                onRetry: _controller.getClientDocuments,
+                                onRetry: _controller.getDocuments,
                               )
                             : filteredDocs.isEmpty
                                 ? const Center(
