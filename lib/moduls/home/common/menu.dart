@@ -1,5 +1,11 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/auth/model/logout_request_model.dart';
+import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'menu_type.dart';
 
 class SideMenu extends StatelessWidget {
@@ -150,12 +156,7 @@ class SideMenu extends StatelessWidget {
                           padding: const EdgeInsets.all(12),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(14),
-                            onTap: () {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Logged out')),
-                              );
-                            },
+                            onTap: () => _handleLogout(context),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
@@ -197,6 +198,40 @@ class SideMenu extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final snackbarNotifier = SnackbarNotifier(context: context);
+    final appPigeon = Get.find<AppPigeon>();
+    final authInterface = Get.find<AuthInterface>();
+    final status = await appPigeon.currentAuth();
+    final refreshToken = status is Authenticated
+        ? (status.auth.refreshToken ?? status.auth.accessToken ?? '')
+        : '';
+
+    if (refreshToken.isNotEmpty) {
+      final result = await authInterface.logout(
+        param: LogoutRequestModel(refreshToken: refreshToken),
+      );
+      result.fold(
+        (failure) {
+          snackbarNotifier.notifyError(
+            message:
+                failure.uiMessage.isNotEmpty ? failure.uiMessage : 'Logout failed',
+          );
+        },
+        (_) {},
+      );
+    } else {
+      await appPigeon.logOut();
+    }
+
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
     );
   }
 

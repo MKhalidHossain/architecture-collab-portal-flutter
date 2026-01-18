@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 base class ApiEndpoints {
   static const String socketUrl = _LocalHostWifi.socketUrl;
 
-  static const String baseUrl = _RemoteServer.baseUrl;
+  // static const String baseUrl = _RemoteServer.baseUrl;
+  static const String baseUrl = _LocalHostWifi.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -42,7 +43,8 @@ base class ApiEndpoints {
   // ---------------------- Team Portal -----------------------------
   /// ### get
   static const String teamMemberDashboard = _TeamPortal.dashboard;
-  static const String getTeamMemberDocuments = _TeamPortal.getTeamMemberDocuments;
+  static const String getTeamMemberDocuments =
+      _TeamPortal.getTeamMemberDocuments;
 
   // ---------------------- Projects -----------------------------
   /// ### get
@@ -73,9 +75,8 @@ base class ApiEndpoints {
   static const String getAllNotifications = _Notification.getAllNotifications;
   static const String marksRead = _Notification.marksRead;
   static const String markAllRead = _Notification.markAllRead;
-  static  String deleteNotification(String notificationId) => _Notification.deleteNotification(notificationId);
-
-
+  static String deleteNotification(String notificationId) =>
+      _Notification.deleteNotification(notificationId);
 
   /// ### post
   // static const String readAllNotifications = _Notification.readAllNotifications;
@@ -83,7 +84,6 @@ base class ApiEndpoints {
   /// ### patch
   static String markNotificationAsRead({required String notificationId}) =>
       _Notification.markNotificationAsRead(notificationId);
-
 
   // static const String markAllRead = '$_notificationRoute/read-all';
   // static const String deleteNotification = '$_notificationRoute/$notificationId';
@@ -170,12 +170,12 @@ base class ApiEndpoints {
 class _RemoteServer {
   static const String socketUrl = 'https://ursffiver-backend.onrender.com';
 
-  static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
+  // static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
 }
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.85:5000/api';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
@@ -233,8 +233,8 @@ class _Notification {
   //     '$_notificationRoute/mark-all-as-read';
   static const String marksRead = '$_notificationRoute/read-all';
   static const String markAllRead = '$_notificationRoute/read-all';
-  static  String deleteNotification (String notificationId) => '$_notificationRoute/$notificationId';
-
+  static String deleteNotification(String notificationId) =>
+      '$_notificationRoute/$notificationId';
 }
 
 // ---------------------- USER -----------------------------
@@ -310,7 +310,6 @@ class _ClientPortal {
       '${ApiEndpoints.baseUrl}/client-portal';
   static const String dashboard = '$_clientPortalRoute/dashboard';
   static const String getClientDocuments = '$_clientPortalRoute/documents';
-
 }
 
 // ---------------------- Team Portal -----------------------------
