@@ -314,21 +314,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   Widget _notificationsHeader() {
-    return _glass(
-      child: Column(
-        children: [
-          _topRow('Notifications'),
-          const SizedBox(height: 12),
-          Row(
-            children: const [
-              Chip(label: Text('All')),
-              SizedBox(width: 8),
-              Chip(label: Text('Unread')),
-            ],
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _settingsHeader() {

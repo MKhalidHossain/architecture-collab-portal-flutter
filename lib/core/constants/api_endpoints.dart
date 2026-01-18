@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 base class ApiEndpoints {
   static const String socketUrl = _LocalHostWifi.socketUrl;
 
-  static const String baseUrl = _LocalHostWifi.baseUrl;
+  static const String baseUrl = _RemoteServer.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -37,10 +37,12 @@ base class ApiEndpoints {
   // ---------------------- Client Portal -----------------------------
   /// ### get
   static const String clientPortalDashboard = _ClientPortal.dashboard;
+  static const String getClientDocuments = _ClientPortal.getClientDocuments;
 
   // ---------------------- Team Portal -----------------------------
   /// ### get
   static const String teamMemberDashboard = _TeamPortal.dashboard;
+  static const String getTeamMemberDocuments = _TeamPortal.getTeamMemberDocuments;
 
   // ---------------------- Projects -----------------------------
   /// ### get
@@ -69,16 +71,24 @@ base class ApiEndpoints {
   //------------notification----------------
   /// ### get
   static const String getAllNotifications = _Notification.getAllNotifications;
+  static const String marksRead = _Notification.marksRead;
+  static const String markAllRead = _Notification.markAllRead;
+  static  String deleteNotification(String notificationId) => _Notification.deleteNotification(notificationId);
+
+
 
   /// ### post
-  static const String readAllNotifications = _Notification.readAllNotifications;
+  // static const String readAllNotifications = _Notification.readAllNotifications;
 
   /// ### patch
   static String markNotificationAsRead({required String notificationId}) =>
       _Notification.markNotificationAsRead(notificationId);
 
+
+  // static const String markAllRead = '$_notificationRoute/read-all';
+  // static const String deleteNotification = '$_notificationRoute/$notificationId';
   /// ### patch
-  static const String markAllAsRead = _Notification.markAllAsRead;
+  // static const String markAllRead = _Notification.markAllAsRead;
 
   // ---------------------- USER -----------------------------
 
@@ -160,12 +170,12 @@ base class ApiEndpoints {
 class _RemoteServer {
   static const String socketUrl = 'https://ursffiver-backend.onrender.com';
 
-  static const String baseUrl = 'https://ursffiver-backend.onrender.com/api/v1';
+  static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
 }
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String baseUrl = 'http://10.10.5.85:5000/api';
 }
 
 class _Auth {
@@ -215,13 +225,16 @@ class _Report {
 // ---------------------- Notification -----------------------------
 class _Notification {
   static const String _notificationRoute =
-      '${ApiEndpoints.baseUrl}/notification';
-  static String markNotificationAsRead(String notificationId) =>
-      '$_notificationRoute/mark-as-read/$notificationId';
-  static const String readAllNotifications =
-      '$_notificationRoute/mark-all-as-read';
-  static const String markAllAsRead = '$_notificationRoute/mark-all-as-read';
+      '${ApiEndpoints.baseUrl}/notifications';
   static const String getAllNotifications = '$_notificationRoute/';
+  static String markNotificationAsRead(String notificationId) =>
+      '$_notificationRoute/$notificationId/read/';
+  // static const String readAllNotifications =
+  //     '$_notificationRoute/mark-all-as-read';
+  static const String marksRead = '$_notificationRoute/read-all';
+  static const String markAllRead = '$_notificationRoute/read-all';
+  static  String deleteNotification (String notificationId) => '$_notificationRoute/$notificationId';
+
 }
 
 // ---------------------- USER -----------------------------
@@ -296,12 +309,15 @@ class _ClientPortal {
   static const String _clientPortalRoute =
       '${ApiEndpoints.baseUrl}/client-portal';
   static const String dashboard = '$_clientPortalRoute/dashboard';
+  static const String getClientDocuments = '$_clientPortalRoute/documents';
+
 }
 
 // ---------------------- Team Portal -----------------------------
 class _TeamPortal {
   static const String _teamPortalRoute = '${ApiEndpoints.baseUrl}/team-portal';
   static const String dashboard = '$_teamPortalRoute/dashboard';
+  static const String getTeamMemberDocuments = '$_teamPortalRoute/documents';
 }
 
 // ---------------------- Projects -----------------------------

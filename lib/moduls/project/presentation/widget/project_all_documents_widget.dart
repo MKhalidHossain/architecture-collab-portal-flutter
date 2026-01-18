@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/common/widget/glass_card.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/view_documents.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,9 @@ class AllTab extends StatelessWidget {
             onView: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const DocumentDetailScreen()),
+                MaterialPageRoute(
+                  builder: (_) => DocumentDetailScreen(document: doc),
+                ),
               );
             },
             onDownload: () {
@@ -60,7 +63,7 @@ class AllTab extends StatelessWidget {
 final List<DocumentModel> documents = [
   DocumentModel(
     category: "Pre-Design",
-    subtitle: "Modern Villa Design",
+    subtitle: "Modern Villa Designss ss",
     size: "2.1 MB",
     date: "11/10/2025",
     type: "PNG File",
@@ -144,77 +147,75 @@ class DocumentPreviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              // color: const Color(0xFF6B6B68),
-              color:  Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white54),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF01676C),
-                    borderRadius: BorderRadius.circular(14),
+          child: glassCard(
+            
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF01676C),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Icon(Icons.description_outlined, color: Colors.white),
                   ),
-                  child: const Icon(Icons.description, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          _meta(size),
-                          _dot(),
-                          _meta(date),
-                          _dot(),
-                          _meta(type),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          _actionButton(
-                            context,
-                            Icons.remove_red_eye,
-                            "View",
-                            onView,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
-                          const SizedBox(width: 12),
-                          _actionButton(
-                            context,
-                            Icons.download,
-                            "Download",
-                            onDownload,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            _meta(size),
+                            _dot(),
+                            _meta(date),
+                            _dot(),
+                            _meta(type),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            _actionButton(
+                              context,
+                              Icons.remove_red_eye,
+                              "View",
+                              onView,
+                            ),
+                            const SizedBox(width: 12),
+                            _actionButton(
+                              context,
+                              Icons.download,
+                              "Download",
+                              onDownload,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -1,12 +1,40 @@
 import 'dart:ui';
+import 'package:dio/dio.dart';
+import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/document_preview_screen.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/full_screen_image_viewer.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
-class DocumentDetailScreen extends StatelessWidget {
-  const DocumentDetailScreen({super.key});
+class DocumentDetailScreen extends StatefulWidget {
+  final DocumentModel document;
+
+  const DocumentDetailScreen({
+    super.key,
+    required this.document,
+  });
+
+  @override
+  State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
+}
+
+class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
+  bool _isDownloading = false;
+  double _downloadProgress = 0;
 
   @override
   Widget build(BuildContext context) {
+    final document = widget.document;
+    final title = document.category.trim().isNotEmpty
+        ? document.category
+        : "Document";
+    final subtitle = (document.subtitle ?? document.title ?? '-').trim();
+    final status = (document.status ?? '-').trim();
+    final uploadedBy = (document.uploadedBy ?? '-').trim();
+    final url = document.url?.trim() ?? '';
+    final isImagePreview = _isImageUrl(url);
+    final commentsCount = document.commentsCount ?? 0;
+
     return Scaffold(
       backgroundColor: Color(0xFF5C5C5A),
       appBar: AppBar(
@@ -21,22 +49,22 @@ class DocumentDetailScreen extends StatelessWidget {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Pre-Design",
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              "Modern Villa Design",
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              subtitle.isNotEmpty ? subtitle : '-',
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
             ),
           ],
         ),
@@ -62,44 +90,56 @@ class DocumentDetailScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FullScreenImageViewer(
-                                  imagePath: 'assets/image/aa.png',
-                                  isAsset: true,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Image.asset(
-                                  'assets/image/aa.png',
-                                  height: 220,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ],
+                          onTap: isImagePreview
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          FullScreenImageViewer(
+                                        imagePath: url,
+                                        isAsset: false,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: isImagePreview
+                                ? Image.network(
+                                    url,
+                                    height: 220,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _filePreview(
+                                      context,
+                                      title: title,
+                                    ),
+                                  )
+                                : _filePreview(
+                                    context,
+                                    title: title,
+                                  ),
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         Row(
                           children: [
                             Expanded(
                               child: _actionButton(
-                                label: "Download",
+                                label:
+                                    _isDownloading ? "Downloading" : "Download",
                                 icon: Icons.download_rounded,
                                 isPrimary: true,
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Download started..."),
-                                    ),
+                                  if (_isDownloading) {
+                                    return;
+                                  }
+                                  _handleDownload(
+                                    context,
+                                    url: url,
+                                    title: subtitle.isNotEmpty ? subtitle : title,
                                   );
                                 },
                               ),
@@ -111,13 +151,19 @@ class DocumentDetailScreen extends StatelessWidget {
                                 icon: Icons.remove_red_eye_outlined,
                                 isPrimary: false,
                                 onTap: () {
+                                  if (url.isEmpty) {
+                                    _showMessage(context, "No file URL found.");
+                                    return;
+                                  }
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const FullScreenImageViewer(
-                                        imagePath: 'assets/image/aa.png',
-                                        isAsset: true,
+                                          DocumentPreviewScreen(
+                                        url: url,
+                                        title: subtitle.isNotEmpty
+                                            ? subtitle
+                                            : title,
                                       ),
                                     ),
                                   );
@@ -126,6 +172,7 @@ class DocumentDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        _downloadProgressBar(),
                       ],
                     ),
                   ),
@@ -139,24 +186,24 @@ class DocumentDetailScreen extends StatelessWidget {
                       children: [
                         _buildDetailRow(
                           label: "Status",
-                          value: "Review",
+                          value: status.isNotEmpty ? status : '-',
                           isStatus: true,
                         ),
                         _buildDetailRow(
                           label: "Type",
-                          value: "Drawing",
+                          value: document.type,
                         ),
                         _buildDetailRow(
                           label: "Size",
-                          value: "2.1 MB",
+                          value: document.size,
                         ),
                         _buildDetailRow(
                           label: "Uploaded By",
-                          value: "Guy Hawkins",
+                          value: uploadedBy.isNotEmpty ? uploadedBy : '-',
                         ),
                         _buildDetailRow(
                           label: "Uploaded Date",
-                          value: "Dec 01, 2025",
+                          value: document.date,
                         ),
                       ],
                     ),
@@ -180,82 +227,19 @@ class DocumentDetailScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 14),
-                            const Text(
-                              "Comments & Feedback (1)",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                              ),
+                          Text(
+                            "Comments & Feedback ($commentsCount)",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
+                      ),
                         const SizedBox(height: 20),
 
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: const Color(0xFF2A2A2A).withOpacity(0.35),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.25),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: const Color(0xFF2A2A2A),
-                                  child: const Icon(
-                                    Icons.person,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            "Jhon Doe",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const Text(
-                                            "Dec 24, 2025",
-                                            style: TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      const Text(
-                                        "Can we adjust the window sizes on the east facade?",
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 14,
-                                          height: 1.4,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        _buildCommentsMessage(commentsCount),
 
                         const SizedBox(height: 24),
 
@@ -311,6 +295,143 @@ class DocumentDetailScreen extends StatelessWidget {
                   ),
                   
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isImageUrl(String url) {
+    if (url.isEmpty) {
+      return false;
+    }
+    final lower = url.toLowerCase();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
+  }
+
+  Widget _buildCommentsMessage(int commentsCount) {
+    final message = commentsCount == 0
+        ? "No comments yet."
+        : "Comments are not loaded in this view.";
+    return Text(
+      message,
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.7),
+        fontSize: 14,
+      ),
+    );
+  }
+
+  Future<void> _handleDownload(
+    BuildContext context, {
+    required String url,
+    required String title,
+  }) async {
+    if (url.isEmpty) {
+      _showMessage(context, "No file URL found.");
+      return;
+    }
+    setState(() {
+      _isDownloading = true;
+      _downloadProgress = 0;
+    });
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = _buildFileName(title, url);
+      final filePath = '${dir.path}/$fileName';
+      await Dio().download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total <= 0) {
+            return;
+          }
+          setState(() {
+            _downloadProgress = received / total;
+          });
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      _showMessage(context, "Saved to $filePath");
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      _showMessage(context, "Download failed. Please try again.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _downloadProgress = 0;
+        });
+      }
+    }
+  }
+
+  String _buildFileName(String title, String url) {
+    final uri = Uri.tryParse(url);
+    final lastSegment = uri?.pathSegments.isNotEmpty == true
+        ? uri!.pathSegments.last
+        : '';
+    if (lastSegment.isNotEmpty && lastSegment.contains('.')) {
+      return lastSegment;
+    }
+    final cleaned = title.trim().isEmpty ? 'document' : title.trim();
+    final safe = cleaned.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    return '$safe.pdf';
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget _downloadProgressBar() {
+    if (!_isDownloading || _downloadProgress <= 0) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: LinearProgressIndicator(
+        value: _downloadProgress,
+        color: const Color(0xFF01676C),
+        backgroundColor: Colors.white.withOpacity(0.1),
+      ),
+    );
+  }
+
+  Widget _filePreview(BuildContext context, {required String title}) {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      color: Colors.black.withOpacity(0.25),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.insert_drive_file_rounded,
+            color: Colors.white70,
+            size: 46,
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
