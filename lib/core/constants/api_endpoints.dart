@@ -55,6 +55,11 @@ base class ApiEndpoints {
   static String getProjectById(String projectId) =>
       _Project.projectById(projectId);
 
+  // ---------------------- Documents -----------------------------
+  /// ### get
+  static String getProjectDocuments(String projectId) =>
+      _Documents.projectDocuments(projectId);
+
   //------------interest----------------
   /// ### get
   static const String getInterests = _Interest.getallInterests;
@@ -330,4 +335,11 @@ class _Project {
   static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
   static const String projects = '$_projectRoute/';
   static String projectById(String projectId) => '$_projectRoute/$projectId';
+}
+
+// ---------------------- Documents -----------------------------
+class _Documents {
+  static const String _documentsRoute = '${ApiEndpoints.baseUrl}/documents';
+  static String projectDocuments(String projectId) =>
+      '$_documentsRoute/project/$projectId';
 }

@@ -6,8 +6,13 @@ import 'package:flutter/material.dart';
 
 class AllTab extends StatelessWidget {
   final String selectedCategory;
+  final List<DocumentModel> documents;
 
-  const AllTab({super.key, required this.selectedCategory});
+  const AllTab({
+    super.key,
+    required this.selectedCategory,
+    required this.documents,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,66 +63,6 @@ class AllTab extends StatelessWidget {
     );
   }
 }
-
-// Sample documents
-final List<DocumentModel> documents = [
-  DocumentModel(
-    category: "Pre-Design",
-    subtitle: "Modern Villa Designss ss",
-    size: "2.1 MB",
-    date: "11/10/2025",
-    type: "PNG File",
-  ),
-  DocumentModel(
-    category: "Schematic Design",
-    subtitle: "Modern Villa Design",
-    size: "2.4 MB",
-    date: "12/10/2025",
-    type: "PDF File",
-  ),
-  DocumentModel(
-    category: "Construction Design",
-    subtitle: "Modern Villa Design",
-    size: "3.2 MB",
-    date: "13/10/2025",
-    type: "JPG File",
-  ),
-  DocumentModel(
-    category: "Design Development",
-    subtitle: "Modern Villa Design",
-    size: "1.8 MB",
-    date: "10/10/2025",
-    type: "PNG File",
-  ),
-  DocumentModel(
-    category: "Pre-Design",
-    subtitle: "Modern Villa Design",
-    size: "2.1 MB",
-    date: "11/10/2025",
-    type: "PNG File",
-  ),
-  DocumentModel(
-    category: "Schematic Design",
-    subtitle: "Modern Villa Design",
-    size: "2.4 MB",
-    date: "12/10/2025",
-    type: "PDF File",
-  ),
-  DocumentModel(
-    category: "Construction Design",
-    subtitle: "Modern Villa Design",
-    size: "3.2 MB",
-    date: "13/10/2025",
-    type: "JPG File",
-  ),
-  DocumentModel(
-    category: "Design Development",
-    subtitle: "Modern Villa Design",
-    size: "1.8 MB",
-    date: "10/10/2025",
-    type: "PNG File",
-  ),
-];
 
 class DocumentPreviewCard extends StatelessWidget {
   final String title;

@@ -189,7 +189,7 @@ class OverviewTab extends StatelessWidget {
             icon: Icons.description_outlined,
             count: documentsCount.toString().padLeft(2, '0'),
             badgeColor: const Color(0xFF0C7A7E),
-            navigateTo: const ProjectBasedDocuments(),
+            navigateTo: ProjectBasedDocuments(projectId: project.id),
           ),
           const SizedBox(height: 10),
           _ActionTile(

@@ -4,6 +4,7 @@ import 'package:dana_bozzetto/core/api_handler/success.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_approval_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_approvals_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_documents_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/team_member_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
@@ -27,6 +28,11 @@ abstract base class ProjectInterface extends BaseRepository {
     required String approvalId,
     required String status,
   });
+
+  Future<
+          Either<DataCRUDFailure,
+              Success<List<ProjectDocumentsResponseModel>>>>
+      fetchProjectDocuments({required String projectId});
 
   Future<
           Either<DataCRUDFailure,
