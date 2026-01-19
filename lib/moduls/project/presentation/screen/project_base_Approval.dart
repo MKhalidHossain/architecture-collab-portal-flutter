@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/moduls/project/controller/project_approvals_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_approvals_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/approval_details_screen.dart';
@@ -351,10 +352,19 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
                           label: "Review",
                           isPrimary: true,
                           onTap: () {
+                            final approvalId = approval.id ?? '';
+                            if (approvalId.trim().isEmpty) {
+                              SnackbarNotifier(context: context).notifyError(
+                                message: 'Approval ID is missing.',
+                              );
+                              return;
+                            }
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ApprovalDetailsScreen(),
+                                builder: (_) => ApprovalDetailsScreen(
+                                  approvalId: approvalId,
+                                ),
                               ),
                             );
                           },

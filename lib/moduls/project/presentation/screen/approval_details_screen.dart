@@ -1,8 +1,51 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class ApprovalDetailsScreen extends StatelessWidget {
-  const ApprovalDetailsScreen({super.key});
+class ApprovalDetailsScreen extends StatefulWidget {
+  final String approvalId;
+
+  const ApprovalDetailsScreen({
+    super.key,
+    required this.approvalId,
+  });
+
+  @override
+  State<ApprovalDetailsScreen> createState() => _ApprovalDetailsScreenState();
+}
+
+class _ApprovalDetailsScreenState extends State<ApprovalDetailsScreen> {
+  bool _isSubmitting = false;
+
+  Future<void> _submitApproval(String status) async {
+    if (_isSubmitting) {
+      return;
+    }
+    if (widget.approvalId.trim().isEmpty) {
+      SnackbarNotifier(context: context)
+          .notifyError(message: 'Approval ID is missing.');
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    final notifier = SnackbarNotifier(context: context);
+    final result = await Get.find<ProjectInterface>().updateClientApproval(
+      approvalId: widget.approvalId,
+      status: status,
+    );
+    if (!mounted) {
+      return;
+    }
+    result.fold(
+      (failure) => notifier.notifyError(message: failure.uiMessage),
+      (success) {
+        notifier.notifySuccess(message: success.message);
+        Navigator.pop(context);
+      },
+    );
+    setState(() => _isSubmitting = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +302,7 @@ class ApprovalDetailsScreen extends StatelessWidget {
             textColor: const Color(0xFFFF4D2D),
             background: Colors.white.withOpacity(0.08),
             borderColor: Colors.white.withOpacity(0.2),
+            onTap: () => _submitApproval('Rejected'),
           ),
         ),
         const SizedBox(width: 16),
@@ -270,6 +314,7 @@ class ApprovalDetailsScreen extends StatelessWidget {
             textColor: Colors.white,
             background: const Color(0xFF0B6A62),
             borderColor: const Color(0xFF0B6A62),
+            onTap: () => _submitApproval('Approved'),
           ),
         ),
       ],
@@ -283,28 +328,32 @@ class ApprovalDetailsScreen extends StatelessWidget {
     required Color textColor,
     required Color background,
     required Color borderColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: _isSubmitting ? null : onTap,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

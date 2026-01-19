@@ -40,6 +40,8 @@ base class ApiEndpoints {
   static const String clientPortalDashboard = _ClientPortal.dashboard;
   static const String getClientDocuments = _ClientPortal.getClientDocuments;
   static const String getClientApprovals = _ClientPortal.getClientApprovals;
+  static String updateClientApproval(String approvalId) =>
+      _ClientPortal.updateClientApproval(approvalId);
 
   // ---------------------- Team Portal -----------------------------
   /// ### get
@@ -312,6 +314,8 @@ class _ClientPortal {
   static const String dashboard = '$_clientPortalRoute/dashboard';
   static const String getClientDocuments = '$_clientPortalRoute/documents';
   static const String getClientApprovals = '$_clientPortalRoute/approvals';
+  static String updateClientApproval(String approvalId) =>
+      '$_clientPortalRoute/approvals/$approvalId';
 }
 
 // ---------------------- Team Portal -----------------------------

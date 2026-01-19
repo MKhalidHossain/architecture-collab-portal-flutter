@@ -3,6 +3,7 @@ import 'package:dana_bozzetto/core/api_handler/success.dart';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/client_approval_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_approvals_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/team_member_get_documents_response_model.dart';
@@ -62,6 +63,32 @@ final class ProjectInterfaceImpl extends ProjectInterface {
         return Success(
           data: ClientGetApprovalsResponseModel.fromJsonList(response.data),
         );
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<ClientApprovalDetailsResponseModel>>>
+      updateClientApproval({
+    required String approvalId,
+    required String status,
+  }) {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.put(
+          ApiEndpoints.updateClientApproval(approvalId),
+          data: {'status': status},
+        );
+        final data = response.data;
+        if (data is Map) {
+          final mapped = Map<String, dynamic>.from(data);
+          final model = ClientApprovalDetailsResponseModel.fromJson(mapped);
+          return Success(
+            message: model.message ?? "Success",
+            data: model,
+          );
+        }
+        return Success(message: "Success");
       },
     );
   }
