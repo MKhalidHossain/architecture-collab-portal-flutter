@@ -1,17 +1,23 @@
 import 'dart:ui';
 
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/task_submit_request_model.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 const Color _accentColor = Color(0xFF0C7A7E);
 
 class UploadDocumentScreen extends StatefulWidget {
   final String? initialStage;
   final String? initialTaskName;
+  final String taskId;
 
   const UploadDocumentScreen({
     super.key,
     this.initialStage,
     this.initialTaskName,
+    required this.taskId,
   });
 
   @override
@@ -23,6 +29,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   String _selectedStage = 'Pre-Design';
   String _selectedType = 'PDF';
   bool _hasFile = false;
+  bool _isSubmitting = false;
+  PlatformFile? _pickedFile;
 
   final List<String> _stageOptions = const [
     'Pre-Design',
@@ -48,22 +56,73 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     super.dispose();
   }
 
-  void _toggleFile() {
-    setState(() => _hasFile = !_hasFile);
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'dwg', 'fpg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    setState(() {
+      _pickedFile = file;
+      _hasFile = true;
+    });
   }
 
-  void _submit() {
-    final taskLabel = widget.initialTaskName?.trim() ?? '';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          taskLabel.isNotEmpty
-              ? 'Document ready for approval for $taskLabel.'
-              : 'Document ready for approval.',
-        ),
-      ),
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    if (widget.taskId.trim().isEmpty) {
+      _showMessage('Task ID is missing.');
+      return;
+    }
+    if (_pickedFile == null) {
+      _showMessage('Please select a file.');
+      return;
+    }
+    setState(() => _isSubmitting = true);
+
+    final param = TaskSubmitRequestModel(
+      docName: _selectedStage,
+      docType: _selectedType,
+      notes: _notesController.text.trim(),
+      fileName: _pickedFile!.name,
+      filePath: _pickedFile!.path,
+      fileBytes: _pickedFile!.bytes,
     );
-    Navigator.pop(context);
+
+    final result = await Get.find<ProjectInterface>().submitTask(
+      taskId: widget.taskId,
+      param: param,
+    );
+
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        _showMessage(
+          failure.uiMessage.isNotEmpty
+              ? failure.uiMessage
+              : failure.fullError,
+        );
+      },
+      (success) {
+        final message = success.data?.message.isNotEmpty == true
+            ? success.data!.message
+            : 'Document ready for approval.';
+        _showMessage(message);
+        Navigator.pop(context, true);
+      },
+    );
+
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -146,7 +205,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: InkWell(
-          onTap: _toggleFile,
+          onTap: _pickFile,
           child: Container(
             height: 180,
             width: double.infinity,
@@ -167,7 +226,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _hasFile
-                      ? 'File ready to upload'
+                      ? _pickedFile?.name ?? 'File ready to upload'
                       : 'Click to upload or drag and drop',
                   style: const TextStyle(
                     color: Colors.white,
@@ -258,7 +317,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   Expanded(
                     child: _primaryButton(
                       label: 'Send Approval',
-                      onTap: _submit,
+                      onTap: _isSubmitting ? () {} : _submit,
                     ),
                   ),
                 ],

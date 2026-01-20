@@ -1,13 +1,25 @@
 import 'dart:ui';
 
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
+import 'package:dana_bozzetto/moduls/project/model/create_task_request_model.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 const Color _accentColor = Color(0xFF0C7A7E);
 
 class CreateTaskScreen extends StatefulWidget {
   final String? initialStage;
+  final String projectId;
+  final String milestoneId;
 
-  const CreateTaskScreen({super.key, this.initialStage});
+  const CreateTaskScreen({
+    super.key,
+    this.initialStage,
+    required this.projectId,
+    required this.milestoneId,
+  });
 
   @override
   State<CreateTaskScreen> createState() => _CreateTaskScreenState();
@@ -18,6 +30,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   DateTime? _endDate;
   final TextEditingController _descriptionController =
       TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -66,16 +79,73 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return '$month ${value.day.toString().padLeft(2, '0')}, ${value.year}';
   }
 
-  void _submit() {
-    final stage = widget.initialStage?.trim() ?? '';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          stage.isNotEmpty ? 'Task added to $stage.' : 'Task added.',
-        ),
-      ),
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    final name = _descriptionController.text.trim();
+    if (name.isEmpty) {
+      _showMessage('Please add a task description.');
+      return;
+    }
+    if (_startDate == null || _endDate == null) {
+      _showMessage('Please select start and end dates.');
+      return;
+    }
+    if (widget.projectId.trim().isEmpty ||
+        widget.milestoneId.trim().isEmpty) {
+      _showMessage('Project or milestone is missing.');
+      return;
+    }
+
+    final authStatus = await Get.find<AppPigeon>().currentAuth();
+    if (!mounted) return;
+    final assignedTo =
+        authStatus is Authenticated ? authStatus.auth.userId : '';
+    if (assignedTo.isEmpty) {
+      _showMessage('Unable to detect user.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final param = CreateTaskRequestModel(
+      name: name,
+      projectId: widget.projectId,
+      milestoneId: widget.milestoneId,
+      assignedTo: assignedTo,
+      priority: 'High',
+      startDate: _startDate!,
+      endDate: _endDate!,
+      status: 'Pending',
     );
-    Navigator.pop(context);
+
+    final result =
+        await Get.find<ProjectInterface>().createTask(param: param);
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        _showMessage(
+          failure.uiMessage.isNotEmpty
+              ? failure.uiMessage
+              : failure.fullError,
+        );
+      },
+      (_) {
+        final stage = widget.initialStage?.trim() ?? '';
+        _showMessage(
+          stage.isNotEmpty ? 'Task added to $stage.' : 'Task added.',
+        );
+        Navigator.pop(context, true);
+      },
+    );
+
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -155,7 +225,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       Expanded(
                         child: _primaryButton(
                           label: 'Add Task',
-                          onTap: _submit,
+                          onTap: _isSubmitting ? () {} : _submit,
                         ),
                       ),
                     ],

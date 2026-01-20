@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:dana_bozzetto/moduls/project/controller/project_tasks_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/create_task_screen.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/upload_document_screen.dart';
 import 'package:flutter/material.dart';
@@ -17,110 +19,196 @@ class TeamMemberTasksTab extends StatefulWidget {
 }
 
 class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
-  late final List<_TaskSection> _sections;
+  late final ProjectTasksController _tasksController;
 
   @override
   void initState() {
     super.initState();
-    _sections = _buildDefaultSections();
+    _tasksController = ProjectTasksController();
+    _tasksController.fetchTasks(projectId: widget.project.id);
+  }
+
+  @override
+  void dispose() {
+    _tasksController.dispose();
+    super.dispose();
   }
 
   List<_TaskSection> _buildDefaultSections() {
     return [
       _TaskSection(
+        milestoneId: '',
         title: 'Pre-Design',
         statusLabel: 'Approved',
         statusColor: _accentColor,
         statusTextColor: Colors.white,
         showCompletedButton: true,
         tasks: const [
-          _TaskItem(title: 'Survey', completed: true),
-          _TaskItem(title: 'Measuring Building', completed: true),
-          _TaskItem(title: 'Drawing Existing conditions', completed: true),
-          _TaskItem(title: 'Drawing site plan', completed: true),
+          _TaskItem(id: '', title: 'Survey', completed: true),
+          _TaskItem(id: '', title: 'Measuring Building', completed: true),
+          _TaskItem(id: '', title: 'Drawing Existing conditions', completed: true),
+          _TaskItem(id: '', title: 'Drawing site plan', completed: true),
         ],
       ),
       _TaskSection(
+        milestoneId: '',
         title: 'Schematic Design',
         statusLabel: 'Pending',
         statusColor: const Color(0xFFE8F1F1),
         statusTextColor: _accentColor,
         tasks: const [
-          _TaskItem(title: 'Made Concept'),
-          _TaskItem(title: 'Design Preliminary Floor Plan'),
-          _TaskItem(title: 'Design Preliminary Elevation'),
-          _TaskItem(title: 'Preliminary 3D view'),
+          _TaskItem(id: '', title: 'Made Concept'),
+          _TaskItem(id: '', title: 'Design Preliminary Floor Plan'),
+          _TaskItem(id: '', title: 'Design Preliminary Elevation'),
+          _TaskItem(id: '', title: 'Preliminary 3D view'),
         ],
       ),
       _TaskSection(
+        milestoneId: '',
         title: 'Design Developed',
         statusLabel: 'Pending',
         statusColor: const Color(0xFFE8F1F1),
         statusTextColor: _accentColor,
         tasks: const [
-          _TaskItem(title: 'Made floor plan'),
-          _TaskItem(title: 'Made Elevation'),
-          _TaskItem(title: 'Define Structural'),
-          _TaskItem(title: 'Building Sections'),
+          _TaskItem(id: '', title: 'Made floor plan'),
+          _TaskItem(id: '', title: 'Made Elevation'),
+          _TaskItem(id: '', title: 'Define Structural'),
+          _TaskItem(id: '', title: 'Building Sections'),
         ],
       ),
       _TaskSection(
+        milestoneId: '',
         title: 'Construction Documents',
         statusLabel: 'Pending',
         statusColor: const Color(0xFFE8F1F1),
         statusTextColor: _accentColor,
         tasks: const [
-          _TaskItem(title: 'Details'),
-          _TaskItem(title: 'Electric Plan'),
-          _TaskItem(title: 'Plumbing Plan'),
-          _TaskItem(title: 'HVSE Plan'),
-          _TaskItem(title: 'Building Sections'),
+          _TaskItem(id: '', title: 'Details'),
+          _TaskItem(id: '', title: 'Electric Plan'),
+          _TaskItem(id: '', title: 'Plumbing Plan'),
+          _TaskItem(id: '', title: 'HVSE Plan'),
+          _TaskItem(id: '', title: 'Building Sections'),
         ],
       ),
     ];
   }
 
-  void _openUpload({required String stage, String? task}) {
-    Navigator.push(
+  List<_TaskSection> _buildSectionsFromTasks(
+    List<ProjectTaskResponseModel> tasks,
+  ) {
+    final milestones = widget.project.milestones;
+    if (milestones.isEmpty) {
+      return _buildDefaultSections();
+    }
+
+    final tasksByMilestone = <String, List<ProjectTaskResponseModel>>{};
+    for (final task in tasks) {
+      final key = task.milestoneId;
+      if (key.isEmpty) {
+        continue;
+      }
+      tasksByMilestone.putIfAbsent(key, () => <ProjectTaskResponseModel>[]);
+      tasksByMilestone[key]!.add(task);
+    }
+
+    return milestones.map((milestone) {
+      final milestoneTasks = tasksByMilestone[milestone.id] ?? [];
+      final isCompleted = milestone.isCompleted;
+      return _TaskSection(
+        milestoneId: milestone.id,
+        title: milestone.name.trim().isNotEmpty ? milestone.name.trim() : 'Task',
+        statusLabel: isCompleted ? 'Approved' : 'Pending',
+        statusColor: isCompleted ? _accentColor : const Color(0xFFE8F1F1),
+        statusTextColor: isCompleted ? Colors.white : _accentColor,
+        showCompletedButton: isCompleted,
+        tasks: milestoneTasks
+            .map(
+              (task) => _TaskItem(
+                id: task.id,
+                title: task.name.isNotEmpty ? task.name : 'Task',
+                completed: _isTaskCompleted(task.status),
+              ),
+            )
+            .toList(),
+      );
+    }).toList();
+  }
+
+  bool _isTaskCompleted(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'completed' || normalized == 'done';
+  }
+
+  Future<void> _openAddTask({
+    required String stage,
+    required String milestoneId,
+  }) async {
+    if (milestoneId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Milestone is missing.')),
+      );
+      return;
+    }
+    final created = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UploadDocumentScreen(
+        builder: (_) => CreateTaskScreen(
           initialStage: stage,
-          initialTaskName: task,
+          projectId: widget.project.id,
+          milestoneId: milestoneId,
         ),
       ),
     );
-  }
-
-  void _openAddTask({required String stage}) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateTaskScreen(initialStage: stage),
-      ),
-    );
+    if (created == true) {
+      _tasksController.fetchTasks(projectId: widget.project.id);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _stageStepper(),
-        const SizedBox(height: 16),
-        ..._sections.map((section) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 18),
-            child: _sectionBlock(section),
-          );
-        }),
-      ],
+    return AnimatedBuilder(
+      animation: _tasksController,
+      builder: (context, _) {
+        final sections = _buildSectionsFromTasks(_tasksController.tasks);
+        final completedIndex = _completedIndex(sections);
+        final showLoading =
+            _tasksController.isLoading && _tasksController.tasks.isEmpty;
+        final showError =
+            _tasksController.errorMessage.isNotEmpty &&
+                _tasksController.tasks.isEmpty;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _stageStepper(completedIndex),
+            const SizedBox(height: 16),
+            if (showLoading)
+              const Center(
+                child: CircularProgressIndicator(color: Colors.white70),
+              )
+            else if (showError)
+              _errorState(_tasksController.errorMessage)
+            else
+              ...sections.map((section) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: _sectionBlock(section),
+                );
+              }),
+          ],
+        );
+      },
     );
   }
 
-  Widget _stageStepper() {
+  int _completedIndex(List<_TaskSection> sections) {
+    final index =
+        sections.lastIndexWhere((section) => section.showCompletedButton);
+    return index;
+  }
+
+  Widget _stageStepper(int completedIndex) {
     const stages = ['PD', 'SD', 'DD', 'CD'];
-    const completedIndex = 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -128,7 +216,8 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
           children: List.generate(stages.length * 2 - 1, (index) {
             if (index.isOdd) {
               final lineIndex = index ~/ 2;
-              final isActive = lineIndex <= completedIndex;
+              final isActive =
+                  completedIndex >= 0 && lineIndex <= completedIndex;
               return Expanded(
                 child: Container(
                   height: 2,
@@ -137,7 +226,8 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
               );
             }
             final stageIndex = index ~/ 2;
-            final isComplete = stageIndex <= completedIndex;
+            final isComplete =
+                completedIndex >= 0 && stageIndex <= completedIndex;
             return _stageDot(isComplete);
           }),
         ),
@@ -184,6 +274,9 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
   }
 
   Widget _sectionBlock(_TaskSection section) {
+    final sectionTaskId = section.tasks.isNotEmpty
+        ? section.tasks.first.id
+        : '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -220,13 +313,33 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
           _secondaryActionButton(
             label: 'Add New Task',
             icon: Icons.add,
-            onTap: () => _openAddTask(stage: section.title),
+            onTap: () => _openAddTask(
+              stage: section.title,
+              milestoneId: section.milestoneId,
+            ),
           ),
           const SizedBox(height: 12),
           _primaryActionButton(
             label: 'Upload Documents',
             icon: Icons.upload,
-            onTap: () => _openUpload(stage: section.title),
+            onTap: () {
+              if (sectionTaskId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No task to upload.')),
+                );
+                return;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => UploadDocumentScreen(
+                    initialStage: section.title,
+                    initialTaskName: section.tasks.first.title,
+                    taskId: sectionTaskId,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ],
@@ -236,7 +349,24 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
   Widget _taskRow(_TaskSection section, _TaskItem task) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => _openUpload(stage: section.title, task: task.title),
+      onTap: () {
+        if (task.id.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Task is missing.')),
+          );
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => UploadDocumentScreen(
+              initialStage: section.title,
+              initialTaskName: task.title,
+              taskId: task.id,
+            ),
+          ),
+        );
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
@@ -379,9 +509,33 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
       ),
     );
   }
+
+  Widget _errorState(String message) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          message.isNotEmpty ? message : 'Failed to load tasks.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => _tasksController.fetchTasks(
+            projectId: widget.project.id,
+          ),
+          child: const Text(
+            'Retry',
+            style: TextStyle(color: _accentColor),
+          ),
+        ),
+      ],
+    );
+  }
+
 }
 
 class _TaskSection {
+  final String milestoneId;
   final String title;
   final String statusLabel;
   final Color statusColor;
@@ -390,6 +544,7 @@ class _TaskSection {
   final List<_TaskItem> tasks;
 
   const _TaskSection({
+    required this.milestoneId,
     required this.title,
     required this.statusLabel,
     required this.statusColor,
@@ -400,8 +555,13 @@ class _TaskSection {
 }
 
 class _TaskItem {
+  final String id;
   final String title;
   final bool completed;
 
-  const _TaskItem({required this.title, this.completed = false});
+  const _TaskItem({
+    required this.id,
+    required this.title,
+    this.completed = false,
+  });
 }

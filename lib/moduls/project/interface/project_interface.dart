@@ -8,6 +8,10 @@ import 'package:dana_bozzetto/moduls/project/model/project_documents_response_mo
 import 'package:dana_bozzetto/moduls/project/model/team_member_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/create_task_request_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/task_submit_request_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/task_submit_response_model.dart';
 import 'package:dartz/dartz.dart';
 
 abstract base class ProjectInterface extends BaseRepository {
@@ -38,4 +42,16 @@ abstract base class ProjectInterface extends BaseRepository {
           Either<DataCRUDFailure,
               Success<List<TeamMemberGetDocumentsResponseModel>>>>
       fetchTeamMemberDocuments();
+
+  Future<Either<DataCRUDFailure, Success<ProjectTaskResponseModel>>>
+      createTask({required CreateTaskRequestModel param});
+
+  Future<Either<DataCRUDFailure, Success<List<ProjectTaskResponseModel>>>>
+      fetchProjectTasks({required String projectId});
+
+  Future<Either<DataCRUDFailure, Success<TaskSubmitResponseModel>>>
+      submitTask({
+    required String taskId,
+    required TaskSubmitRequestModel param,
+  });
 }

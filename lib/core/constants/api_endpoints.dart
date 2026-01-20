@@ -55,6 +55,13 @@ base class ApiEndpoints {
   static String getProjectById(String projectId) =>
       _Project.projectById(projectId);
 
+  // ---------------------- Tasks -----------------------------
+  /// ### post/get
+  static const String createTask = _Tasks.tasks;
+  static String getProjectTasks(String projectId) =>
+      _Tasks.projectTasks(projectId);
+  static String submitTask(String taskId) => _Tasks.submitTask(taskId);
+
   // ---------------------- Documents -----------------------------
   /// ### get
   static String getProjectDocuments(String projectId) =>
@@ -335,6 +342,15 @@ class _Project {
   static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
   static const String projects = '$_projectRoute/';
   static String projectById(String projectId) => '$_projectRoute/$projectId';
+}
+
+// ---------------------- Tasks -----------------------------
+class _Tasks {
+  static const String _tasksRoute = '${ApiEndpoints.baseUrl}/tasks';
+  static const String tasks = _tasksRoute;
+  static String projectTasks(String projectId) =>
+      '$_tasksRoute/?projectId=$projectId';
+  static String submitTask(String taskId) => '$_tasksRoute/$taskId/submit';
 }
 
 // ---------------------- Documents -----------------------------

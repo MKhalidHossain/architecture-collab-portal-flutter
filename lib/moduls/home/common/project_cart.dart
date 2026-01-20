@@ -50,10 +50,7 @@ class ProjectCard extends StatelessWidget {
   Widget _milestoneText(int current, int total) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         children: [
           TextSpan(
             text: '$current',
@@ -134,8 +131,9 @@ class ProjectCard extends StatelessWidget {
                         child: Text(
                           statusLabel,
                           style: TextStyle(
-                            color:
-                                project.isActive ? Colors.white : Colors.black87,
+                            color: project.isActive
+                                ? Colors.white
+                                : Colors.black87,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -201,10 +199,7 @@ class ProjectCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     project.subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                 ],
 
@@ -237,8 +232,7 @@ class ProjectCard extends StatelessWidget {
                   children: [
                     const Text(
                       'Team Members',
-                      style:
-                          TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     Row(
                       children: project.teamAvatars
@@ -283,9 +277,7 @@ class ProjectCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                      ),
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                     ),
                     child: const Center(
                       child: Text(
@@ -321,10 +313,7 @@ class _ProgressCircle extends StatelessWidget {
   final bool active;
   final double size;
 
-  const _ProgressCircle({
-    required this.active,
-    required this.size,
-  });
+  const _ProgressCircle({required this.active, required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -341,11 +330,7 @@ class _ProgressCircle extends StatelessWidget {
       ),
       child: Center(
         child: active
-            ? const Icon(
-                Icons.check,
-                size: 16,
-                color: Colors.white,
-              )
+            ? const Icon(Icons.check, size: 16, color: Colors.white)
             : const SizedBox.shrink(),
       ),
     );
@@ -369,16 +354,14 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (icon != null)
-          Icon(icon, color: _accentColor, size: 22),
+        if (icon != null) Icon(icon, color: _accentColor, size: 22),
         if (icon != null) const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style:
-                  const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
             valueWidget ??
                 Text(
