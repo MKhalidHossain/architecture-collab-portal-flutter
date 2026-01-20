@@ -32,7 +32,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   bool _isSubmitting = false;
   PlatformFile? _pickedFile;
 
-  final List<String> _stageOptions = const [
+  final List<String> _stageOptions = [
     'Pre-Design',
     'Schematic Design',
     'Design Developed',
@@ -45,7 +45,10 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   void initState() {
     super.initState();
     final stage = widget.initialStage?.trim() ?? '';
-    if (stage.isNotEmpty && _stageOptions.contains(stage)) {
+    if (stage.isNotEmpty) {
+      if (!_stageOptions.contains(stage)) {
+        _stageOptions.insert(0, stage);
+      }
       _selectedStage = stage;
     }
   }

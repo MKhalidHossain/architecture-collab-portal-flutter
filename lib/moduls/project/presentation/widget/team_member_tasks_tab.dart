@@ -164,6 +164,25 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     }
   }
 
+  Future<void> _openUploadForTask({
+    required String stage,
+    required _TaskItem task,
+  }) async {
+    final updated = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UploadDocumentScreen(
+          initialStage: stage,
+          initialTaskName: task.title,
+          taskId: task.id,
+        ),
+      ),
+    );
+    if (updated == true) {
+      _tasksController.fetchTasks(projectId: widget.project.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -329,15 +348,9 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
                 );
                 return;
               }
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => UploadDocumentScreen(
-                    initialStage: section.title,
-                    initialTaskName: section.tasks.first.title,
-                    taskId: sectionTaskId,
-                  ),
-                ),
+              _openUploadForTask(
+                stage: section.title,
+                task: section.tasks.first,
               );
             },
           ),
@@ -356,16 +369,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
           );
           return;
         }
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => UploadDocumentScreen(
-              initialStage: section.title,
-              initialTaskName: task.title,
-              taskId: task.id,
-            ),
-          ),
-        );
+        _openUploadForTask(stage: section.title, task: task);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
