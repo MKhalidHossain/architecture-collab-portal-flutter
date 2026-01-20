@@ -79,6 +79,7 @@ class _TeamMemberHomeScreenState extends State<TeamMemberHomeScreen> {
       userId: widget.userId,
       dashboardFuture: _dashboardFuture,
       showCalendarMenu: true,
+      isTeamMember: true,
     );
   }
 }

@@ -8,7 +8,9 @@ import 'package:get/get.dart';
 enum NotificationFilter { all, unread }
 
 class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+  final VoidCallback? onBack;
+
+  const NotificationScreen({super.key, this.onBack});
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -112,8 +114,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
             children: [
               IconButton(
                 onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
+                  if (widget.onBack != null) {
+                    widget.onBack!();
+                  } else {
+                    Get.back();
                   }
                 },
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
@@ -351,8 +355,10 @@ class _NotificationItemState extends State<NotificationItem> {
           const SizedBox(height: 8),
           Text(
             widget.timeLabel,
-            style:
-                TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.6)),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.6),
+            ),
           ),
         ],
       ),
@@ -412,7 +418,10 @@ _NotificationTypeStyle _typeStyle(String type) {
     case 'approval request':
       return const _NotificationTypeStyle(Icons.check_circle, Colors.orange);
     case 'task submitted':
-      return const _NotificationTypeStyle(Icons.assignment_turned_in, Colors.teal);
+      return const _NotificationTypeStyle(
+        Icons.assignment_turned_in,
+        Colors.teal,
+      );
     case 'new message':
       return const _NotificationTypeStyle(Icons.chat_bubble, Colors.green);
     case 'milestone completed':
