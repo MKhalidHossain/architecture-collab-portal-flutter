@@ -474,6 +474,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         return ProjectBody(
           projectsFuture: _projectsFuture,
           filter: _projectFilter,
+          isTeamMember: widget.isTeamMember,
         );
       case MenuType.messages:
         return MessagesScreen();

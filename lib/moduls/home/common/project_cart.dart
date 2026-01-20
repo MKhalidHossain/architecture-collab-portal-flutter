@@ -8,8 +8,13 @@ const double _stepSize = 34;
 
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
+  final bool isTeamMember;
 
-  const ProjectCard({super.key, required this.project});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    this.isTeamMember = false,
+  });
 
   ImageProvider _resolveImage(String source) {
     final value = source.trim();
@@ -265,8 +270,10 @@ class ProjectCard extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            ProjectDetailScreen(projectId: project.id),
+                        builder: (_) => ProjectDetailScreen(
+                          projectId: project.id,
+                          isClient: !isTeamMember,
+                        ),
                       ),
                     );
                   },

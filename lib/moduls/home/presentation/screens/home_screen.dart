@@ -348,6 +348,7 @@ class _HomeScreenTState extends State<HomeScreenT> {
                       margin: const EdgeInsets.only(right: 16),
                       child: ProjectCard(
                         project: projectModels[index],
+                        isTeamMember: widget.isTeamMember,
                       ),
                     );
                   },

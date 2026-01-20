@@ -10,8 +10,13 @@ import 'package:flutter/material.dart';
 
 class OverviewTab extends StatelessWidget {
   final ProjectDetailsModel project;
+  final bool isTeamMember;
 
-  const OverviewTab({super.key, required this.project});
+  const OverviewTab({
+    super.key,
+    required this.project,
+    this.isTeamMember = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +174,7 @@ class OverviewTab extends StatelessWidget {
   Widget _quickActions() {
     final documentsCount = project.documents.length;
     final approvalsCount = 2;
+    final reviewCount = 2;
     final invoicesCount = 2;
 
     return _glassCard(
@@ -200,13 +206,22 @@ class OverviewTab extends StatelessWidget {
             navigateTo: const ProjectBaseApproval(),
           ),
           const SizedBox(height: 10),
-          _ActionTile(
-            title: "Invoices",
-            icon: Icons.attach_money,
-            count: invoicesCount.toString().padLeft(2, '0'),
-            badgeColor: const Color(0xFF0C7A7E),
-            navigateTo: const ProjectInvoicesScreen(),
-          ),
+          if (isTeamMember)
+            _ActionTile(
+              title: "Review",
+              icon: Icons.fact_check_outlined,
+              count: reviewCount.toString().padLeft(2, '0'),
+              badgeColor: const Color(0xFFE74C3C),
+              navigateTo: const ProjectBaseApproval(),
+            )
+          else
+            _ActionTile(
+              title: "Invoices",
+              icon: Icons.attach_money,
+              count: invoicesCount.toString().padLeft(2, '0'),
+              badgeColor: const Color(0xFF0C7A7E),
+              navigateTo: const ProjectInvoicesScreen(),
+            ),
         ],
       ),
     );

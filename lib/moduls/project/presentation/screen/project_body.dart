@@ -12,11 +12,13 @@ enum ProjectFilter {
 class ProjectBody extends StatefulWidget {
   final Future<ProjectsResponse> projectsFuture;
   final ProjectFilter filter;
+  final bool isTeamMember;
 
   const ProjectBody({
     super.key,
     required this.projectsFuture,
     required this.filter,
+    this.isTeamMember = false,
   });
 
   @override
@@ -73,6 +75,7 @@ class _ProjectBodyState extends State<ProjectBody> {
                   itemBuilder: (context, index) {
                     return ProjectCard(
                       project: projectModels[index],
+                      isTeamMember: widget.isTeamMember,
                     );
                   },
                 );

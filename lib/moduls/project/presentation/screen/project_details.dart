@@ -5,12 +5,18 @@ import 'package:dana_bozzetto/moduls/project/model/project_details_response_mode
 import 'package:dana_bozzetto/moduls/project/presentation/widget/mileston_widget.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/overview_widget.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/team_widget.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/widget/team_member_tasks_tab.dart';
 import 'package:flutter/material.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final String projectId;
+  final bool isClient;
 
-  const ProjectDetailScreen({super.key, required this.projectId});
+  const ProjectDetailScreen({
+    super.key,
+    required this.projectId,
+    this.isClient = true,
+  });
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
@@ -18,7 +24,6 @@ class ProjectDetailScreen extends StatefulWidget {
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   int _selectedTab = 0;
-  final bool isClient = true;
   late final ProjectDetailsController _controller;
 
   @override
@@ -87,11 +92,18 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   // ================= TAB LIST =================
 
   List<String> _tabsList() {
+    if (widget.isClient) {
+      return [
+        "Overview",
+        "Team",
+        "Milestones",
+      ];
+    }
     return [
       "Overview",
-      if (!isClient) "Tasks", // ✅ only for team member
-      "Team",
+      "Tasks",
       "Milestones",
+      "Team",
     ];
   }
 
@@ -102,14 +114,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
     switch (currentTab) {
       case "Overview":
-        return OverviewTab(project: project);
+        return OverviewTab(project: project, isTeamMember: !widget.isClient);
       case "Tasks":
-        return const Center(
-          child: Text(
-            "Tasks Screen",
-            style: TextStyle(color: Colors.white),
-          ),
-        );
+        return TeamMemberTasksTab(project: project);
       case "Team":
         return TeamTab(teamMembers: project.teamMembers);
       case "Milestones":
@@ -137,6 +144,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     final status = project.status.trim().isNotEmpty
         ? project.status.trim()
         : 'Unknown';
+    final tabWidth = widget.isClient ? 130.0 : 120.0;
+    final tabHeight = widget.isClient ? 50.0 : 44.0;
+    final tabRadius = widget.isClient ? 16.0 : 14.0;
 
     return Stack(
       children: [
@@ -238,11 +248,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             });
                           },
                           child: Container(
-                            width: 130,
-                            height: 50,
+                            width: tabWidth,
+                            height: tabHeight,
                             decoration: BoxDecoration(
                               color: backgroundColor,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(tabRadius),
                               border: Border.all(
                                 color: Colors.white.withOpacity(0.2),
                               ),
