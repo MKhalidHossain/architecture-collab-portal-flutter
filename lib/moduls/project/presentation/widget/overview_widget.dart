@@ -203,7 +203,13 @@ class OverviewTab extends StatelessWidget {
             icon: Icons.check_box_outlined,
             count: approvalsCount.toString().padLeft(2, '0'),
             badgeColor: const Color(0xFFE74C3C),
-            navigateTo: const ProjectBaseApproval(),
+            navigateTo: ProjectBaseApproval(
+              isTeamMember: isTeamMember,
+              projectTitle: project.name,
+              projectSubtitle: project.client.name,
+              projectStatus: project.status,
+              coverImageUrl: project.coverImage.url,
+            ),
           ),
           const SizedBox(height: 10),
           if (isTeamMember)
@@ -212,7 +218,13 @@ class OverviewTab extends StatelessWidget {
               icon: Icons.fact_check_outlined,
               count: reviewCount.toString().padLeft(2, '0'),
               badgeColor: const Color(0xFFE74C3C),
-              navigateTo: const ProjectBaseApproval(),
+              navigateTo: ProjectBaseApproval(
+                isTeamMember: isTeamMember,
+                projectTitle: project.name,
+                projectSubtitle: project.client.name,
+                projectStatus: project.status,
+                coverImageUrl: project.coverImage.url,
+              ),
             )
           else
             _ActionTile(

@@ -5,8 +5,23 @@ import 'package:dana_bozzetto/moduls/project/model/client_get_approvals_response
 import 'package:dana_bozzetto/moduls/project/presentation/screen/approval_details_screen.dart';
 import 'package:flutter/material.dart';
 
+const Color _accentColor = Color(0xFF0C7A7E);
+
 class ProjectBaseApproval extends StatefulWidget {
-  const ProjectBaseApproval({super.key});
+  final bool isTeamMember;
+  final String? projectTitle;
+  final String? projectSubtitle;
+  final String? projectStatus;
+  final String? coverImageUrl;
+
+  const ProjectBaseApproval({
+    super.key,
+    this.isTeamMember = false,
+    this.projectTitle,
+    this.projectSubtitle,
+    this.projectStatus,
+    this.coverImageUrl,
+  });
 
   @override
   State<ProjectBaseApproval> createState() => _ProjectBaseApprovalState();
@@ -50,7 +65,9 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
 
           return Column(
             children: [
-              _buildHeader(context, tabs),
+              widget.isTeamMember
+                  ? _buildTeamMemberHeader(context, tabs, approvals)
+                  : _buildHeader(context, tabs),
               Expanded(
                 child: Stack(
                   children: [
@@ -217,7 +234,148 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
     );
   }
 
+  Widget _buildTeamMemberHeader(
+    BuildContext context,
+    List<String> tabs,
+    List<ClientGetApprovalsResponseModel> approvals,
+  ) {
+    final headerTitle = _firstNonEmpty(
+      widget.projectTitle,
+      approvals.isNotEmpty ? approvals.first.projectName : null,
+      fallback: 'Project',
+    );
+    final headerSubtitle =
+        _firstNonEmpty(widget.projectSubtitle, null, fallback: '');
+    final headerStatus = _formatStatusLabel(widget.projectStatus);
+
+    return Stack(
+      children: [
+        Image(
+          image: _resolveImage(widget.coverImageUrl ?? ''),
+          width: double.infinity,
+          height: 300,
+          fit: BoxFit.cover,
+        ),
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            height: 320,
+            padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
+            color: Colors.black.withOpacity(0.4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "Approvals",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  headerTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (headerSubtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    headerSubtitle,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _accentColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    headerStatus.isNotEmpty ? headerStatus : 'Active',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(tabs.length, (i) {
+                      final active = _selectedTab == i;
+                      final backgroundColor = active
+                          ? _accentColor
+                          : const Color(0xFFB0B0B0).withOpacity(0.6);
+                      final textColor =
+                          active ? Colors.white : const Color(0xFF2B2B2B);
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedTab = i),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 12),
+                          width: 128,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: backgroundColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.35),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              tabs[i],
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 15,
+                                fontWeight:
+                                    active ? FontWeight.w700 : FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildApprovalCard(ClientGetApprovalsResponseModel approval) {
+    if (widget.isTeamMember) {
+      return _buildTeamMemberApprovalCard(approval);
+    }
     final statusView = _statusView(approval.status);
     final showActions = statusView.category == _ApprovalStatusCategory.pending;
     final title = approval.title?.trim();
@@ -378,6 +536,193 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTeamMemberApprovalCard(
+    ClientGetApprovalsResponseModel approval,
+  ) {
+    final badgeStyle = _teamStatusBadge(approval.status);
+    final title = approval.title?.trim().isNotEmpty == true
+        ? approval.title!.trim()
+        : 'Approval Request';
+    final description = approval.description?.trim().isNotEmpty == true
+        ? approval.description!.trim()
+        : 'Please review and approve the final design proposal.';
+    final isApproved =
+        _statusCategory(approval.status) == _ApprovalStatusCategory.approved;
+    final fallbackBy = isApproved ? 'Admin' : 'Team';
+    final requestedBy = approval.requestedBy?.trim().isNotEmpty == true
+        ? approval.requestedBy!.trim()
+        : fallbackBy;
+    final requestedDate = approval.requestedDate;
+    final approvedDate = approval.dueDate ?? approval.requestedDate;
+    final byLabelPrefix = isApproved ? 'Accepted by' : 'Requested by';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.black.withOpacity(0.35),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withOpacity(0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badgeStyle.background,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      badgeStyle.label,
+                      style: TextStyle(
+                        color: badgeStyle.textColor,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.person_outline_rounded,
+                    size: 16,
+                    color: Colors.white60,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$byLabelPrefix $requestedBy',
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _dateColumn(
+                      'Requested',
+                      requestedDate,
+                    ),
+                  ),
+                  if (isApproved) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _dateColumn(
+                        'Approved date',
+                        approvedDate,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dateColumn(String label, DateTime? date) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 16,
+              color: Colors.white60,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _formatDateLong(date),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  _TeamStatusBadge _teamStatusBadge(String? status) {
+    final category = _statusCategory(status);
+    if (category == _ApprovalStatusCategory.pending) {
+      return _TeamStatusBadge(
+        label: _formatStatusLabel(status),
+        background: const Color(0xFFF3E7B3),
+        textColor: _accentColor,
+      );
+    }
+    if (category == _ApprovalStatusCategory.approved) {
+      return _TeamStatusBadge(
+        label: _formatStatusLabel(status),
+        background: _accentColor,
+        textColor: Colors.white,
+      );
+    }
+    return _TeamStatusBadge(
+      label: _formatStatusLabel(status),
+      background: Colors.white70,
+      textColor: Colors.black87,
     );
   }
 
@@ -545,6 +890,49 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
     final month = date.month.toString().padLeft(2, '0');
     return "$day/$month/${date.year}";
   }
+
+  String _formatDateLong(DateTime? date) {
+    if (date == null) {
+      return '-';
+    }
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[date.month - 1];
+    return '$month ${date.day.toString().padLeft(2, '0')}, ${date.year}';
+  }
+
+  String _firstNonEmpty(String? first, String? second, {String fallback = ''}) {
+    if (first != null && first.trim().isNotEmpty) {
+      return first.trim();
+    }
+    if (second != null && second.trim().isNotEmpty) {
+      return second.trim();
+    }
+    return fallback;
+  }
+
+  ImageProvider _resolveImage(String source) {
+    final value = source.trim();
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+    if (value.isNotEmpty) {
+      return AssetImage(value);
+    }
+    return const AssetImage('assets/image/aa.png');
+  }
 }
 
 class _ApprovalCounts {
@@ -574,5 +962,17 @@ class _ApprovalStatusView {
     required this.label,
     required this.color,
     required this.category,
+  });
+}
+
+class _TeamStatusBadge {
+  final String label;
+  final Color background;
+  final Color textColor;
+
+  const _TeamStatusBadge({
+    required this.label,
+    required this.background,
+    required this.textColor,
   });
 }
