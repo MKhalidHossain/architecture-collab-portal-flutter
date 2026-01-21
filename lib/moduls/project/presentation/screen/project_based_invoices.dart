@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/controller/project_invoices_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/invoice_pdf_preview_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class ProjectInvoicesScreen extends StatefulWidget {
   const ProjectInvoicesScreen({super.key});
@@ -155,6 +159,15 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
                                                     "Due",
                                                     item.updatedAt,
                                                   ),
+                                                  onDownload: () =>
+                                                      _handleDownload(
+                                                        context,
+                                                        item: item,
+                                                      ),
+                                                  onPreview: () => _handlePreview(
+                                                    context,
+                                                    item: item,
+                                                  ),
                                                 ),
                                               ),
                                               const SizedBox(height: 40),
@@ -279,6 +292,8 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     required String description,
     required String issued,
     required String due,
+    VoidCallback? onDownload,
+    VoidCallback? onPreview,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -391,6 +406,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
                         label: "Download",
                         icon: Icons.download_rounded,
                         isPrimary: true,
+                        onTap: onDownload,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -399,6 +415,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
                         label: "Preview",
                         icon: Icons.remove_red_eye_rounded,
                         isPrimary: false,
+                        onTap: onPreview,
                       ),
                     ),
                   ],
@@ -415,6 +432,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     required String label,
     required IconData icon,
     required bool isPrimary,
+    VoidCallback? onTap,
   }) {
     return Container(
       height: 46,
@@ -425,20 +443,27 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
             ? null
             : Border.all(color: Colors.white30, width: 1.3),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 18),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -548,6 +573,168 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     return item.type?.trim().isNotEmpty == true
         ? item.type!
         : "No details available";
+  }
+
+  Future<void> _handlePreview(
+    BuildContext context, {
+    required ProjectFinanceItem item,
+  }) async {
+    try {
+      final filePath = await _saveInvoicePdf(item, isPreview: true);
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InvoicePdfPreviewScreen(
+            filePath: filePath,
+            title: item.customId ?? "Invoice",
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      _showMessage(context, "Unable to preview this invoice.");
+    }
+  }
+
+  Future<void> _handleDownload(
+    BuildContext context, {
+    required ProjectFinanceItem item,
+  }) async {
+    try {
+      final filePath = await _saveInvoicePdf(item, isPreview: false);
+      if (!context.mounted) {
+        return;
+      }
+      _showMessage(context, "Saved to $filePath");
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      _showMessage(context, "Download failed. Please try again.");
+    }
+  }
+
+  Future<String> _saveInvoicePdf(
+    ProjectFinanceItem item, {
+    required bool isPreview,
+  }) async {
+    final bytes = await _buildInvoicePdfBytes(item);
+    final dir = isPreview
+        ? await getTemporaryDirectory()
+        : await getApplicationDocumentsDirectory();
+    final fileName = _buildInvoiceFileName(item);
+    final filePath = '${dir.path}/$fileName';
+    final file = File(filePath);
+    await file.writeAsBytes(bytes, flush: true);
+    return file.path;
+  }
+
+  String _buildInvoiceFileName(ProjectFinanceItem item) {
+    final base =
+        (item.customId ?? item.id ?? 'invoice').replaceAll(RegExp(r'\s+'), '_');
+    final safe = base.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '');
+    return '$safe.pdf';
+  }
+
+  Future<List<int>> _buildInvoicePdfBytes(ProjectFinanceItem item) async {
+    final pdf = pw.Document();
+    final issueDate = _formatDate(item.createdAt ?? DateTime.now());
+    final dueDate = _formatDate(item.updatedAt ?? DateTime.now());
+    final title = item.customId ?? item.type ?? 'Invoice';
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 24,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text('Status: ${item.status ?? "Pending"}'),
+          pw.SizedBox(height: 6),
+          pw.Text('Issued: $issueDate'),
+          pw.Text('Due: $dueDate'),
+          pw.SizedBox(height: 12),
+          if (item.client != null) ...[
+            pw.Text('Client: ${item.client?.name ?? "-"}'),
+            pw.Text('Email: ${item.client?.email ?? "-"}'),
+            pw.SizedBox(height: 12),
+          ],
+          pw.Text(
+            'Line Items',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Table.fromTextArray(
+            headers: const ['Description', 'Qty', 'Rate', 'Amount'],
+            data: item.lineItems.isEmpty
+                ? [
+                    ['-', '-', '-', '-'],
+                  ]
+                : item.lineItems.map((line) {
+                    return [
+                      line.description ?? '-',
+                      '${line.quantity ?? 0}',
+                      _formatCurrency(line.rate),
+                      _formatCurrency(line.amount),
+                    ];
+                  }).toList(),
+          ),
+          pw.SizedBox(height: 16),
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text('Subtotal: ${_formatCurrency(item.subtotal)}'),
+                pw.Text('Tax (${item.taxRate ?? 0}%): '
+                    '${_formatCurrency(item.taxAmount)}'),
+                pw.Text('Discount: ${_formatCurrency(item.discount)}'),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Total: ${_formatCurrency(item.totalAmount)}',
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if ((item.notes ?? '').trim().isNotEmpty) ...[
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Notes',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(item.notes!.trim()),
+          ],
+        ],
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Widget _buildMessage(String message, {VoidCallback? onRetry}) {
