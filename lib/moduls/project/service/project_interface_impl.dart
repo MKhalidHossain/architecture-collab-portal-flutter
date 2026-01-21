@@ -9,6 +9,7 @@ import 'package:dana_bozzetto/moduls/project/model/client_get_documents_response
 import 'package:dana_bozzetto/moduls/project/model/project_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/team_member_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/create_task_request_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
@@ -131,6 +132,16 @@ final class ProjectInterfaceImpl extends ProjectInterface {
   }
 
   @override
+  Future<Either<DataCRUDFailure, Success<List<ProjectFinanceItem>>>>
+      fetchFinances() {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getFinances);
+        final data = response.data;
+        final payload = data is Map && data['data'] is List ? data['data'] : data;
+        return Success(
+          data: ProjectFinanceItem.fromJsonList(payload),
+        );
   Future<Either<DataCRUDFailure, Success<ProjectTaskResponseModel>>> createTask({
     required CreateTaskRequestModel param,
   }) {
