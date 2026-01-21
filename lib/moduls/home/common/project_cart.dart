@@ -3,10 +3,18 @@ import 'package:dana_bozzetto/moduls/project/presentation/screen/project_details
 import 'package:flutter/material.dart';
 import '../model/project_cart_model.dart';
 
+const Color _accentColor = Color(0xFF0C7C84);
+const double _stepSize = 34;
+
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
+  final bool isTeamMember;
 
-  const ProjectCard({super.key, required this.project});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    this.isTeamMember = false,
+  });
 
   ImageProvider _resolveImage(String source) {
     final value = source.trim();
@@ -19,17 +27,72 @@ class ProjectCard extends StatelessWidget {
     return const AssetImage('assets/image/aa.png');
   }
 
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = months[date.month - 1];
+    final day = date.day.toString().padLeft(2, '0');
+    return '$month $day, ${date.year}';
+  }
+
+  Widget _milestoneText(int current, int total) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        children: [
+          TextSpan(
+            text: '$current',
+            style: const TextStyle(color: _accentColor),
+          ),
+          TextSpan(
+            text: ' / $total',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatStatusLabel(String status) {
+    final trimmed = status.trim();
+    if (trimmed.isEmpty) {
+      return 'Active';
+    }
+    if (trimmed.length == 1) {
+      return trimmed.toUpperCase();
+    }
+    return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final statusLabel = _formatStatusLabel(project.status);
+
     return SizedBox(
-      height: 600,
+      height: 560,
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: Container(
-            color: const Color(0xFF4A4A4A).withOpacity(0.45),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3F3F3F).withOpacity(0.55),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,15 +100,15 @@ class ProjectCard extends StatelessWidget {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       child: Image(
                         image: _resolveImage(project.image),
-                        height: 180,
+                        height: 170,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Image.asset(
                           'assets/image/aa.png',
-                          height: 180,
+                          height: 170,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
@@ -56,19 +119,22 @@ class ProjectCard extends StatelessWidget {
                       left: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
+                          horizontal: 18,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              project.isActive ? Colors.teal : Colors.grey,
-                          borderRadius: BorderRadius.circular(30),
+                          color: project.isActive
+                              ? _accentColor
+                              : Colors.white70,
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: Text(
-                          project.status,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
+                          statusLabel,
+                          style: TextStyle(
+                            color: project.isActive
+                                ? Colors.white
+                                : Colors.black87,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -90,31 +156,52 @@ class ProjectCard extends StatelessWidget {
                       final step = project.steps[i ~/ 2];
                       return _ProgressCircle(
                         active: step.completed,
-                        label: step.label,
+                        size: _stepSize,
                       );
                     }
                   }),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: project.steps
+                      .map(
+                        (step) => SizedBox(
+                          width: _stepSize,
+                          child: Text(
+                            step.label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: step.completed
+                                  ? _accentColor
+                                  : Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 /// Title
                 Text(
                   project.title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  project.subtitle,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
+                if (project.subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    project.subtitle,
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
                   ),
-                ),
+                ],
 
                 const SizedBox(height: 20),
 
@@ -124,14 +211,15 @@ class ProjectCard extends StatelessWidget {
                     _InfoRow(
                       icon: Icons.calendar_today_outlined,
                       title: 'Deadline',
-                      value:
-                          '${project.deadline.day}/${project.deadline.month}/${project.deadline.year}',
+                      value: _formatDate(project.deadline),
                     ),
                     const Spacer(),
                     _InfoRow(
                       title: 'Milestone',
-                      value:
-                          '${project.currentMilestone} / ${project.totalMilestones}',
+                      valueWidget: _milestoneText(
+                        project.currentMilestone,
+                        project.totalMilestones,
+                      ),
                     ),
                   ],
                 ),
@@ -144,25 +232,25 @@ class ProjectCard extends StatelessWidget {
                   children: [
                     const Text(
                       'Team Members',
-                      style:
-                          TextStyle(color: Colors.white70, fontSize: 15),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     Row(
-                      children: List.generate(project.teamAvatars.length,
-                          (index) {
-                        return Align(
-                          widthFactor: 0.6,
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white,
-                            child: CircleAvatar(
-                              radius: 19,
-                              backgroundImage:
-                                  _resolveImage(project.teamAvatars[index]),
+                      children: project.teamAvatars
+                          .take(3)
+                          .map(
+                            (avatar) => Align(
+                              widthFactor: 0.6,
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.white,
+                                child: CircleAvatar(
+                                  radius: 12,
+                                  backgroundImage: _resolveImage(avatar),
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      }),
+                          )
+                          .toList(),
                     ),
                   ],
                 ),
@@ -171,13 +259,15 @@ class ProjectCard extends StatelessWidget {
 
                 /// Button
                 InkWell(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            ProjectDetailScreen(projectId: project.id),
+                        builder: (_) => ProjectDetailScreen(
+                          projectId: project.id,
+                          isClient: !isTeamMember,
+                        ),
                       ),
                     );
                   },
@@ -185,17 +275,15 @@ class ProjectCard extends StatelessWidget {
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                      ),
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                     ),
                     child: const Center(
                       child: Text(
                         'View Details',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _accentColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -214,8 +302,8 @@ class ProjectCard extends StatelessWidget {
   Widget _buildLine({required bool active}) {
     return Expanded(
       child: Container(
-        height: 3,
-        color: active ? Colors.teal : Colors.white38,
+        height: 2.5,
+        color: active ? _accentColor : Colors.white38,
       ),
     );
   }
@@ -223,34 +311,27 @@ class ProjectCard extends StatelessWidget {
 
 class _ProgressCircle extends StatelessWidget {
   final bool active;
-  final String label;
+  final double size;
 
-  const _ProgressCircle({
-    required this.active,
-    required this.label,
-  });
+  const _ProgressCircle({required this.active, required this.size});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: active ? Colors.teal : Colors.white24,
+        color: active ? _accentColor : Colors.white24,
         border: Border.all(
-          color: active ? Colors.teal : Colors.white38,
-          width: 3,
+          color: active ? _accentColor : Colors.white38,
+          width: 2.5,
         ),
       ),
       child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.white70,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        child: active
+            ? const Icon(Icons.check, size: 16, color: Colors.white)
+            : const SizedBox.shrink(),
       ),
     );
   }
@@ -259,37 +340,38 @@ class _ProgressCircle extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final IconData? icon;
   final String title;
-  final String value;
+  final String? value;
+  final Widget? valueWidget;
 
   const _InfoRow({
     this.icon,
     required this.title,
-    required this.value,
+    this.value,
+    this.valueWidget,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (icon != null)
-          Icon(icon, color: Colors.tealAccent, size: 22),
+        if (icon != null) Icon(icon, color: _accentColor, size: 22),
         if (icon != null) const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style:
-                  const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            valueWidget ??
+                Text(
+                  value ?? '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
           ],
         ),
       ],

@@ -38,11 +38,15 @@ base class ApiEndpoints {
   /// ### get
   static const String clientPortalDashboard = _ClientPortal.dashboard;
   static const String getClientDocuments = _ClientPortal.getClientDocuments;
+  static const String getClientApprovals = _ClientPortal.getClientApprovals;
+  static String updateClientApproval(String approvalId) =>
+      _ClientPortal.updateClientApproval(approvalId);
 
   // ---------------------- Team Portal -----------------------------
   /// ### get
   static const String teamMemberDashboard = _TeamPortal.dashboard;
-  static const String getTeamMemberDocuments = _TeamPortal.getTeamMemberDocuments;
+  static const String getTeamMemberDocuments =
+      _TeamPortal.getTeamMemberDocuments;
 
   // ---------------------- Projects -----------------------------
   /// ### get
@@ -50,6 +54,18 @@ base class ApiEndpoints {
   static String getProjectById(String projectId) =>
       _Project.projectById(projectId);
   static const String getFinances = _Finance.getFinances;
+
+  // ---------------------- Tasks -----------------------------
+  /// ### post/get
+  static const String createTask = _Tasks.tasks;
+  static String getProjectTasks(String projectId) =>
+      _Tasks.projectTasks(projectId);
+  static String submitTask(String taskId) => _Tasks.submitTask(taskId);
+
+  // ---------------------- Documents -----------------------------
+  /// ### get
+  static String getProjectDocuments(String projectId) =>
+      _Documents.projectDocuments(projectId);
 
   //------------interest----------------
   /// ### get
@@ -74,9 +90,8 @@ base class ApiEndpoints {
   static const String getAllNotifications = _Notification.getAllNotifications;
   static const String marksRead = _Notification.marksRead;
   static const String markAllRead = _Notification.markAllRead;
-  static  String deleteNotification(String notificationId) => _Notification.deleteNotification(notificationId);
-
-
+  static String deleteNotification(String notificationId) =>
+      _Notification.deleteNotification(notificationId);
 
   /// ### post
   // static const String readAllNotifications = _Notification.readAllNotifications;
@@ -84,7 +99,6 @@ base class ApiEndpoints {
   /// ### patch
   static String markNotificationAsRead({required String notificationId}) =>
       _Notification.markNotificationAsRead(notificationId);
-
 
   // static const String markAllRead = '$_notificationRoute/read-all';
   // static const String deleteNotification = '$_notificationRoute/$notificationId';
@@ -171,12 +185,12 @@ base class ApiEndpoints {
 class _RemoteServer {
   static const String socketUrl = 'https://ursffiver-backend.onrender.com';
 
-  static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
+  // static const String baseUrl = 'https://backend-dana-bozzetto.onrender.com/api';
 }
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.85:5000/api';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
@@ -234,8 +248,8 @@ class _Notification {
   //     '$_notificationRoute/mark-all-as-read';
   static const String marksRead = '$_notificationRoute/read-all';
   static const String markAllRead = '$_notificationRoute/read-all';
-  static  String deleteNotification (String notificationId) => '$_notificationRoute/$notificationId';
-
+  static String deleteNotification(String notificationId) =>
+      '$_notificationRoute/$notificationId';
 }
 
 // ---------------------- USER -----------------------------
@@ -317,7 +331,9 @@ class _ClientPortal {
       '${ApiEndpoints.baseUrl}/client-portal';
   static const String dashboard = '$_clientPortalRoute/dashboard';
   static const String getClientDocuments = '$_clientPortalRoute/documents';
-
+  static const String getClientApprovals = '$_clientPortalRoute/approvals';
+  static String updateClientApproval(String approvalId) =>
+      '$_clientPortalRoute/approvals/$approvalId';
 }
 
 // ---------------------- Team Portal -----------------------------
@@ -332,4 +348,20 @@ class _Project {
   static const String _projectRoute = '${ApiEndpoints.baseUrl}/projects';
   static const String projects = '$_projectRoute/';
   static String projectById(String projectId) => '$_projectRoute/$projectId';
+}
+
+// ---------------------- Tasks -----------------------------
+class _Tasks {
+  static const String _tasksRoute = '${ApiEndpoints.baseUrl}/tasks';
+  static const String tasks = _tasksRoute;
+  static String projectTasks(String projectId) =>
+      '$_tasksRoute/?projectId=$projectId';
+  static String submitTask(String taskId) => '$_tasksRoute/$taskId/submit';
+}
+
+// ---------------------- Documents -----------------------------
+class _Documents {
+  static const String _documentsRoute = '${ApiEndpoints.baseUrl}/documents';
+  static String projectDocuments(String projectId) =>
+      '$_documentsRoute/project/$projectId';
 }

@@ -45,12 +45,10 @@ final class AuthInterfaceImpl extends AuthInterface {
   }) async {
     return await asyncTryCatch(
       tryFunc: () async {
-        try {
-          await appPigeon.post(ApiEndpoints.logout, data: param.toJson());
-        } finally {
-          await appPigeon.logOut();
-        }
+        await appPigeon.post(ApiEndpoints.logout, data: param.toJson());
+        await appPigeon.logOut();
         return Success(message: 'Logout Succesfuly', data: "Logged out");
+        
       },
     );
   }
