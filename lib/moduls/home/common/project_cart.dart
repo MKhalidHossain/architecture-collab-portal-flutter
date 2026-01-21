@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../model/project_cart_model.dart';
 
 const Color _accentColor = Color(0xFF0C7C84);
-const double _stepSize = 34;
+const double _stepSize = 36;
 
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
@@ -81,7 +81,7 @@ class ProjectCard extends StatelessWidget {
     final statusLabel = _formatStatusLabel(project.status);
 
     return SizedBox(
-      height: 560,
+      height: 610,
       width: double.infinity,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -103,12 +103,12 @@ class ProjectCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                       child: Image(
                         image: _resolveImage(project.image),
-                        height: 170,
+                        height: 210,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Image.asset(
                           'assets/image/aa.png',
-                          height: 170,
+                          height: 210,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
@@ -120,7 +120,7 @@ class ProjectCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
-                          vertical: 6,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: project.isActive
@@ -134,7 +134,7 @@ class ProjectCard extends StatelessWidget {
                             color: project.isActive
                                 ? Colors.white
                                 : Colors.black87,
-                            fontSize: 12.5,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -143,7 +143,7 @@ class ProjectCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
                 /// Progress Stepper
                 Row(
@@ -173,9 +173,9 @@ class ProjectCard extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: step.completed
-                                  ? _accentColor
+                                  ? Colors.white
                                   : Colors.white70,
-                              fontSize: 12,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -184,14 +184,14 @@ class ProjectCard extends StatelessWidget {
                       .toList(),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 /// Title
                 Text(
                   project.title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -199,11 +199,11 @@ class ProjectCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     project.subtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    style: const TextStyle(color: Colors.white70, fontSize: 15),
                   ),
                 ],
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 /// Info Row
                 Row(
@@ -224,7 +224,7 @@ class ProjectCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 /// Team
                 Row(
@@ -240,14 +240,7 @@ class ProjectCard extends StatelessWidget {
                           .map(
                             (avatar) => Align(
                               widthFactor: 0.6,
-                              child: CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Colors.white,
-                                child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundImage: _resolveImage(avatar),
-                                ),
-                              ),
+                              child: _buildAvatar(avatar),
                             ),
                           )
                           .toList(),
@@ -255,7 +248,7 @@ class ProjectCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 /// Button
                 InkWell(
@@ -275,17 +268,18 @@ class ProjectCard extends StatelessWidget {
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
+                      color: Colors.white.withOpacity(0.14),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      border: Border.all(color: Colors.white.withOpacity(0.32)),
                     ),
                     child: const Center(
                       child: Text(
                         'View Details',
                         style: TextStyle(
                           color: _accentColor,
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
@@ -299,11 +293,32 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
+  Widget _buildAvatar(String source) {
+    return CircleAvatar(
+      radius: 14,
+      backgroundColor: Colors.white,
+      child: ClipOval(
+        child: Image(
+          image: _resolveImage(source),
+          width: 24,
+          height: 24,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Image.asset(
+            'assets/image/aa.png',
+            width: 24,
+            height: 24,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLine({required bool active}) {
     return Expanded(
       child: Container(
-        height: 2.5,
-        color: active ? _accentColor : Colors.white38,
+        height: 3,
+        color: active ? _accentColor : Colors.white24,
       ),
     );
   }
@@ -322,15 +337,16 @@ class _ProgressCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: active ? _accentColor : Colors.white24,
+        color: active ? _accentColor : Colors.white70,
         border: Border.all(
-          color: active ? _accentColor : Colors.white38,
-          width: 2.5,
+          color: active ? _accentColor : Colors.white54,
+          width: 2,
         ),
       ),
       child: Center(
         child: active
-            ? const Icon(Icons.check, size: 16, color: Colors.white)
+            ? const Icon(Icons.verified_rounded,
+                size: 18, color: Colors.white)
             : const SizedBox.shrink(),
       ),
     );

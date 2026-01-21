@@ -138,10 +138,16 @@ final class ProjectInterfaceImpl extends ProjectInterface {
       tryFunc: () async {
         final response = await appPigeon.get(ApiEndpoints.getFinances);
         final data = response.data;
-        final payload = data is Map && data['data'] is List ? data['data'] : data;
+        final payload =
+            data is Map && data['data'] is List ? data['data'] : data;
         return Success(
           data: ProjectFinanceItem.fromJsonList(payload),
         );
+      },
+    );
+  }
+
+  @override
   Future<Either<DataCRUDFailure, Success<ProjectTaskResponseModel>>> createTask({
     required CreateTaskRequestModel param,
   }) {

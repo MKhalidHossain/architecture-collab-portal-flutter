@@ -240,6 +240,8 @@ class _HomeScreenTState extends State<HomeScreenT> {
                   icon: Icons.description,
                   iconBackground: Colors.white70,
                   iconColor: const Color(0xFF5A5A5A),
+                  
+                  
                 ),
               ];
 
@@ -284,7 +286,14 @@ class _HomeScreenTState extends State<HomeScreenT> {
                 _QuickActionData(
                   title: 'Finance',
                   icon: Icons.attach_money,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectInvoicesScreen(),
+                      ),
+                    );
+                  },
                 ),
               ];
 
@@ -331,7 +340,7 @@ class _HomeScreenTState extends State<HomeScreenT> {
                 ),
               ),
               const SizedBox(height: 16),
-              _sectionHeader(
+               _sectionHeader(
                 projectSectionTitle,
                 onLeft: _scrollLeftNewProjects,
                 onRight: _scrollRightNewProjects,
@@ -351,49 +360,34 @@ class _HomeScreenTState extends State<HomeScreenT> {
                         project: projectModels[index],
                         isTeamMember: widget.isTeamMember,
                       ),
-                      const SizedBox(height: 12),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 160 / 120,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        children: [
-                          QuickAction(
-                            icon: Icons.description,
-                            title: 'Documents',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => DocumentsScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          QuickAction(
-                            icon: Icons.home,
-                            title: 'Home Services',
-                            onTap: () {},
-                          ),
-                          QuickAction(
-                            icon: Icons.attach_money,
-                            title: 'Finance',
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_){
-                                return ProjectInvoicesScreen();
-                              }));
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // ===== Recent Activity =====
-                      const Text(
-                        'Recent Activity',
-                        style: TextStyle(color: Colors.white, fontSize: 18),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                quickActionTitle,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 165 / 120,
+                padding: EdgeInsets.zero,
+                children: quickActions
+                    .map(
+                      (action) => QuickAction(
+                        icon: action.icon,
+                        title: action.title,
+                        onTap: action.onTap,
                       ),
                     )
                     .toList(),
