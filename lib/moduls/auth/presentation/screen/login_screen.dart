@@ -307,9 +307,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (authStatus is Authenticated) {
       switch (authStatus.auth.authRole) {
         case AuthRole.client:
-          return const ClientHomeScreen();
+          return ClientHomeScreen(userId: (authStatus).auth.userId,);
         case AuthRole.teamMember:
-          return const TeamMemberHomeScreen();
+          return TeamMemberHomeScreen(userId: (authStatus).auth.userId,);
         case AuthRole.unknown:
           return null;
       }

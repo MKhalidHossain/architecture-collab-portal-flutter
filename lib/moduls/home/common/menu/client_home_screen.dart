@@ -20,11 +20,15 @@ import 'package:get/get.dart';
 class ClientHomeScreen extends StatefulWidget {
   final Future<HomeDashboardResponse>? dashboardFuture;
   final bool showCalendarMenu;
+  final String userId;
+  final bool isTeamMember;
 
   const ClientHomeScreen({
     super.key,
     this.dashboardFuture,
     this.showCalendarMenu = false,
+    required this.userId,
+    this.isTeamMember = false,
   });
   @override
   State<ClientHomeScreen> createState() => _ClientHomeScreenState();
@@ -52,6 +56,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     _profileFuture = _fetchProfile();
     _dashboardFuture = widget.dashboardFuture ?? _fetchDashboard();
     _projectsFuture = _fetchProjects();
+
+    Get.find<AppPigeon>().socketInit(
+      SocketConnetParamX(
+        token: null,
+        socketUrl: ApiEndpoints.socketUrl,
+        joinId: widget.userId,
+      ),
+    );
   }
 
   Future<Map<String, dynamic>> _fetchProfile() async {
@@ -108,7 +120,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         onSelect: (menu) {
           setState(() {
             _selectedMenu = menu;
-            _calendarExpanded = menu == MenuType.calendar;
+            if (menu == MenuType.calendar) {
+              _calendarExpanded = false;
+            }
           });
         },
       ),
@@ -169,13 +183,43 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _topRow(greeting),
-              const Text(
-                'Here’s your project overview',
-                style: TextStyle(color: Colors.white70),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          greeting,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "Here's your project overview",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _notificationButton(),
+                      const SizedBox(width: 8),
+                      _menuButton(),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
-              _searchBar(),
+              _searchBar(hintText: 'Search Projects, Documents......'),
             ],
           );
         },
@@ -422,11 +466,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget _buildBody() {
     switch (_selectedMenu) {
       case MenuType.home:
-        return HomeScreenT(dashboardFuture: _dashboardFuture);
+        return HomeScreenT(
+          dashboardFuture: _dashboardFuture,
+          isTeamMember: widget.isTeamMember,
+        );
       case MenuType.projects:
         return ProjectBody(
           projectsFuture: _projectsFuture,
           filter: _projectFilter,
+          isTeamMember: widget.isTeamMember,
         );
       case MenuType.messages:
         return MessagesScreen();
@@ -442,14 +490,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           },
           onDateSelected: (date) {
             setState(() {
-              _calendarSelectedDate =
-                  DateTime(date.year, date.month, date.day);
+              _calendarSelectedDate = DateTime(date.year, date.month, date.day);
               _calendarMonth = DateTime(date.year, date.month, 1);
             });
           },
         );
       case MenuType.notifications:
-        return NotificationScreen();
+        return NotificationScreen(
+          onBack: () {
+            setState(() => _selectedMenu = MenuType.home);
+          },
+        );
       case MenuType.profile:
         return ProfileBody(onProfileUpdated: _reloadProfile);
       case MenuType.settings:
@@ -509,16 +560,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: Container(
-          height: 40,
-          width: 40,
+          height: 44,
+          width: 44,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.18),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(0.35)),
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
-            icon: Icon(icon, color: Colors.white, size: 24),
+            icon: Icon(icon, color: Colors.white, size: 22),
             onPressed: onPressed,
           ),
         ),
@@ -526,9 +577,36 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
+  Widget _notificationButton() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _actionButton(
+          icon: Icons.notifications_none,
+          onPressed: () {
+            setState(() => _selectedMenu = MenuType.notifications);
+          },
+        ),
+        Positioned(
+          top: 6,
+          right: 6,
+          child: Container(
+            height: 8,
+            width: 8,
+            decoration: BoxDecoration(
+              color: const Color(0xFF00D4AA),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black54, width: 1),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _glass({required Widget child}) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: Container(
@@ -540,7 +618,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: Colors.white.withOpacity(0.2)),
           ),
           child: child,
@@ -551,17 +629,19 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Widget _searchBar({String hintText = 'Search...'}) {
     return Container(
-      height: 48,
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
       child: TextField(
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          prefixIcon: const Icon(Icons.search, color: Colors.white),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          prefixIcon: const Icon(Icons.search, color: Colors.white70),
           hintText: hintText,
-          hintStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white70, fontSize: 13),
           border: InputBorder.none,
         ),
       ),

@@ -18,7 +18,7 @@ class AppManager extends ChangeNotifier {
   AuthStatus get currentAuthStatus => _currentAuthStatus;
 
   AppManager({AppPigeon? appPigeon})
-      : _appPigeon = appPigeon ?? Get.find<AppPigeon>() {
+    : _appPigeon = appPigeon ?? Get.find<AppPigeon>() {
     _subscription = _appPigeon.authStream.listen(_handleAuthStatus);
     _loadCurrentAuth();
   }
@@ -38,9 +38,9 @@ class AppManager extends ChangeNotifier {
     if (status is Authenticated) {
       switch (status.auth.authRole) {
         case AuthRole.client:
-          return const ClientHomeScreen();
+          return ClientHomeScreen(userId: status.auth.userId);
         case AuthRole.teamMember:
-          return const TeamMemberHomeScreen();
+          return TeamMemberHomeScreen(userId: status.auth.userId);
         case AuthRole.unknown:
           break;
       }
