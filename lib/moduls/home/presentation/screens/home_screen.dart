@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/moduls/home/common/project_cart.dart';
 import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
 
+import '../../../project/presentation/screen/project_based_invoices.dart';
+
 class HomeScreenT extends StatefulWidget {
   final Future<HomeDashboardResponse> dashboardFuture;
 
@@ -355,9 +357,13 @@ class _HomeScreenTState extends State<HomeScreenT> {
                             onTap: () {},
                           ),
                           QuickAction(
-                            icon: Icons.car_repair,
-                            title: 'Car Repair',
-                            onTap: () {},
+                            icon: Icons.attach_money,
+                            title: 'Finance',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_){
+                                return ProjectInvoicesScreen();
+                              }));
+                            },
                           ),
                         ],
                       ),

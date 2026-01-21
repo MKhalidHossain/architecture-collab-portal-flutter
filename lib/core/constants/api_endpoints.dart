@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 base class ApiEndpoints {
   static const String socketUrl = _LocalHostWifi.socketUrl;
 
-  static const String baseUrl = _RemoteServer.baseUrl;
+  static const String baseUrl = _LocalHostWifi.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -49,6 +49,7 @@ base class ApiEndpoints {
   static const String getProjects = _Project.projects;
   static String getProjectById(String projectId) =>
       _Project.projectById(projectId);
+  static const String getFinances = _Finance.getFinances;
 
   //------------interest----------------
   /// ### get
@@ -302,6 +303,12 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Finance -----------------------------
+class _Finance {
+  static const String _financeRoute = '${ApiEndpoints.baseUrl}/finance';
+  static const String getFinances = _financeRoute;
 }
 
 // ---------------------- Client Portal -----------------------------

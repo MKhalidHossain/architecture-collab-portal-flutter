@@ -6,6 +6,7 @@ import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/team_member_get_documents_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dartz/dartz.dart';
 
@@ -61,6 +62,21 @@ final class ProjectInterfaceImpl extends ProjectInterface {
             await appPigeon.get(ApiEndpoints.getTeamMemberDocuments);
         return Success(
           data: TeamMemberGetDocumentsResponseModel.fromJsonList(response.data),
+        );
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<List<ProjectFinanceItem>>>>
+      fetchFinances() {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getFinances);
+        final data = response.data;
+        final payload = data is Map && data['data'] is List ? data['data'] : data;
+        return Success(
+          data: ProjectFinanceItem.fromJsonList(payload),
         );
       },
     );
