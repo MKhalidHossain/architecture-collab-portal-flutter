@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/mileston_widget.dart';
