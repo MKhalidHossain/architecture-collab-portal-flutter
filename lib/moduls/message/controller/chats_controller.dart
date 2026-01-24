@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
 import 'package:dana_bozzetto/moduls/message/model/chat_models.dart';
 import 'package:dana_bozzetto/moduls/message/model/create_chat_request_model.dart';
+import 'package:dana_bozzetto/moduls/message/model/message_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -12,6 +15,16 @@ class ChatsController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
   List<ChatModel> get chats => _chats;
+
+  StreamSubscription<MessageModel>? _messageSubscription;
+
+  _listenToMessages() {
+    _messageSubscription =
+        Get.find<MessageInterface>().subscribeToMessages().listen((message) {
+
+        });
+  } 
+
 
   Future<void> fetchChats() async {
     _isLoading = true;
@@ -78,6 +91,7 @@ class ChatsController extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = '';
     _chats = <ChatModel>[];
+    _messageSubscription?.cancel();
     super.dispose();
   }
 }

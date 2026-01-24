@@ -5,6 +5,7 @@ import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
 import 'package:dana_bozzetto/moduls/message/model/chat_models.dart';
 import 'package:dana_bozzetto/moduls/message/model/create_chat_request_model.dart';
+import 'package:dana_bozzetto/moduls/message/model/message_model.dart';
 import 'package:dartz/dartz.dart';
 
 final class MessageInterfaceImpl extends MessageInterface {
@@ -72,5 +73,10 @@ final class MessageInterfaceImpl extends MessageInterface {
       return map;
     }
     return data;
+  }
+
+  @override
+  Stream<MessageModel> subscribeToMessages() {
+    return appPigeon.listen("newMessage").map((event) => MessageModel.fromJson(event));
   }
 }
