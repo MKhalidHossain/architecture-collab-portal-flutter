@@ -118,25 +118,14 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
       tasksByMilestone[key]!.add(task);
     }
 
-    final stageKeys = _defaultStageTitles
-        .map((title) => _normalizeStageName(title))
-        .toSet();
-    final milestonesByStage = <String, ProjectMilestone>{};
-    final extraMilestones = <ProjectMilestone>[];
-
-    for (final milestone in milestones) {
-      final key = _normalizeStageName(milestone.name);
-      if (stageKeys.contains(key) && !milestonesByStage.containsKey(key)) {
-        milestonesByStage[key] = milestone;
-      } else {
-        extraMilestones.add(milestone);
-      }
-    }
-
+    final usedMilestoneIds = <String>{};
     final sections = <_TaskSection>[];
     for (final title in _defaultStageTitles) {
-      final key = _normalizeStageName(title);
-      final milestone = milestonesByStage[key];
+      final milestone =
+          _matchMilestoneForStage(title, milestones, usedMilestoneIds);
+      if (milestone != null) {
+        usedMilestoneIds.add(milestone.id);
+      }
       sections.add(
         _buildSectionFromMilestone(
           milestone: milestone,
@@ -146,7 +135,10 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
       );
     }
 
-    for (final milestone in extraMilestones) {
+    for (final milestone in milestones) {
+      if (usedMilestoneIds.contains(milestone.id)) {
+        continue;
+      }
       sections.add(
         _buildSectionFromMilestone(
           milestone: milestone,
@@ -168,6 +160,48 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
   }
 
+  ProjectMilestone? _matchMilestoneForStage(
+    String stageTitle,
+    List<ProjectMilestone> milestones,
+    Set<String> usedIds,
+  ) {
+    final stageKey = _normalizeStageName(stageTitle);
+    for (final milestone in milestones) {
+      if (usedIds.contains(milestone.id)) {
+        continue;
+      }
+      if (_isStageMatch(stageKey, milestone.name)) {
+        return milestone;
+      }
+    }
+    return null;
+  }
+
+  bool _isStageMatch(String stageKey, String milestoneName) {
+    final name = _normalizeStageName(milestoneName);
+    if (name.isEmpty) {
+      return false;
+    }
+    switch (stageKey) {
+      case 'predesign':
+        return name.contains('predesign') ||
+            (name.contains('pre') && name.contains('design')) ||
+            name == 'pd';
+      case 'schematicdesign':
+        return name.contains('schematic') || name == 'sd';
+      case 'designdeveloped':
+        return name.contains('designdevelop') ||
+            (name.contains('design') && name.contains('develop')) ||
+            name == 'dd';
+      case 'constructiondocuments':
+        return name.contains('construction') &&
+            (name.contains('document') || name.contains('doc')) ||
+            name == 'cd';
+      default:
+        return name == stageKey || name.contains(stageKey);
+    }
+  }
+
   _TaskSection _buildSectionFromMilestone({
     required ProjectMilestone? milestone,
     required String titleFallback,
@@ -182,6 +216,9 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     final title = milestone != null && milestone.name.trim().isNotEmpty
         ? milestone.name.trim()
         : (titleFallback.trim().isNotEmpty ? titleFallback.trim() : 'Task');
+    final visibleTasks = isCompleted
+        ? milestoneTasks.where((task) => _isTaskCompleted(task.status)).toList()
+        : milestoneTasks;
 
     return _TaskSection(
       milestoneId: milestoneId,
@@ -190,7 +227,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
       statusColor: isCompleted ? _accentColor : const Color(0xFFE8F1F1),
       statusTextColor: isCompleted ? Colors.white : _accentColor,
       showCompletedButton: isCompleted,
-      tasks: milestoneTasks
+      tasks: visibleTasks
           .map(
             (task) => _TaskItem(
               id: task.id,
@@ -353,9 +390,11 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
   }
 
   Widget _sectionBlock(_TaskSection section) {
-    final sectionTaskId = section.tasks.isNotEmpty
-        ? section.tasks.first.id
-        : '';
+    final sectionTask = section.tasks.firstWhere(
+      (task) => task.id.isNotEmpty,
+      orElse: () => const _TaskItem(id: '', title: ''),
+    );
+    final sectionTaskId = sectionTask.id;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -396,6 +435,8 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
               stage: section.title,
               milestoneId: section.milestoneId,
             ),
+            alignLeft: true,
+            compact: true,
           ),
           const SizedBox(height: 12),
           _primaryActionButton(
@@ -410,7 +451,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
               }
               _openUploadForTask(
                 stage: section.title,
-                task: section.tasks.first,
+                task: sectionTask,
               );
             },
           ),
@@ -538,32 +579,39 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     required String label,
     required IconData icon,
     required VoidCallback onTap,
+    bool alignLeft = false,
+    bool compact = false,
   }) {
-    return ClipRRect(
+    final button = ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: InkWell(
           onTap: onTap,
           child: Container(
-            height: 52,
-            width: double.infinity,
+            height: compact ? 44 : 52,
+            width: compact ? null : double.infinity,
+            padding: compact
+                ? const EdgeInsets.symmetric(horizontal: 16)
+                : EdgeInsets.zero,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withOpacity(0.35)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+              mainAxisAlignment:
+                  compact ? MainAxisAlignment.start : MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.white, size: 18),
+                Icon(icon, color: Colors.white, size: compact ? 16 : 18),
                 const SizedBox(width: 10),
                 Text(
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -572,6 +620,10 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
         ),
       ),
     );
+    if (alignLeft) {
+      return Align(alignment: Alignment.centerLeft, child: button);
+    }
+    return button;
   }
 
   Widget _errorState(String message) {

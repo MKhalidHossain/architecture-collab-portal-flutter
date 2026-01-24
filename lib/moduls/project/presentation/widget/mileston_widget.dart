@@ -29,11 +29,10 @@ class MilestonesTab extends StatelessWidget {
             ? milestone.name.trim()
             : 'Milestone';
         final chips = _buildChips(milestone, isDone, isActive);
-        final lineColor =
-            isDone ? const Color(0xFF0C7A7E) : Colors.white24;
+        final lineColor = isDone ? const Color(0xFF0C7A7E) : Colors.white24;
 
         return Padding(
-          padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+          padding: EdgeInsets.only(bottom: isLast ? 0 : 0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -45,7 +44,7 @@ class MilestonesTab extends StatelessWidget {
                     if (!isLast)
                       Container(
                         width: 4,
-                        height: 80,
+                        height: 50,
                         margin: const EdgeInsets.only(top: 4),
                         decoration: BoxDecoration(
                           color: lineColor,
@@ -64,17 +63,14 @@ class MilestonesTab extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w500,
+                        fontSize: 20,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: chips,
-                    ),
+                    Wrap(spacing: 10, runSpacing: 8, children: chips),
                   ],
                 ),
               ),
@@ -94,7 +90,11 @@ class MilestonesTab extends StatelessWidget {
           color: Color(0xFF0C7A7E),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check, color: Colors.white, size: 22),
+        child: const Icon(
+          Icons.verified_rounded,
+          color: Colors.white,
+          size: 22,
+        ),
       );
     }
 
@@ -111,7 +111,10 @@ class MilestonesTab extends StatelessWidget {
       ),
       child: isActive
           ? const Center(
-              child: CircleAvatar(radius: 4, backgroundColor: Color(0xFF0C7A7E)),
+              child: CircleAvatar(
+                radius: 4,
+                backgroundColor: Color(0xFF0C7A7E),
+              ),
             )
           : null,
     );
