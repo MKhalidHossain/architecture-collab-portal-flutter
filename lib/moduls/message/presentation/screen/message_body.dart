@@ -1,113 +1,191 @@
 import 'dart:ui';
 
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
+import 'package:dana_bozzetto/moduls/message/controller/chats_controller.dart';
+import 'package:dana_bozzetto/moduls/message/model/chat_models.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
 
-  static const List<_ThreadPreview> _threads = [
-    _ThreadPreview(
-      avatarUrl: 'https://i.pravatar.cc/150?img=1',
-      name: 'Villa Renovation Team',
-      message: 'Floor Plans Rev. 3 has been.......',
-      time: '2 hour ago',
-      unread: 2,
-    ),
-    _ThreadPreview(
-      avatarUrl: 'https://i.pravatar.cc/150?img=2',
-      name: 'Villa Renovation Team',
-      message: 'Floor Plans Rev. 3 has been.......',
-      time: '2 hour ago',
-      unread: 2,
-    ),
-    _ThreadPreview(
-      avatarUrl: 'https://i.pravatar.cc/150?img=3',
-      name: 'Villa Renovation Team',
-      message: 'Floor Plans Rev. 3 has been.......',
-      time: '2 hour ago',
+  @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> {
+  late final ChatsController _controller;
+  String _currentUserId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ChatsController();
+    _controller.fetchChats();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final status = await Get.find<AppPigeon>().currentAuth();
+    if (!mounted) return;
+    if (status is Authenticated) {
+      setState(() => _currentUserId = status.auth.userId);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _formatTimeAgo(DateTime? time) {
+    if (time == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    final duration = diff.isNegative ? diff.abs() : diff;
+    if (duration.inSeconds < 60) {
+      return '${duration.inSeconds}s ago';
+    }
+    if (duration.inMinutes < 60) {
+      return '${duration.inMinutes}m ago';
+    }
+    if (duration.inHours < 24) {
+      return '${duration.inHours}h ago';
+    }
+    if (duration.inDays < 7) {
+      return '${duration.inDays}d ago';
+    }
+    return '${time.month}/${time.day}/${time.year}';
+  }
+
+  ChatUser? _resolveOtherUser(ChatModel chat) {
+    if (chat.users.isEmpty) return null;
+    if (_currentUserId.isEmpty) return chat.users.first;
+    final other = chat.users.firstWhere(
+      (user) => user.id != _currentUserId,
+      orElse: () => chat.users.first,
+    );
+    return other;
+  }
+
+  _ThreadPreview _buildThreadPreview(ChatModel chat) {
+    final otherUser = _resolveOtherUser(chat);
+    final name = chat.chatName.trim().isNotEmpty
+        ? chat.chatName.trim()
+        : otherUser?.name.trim().isNotEmpty == true
+            ? otherUser!.name.trim()
+            : 'Chat';
+    final avatarUrl = otherUser?.avatar.url ?? '';
+    final latestText = chat.latestMessage?.content ?? 'No messages yet';
+    final latestTime = chat.latestMessage?.createdAt ?? chat.updatedAt ?? chat.createdAt;
+    return _ThreadPreview(
+      chatId: chat.id,
+      avatarUrl: avatarUrl,
+      name: name,
+      message: latestText,
+      time: _formatTimeAgo(latestTime),
       unread: 0,
-    ),
-    _ThreadPreview(
-      avatarUrl: 'https://i.pravatar.cc/150?img=4',
-      name: 'Villa Renovation Team',
-      message: 'Floor Plans Rev. 3 has been.......',
-      time: '2 hour ago',
-      unread: 0,
-    ),
-    _ThreadPreview(
-      avatarUrl: 'https://i.pravatar.cc/150?img=5',
-      name: 'Villa Renovation Team',
-      message: 'Floor Plans Rev. 3 has been.......',
-      time: '2 hour ago',
-      unread: 0,
-    ),
-  ];
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0x996F6E6E), Color(0xAA5A5959), Color(0xCC3A3939)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Container(
-                  height: 1,
-                  color: Colors.white.withOpacity(0.18),
-                ),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final threads = _controller.chats.map(_buildThreadPreview).toList();
+        final showLoading = _controller.isLoading && threads.isEmpty;
+        final showError = _controller.errorMessage.isNotEmpty && threads.isEmpty;
+
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0x996F6E6E),
+                  Color(0xAA5A5959),
+                  Color(0xCC3A3939),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
-                  itemCount: _threads.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final thread = _threads[index];
-                    return TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: 1),
-                      duration: Duration(milliseconds: 320 + index * 70),
-                      builder: (context, value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, 12 * (1 - value)),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _MessageThreadTile(
-                        thread: thread,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ProjectChatScreen(
-                                title: thread.name,
-                                avatarUrl: thread.avatarUrl,
-                              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Container(
+                      height: 1,
+                      color: Colors.white.withOpacity(0.18),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (showLoading)
+                    const Expanded(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white70,
+                        ),
+                      ),
+                    )
+                  else if (showError)
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          _controller.errorMessage,
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(18, 6, 18, 24),
+                        itemCount: threads.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        itemBuilder: (context, index) {
+                          final thread = threads[index];
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: Duration(milliseconds: 320 + index * 70),
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(0, 12 * (1 - value)),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: _MessageThreadTile(
+                              thread: thread,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ProjectChatScreen(
+                                      title: thread.name,
+                                      avatarUrl: thread.avatarUrl,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },
                       ),
-                    );
-                  },
-                ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -213,6 +291,13 @@ class _AvatarRing extends StatelessWidget {
 
   final String imageUrl;
 
+  ImageProvider _resolveImage() {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return NetworkImage(imageUrl);
+    }
+    return const AssetImage('assets/image/aa.png');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -228,7 +313,7 @@ class _AvatarRing extends StatelessWidget {
           ),
         ],
       ),
-      child: CircleAvatar(radius: 26, backgroundImage: NetworkImage(imageUrl)),
+      child: CircleAvatar(radius: 26, backgroundImage: _resolveImage()),
     );
   }
 }
@@ -663,6 +748,7 @@ class _ChatComposer extends StatelessWidget {
 }
 
 class _ThreadPreview {
+  final String chatId;
   final String avatarUrl;
   final String name;
   final String message;
@@ -670,6 +756,7 @@ class _ThreadPreview {
   final int unread;
 
   const _ThreadPreview({
+    required this.chatId,
     required this.avatarUrl,
     required this.name,
     required this.message,

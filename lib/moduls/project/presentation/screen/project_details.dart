@@ -117,7 +117,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       case "Tasks":
         return TeamMemberTasksTab(project: project);
       case "Team":
-        return TeamTab(teamMembers: project.teamMembers);
+        return TeamTab(
+          teamMembers: project.teamMembers,
+          projectId: project.id,
+        );
       case "Milestones":
         return MilestonesTab(milestones: project.milestones);
       default:

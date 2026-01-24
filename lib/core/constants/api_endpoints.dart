@@ -178,6 +178,10 @@ base class ApiEndpoints {
   ///////////
   ///
   static String timeExtend(String chatId) => _Message.timeExtend(chatId);
+
+  // ---------------------- Chats -----------------------------
+  /// ### post/get
+  static const String chats = _Chats.chats;
 }
 
 //arrow360degree@gmail.com
@@ -317,6 +321,12 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Chats -----------------------------
+class _Chats {
+  static const String _chatsRoute = '${ApiEndpoints.baseUrl}/chats';
+  static const String chats = _chatsRoute;
 }
 
 // ---------------------- Finance -----------------------------
