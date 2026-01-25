@@ -40,11 +40,18 @@ class SocketService {
   bool get isConnected => _socket?.connected ?? false;
 
   void init(SocketConnectParam socketConnectParam) {
+    if (_socket != null && _param != null) {
+      final sameUrl = _param!.url == socketConnectParam.url;
+      final sameToken = _param!._token == socketConnectParam._token;
+      if (sameUrl && sameToken) {
+        debugPrint("Socket already initialized with same params.");
+        return;
+      }
+      _disposeSocket();
+    }
     _attempts++;
     debugPrint("Socket init attempt: $_attempts");
     _param = socketConnectParam;
-    // Dispose previous socket, if exists
-    _disposeSocket();
     _init();
   }
 
@@ -59,21 +66,40 @@ class SocketService {
     final token = _param!._token;
     _socket = io.io(
       _param!.url,
-      io.OptionBuilder().setTransports(['websocket']).setExtraHeaders({
-        'Authorization': 'Bearer $token',
-      }).build(),
+      io.OptionBuilder()
+          .setTransports(['websocket'])
+          .setAuth({'token': token})
+          .setQuery({'token': token})
+          .build(),
     );
     _socket?.connect();
     _socket?.onConnect((data) {
       debugPrint("Socket connected with data: $data${"\n\n"}");
     });
+    _socket?.onConnectError((data) {
+      debugPrint("Socket connect error: $data");
+    });
+    _socket?.onError((data) {
+      debugPrint("Socket error: $data");
+    });
+    _socket?.onDisconnect((data) {
+      debugPrint("Socket disconnected: $data");
+    });
   }
 
   void emit(String eventName, dynamic data) {
-    _init().then((_) {
+    void send() {
       debugPrint("Emitting event: $eventName, data: $data");
       debugPrint("Socket instance: ${_socket?.connected}");
       _socket?.emit(eventName, data);
+    }
+
+    _init().then((_) {
+      if (_socket?.connected == true) {
+        send();
+      } else {
+        _socket?.once('connect', (_) => send());
+      }
     });
   }
 

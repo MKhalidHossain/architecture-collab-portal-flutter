@@ -77,6 +77,8 @@ final class MessageInterfaceImpl extends MessageInterface {
 
   @override
   Stream<MessageModel> subscribeToMessages() {
-    return appPigeon.listen("newMessage").map((event) => MessageModel.fromJson(event));
+    return appPigeon
+        .listen("message received")
+        .map((event) => MessageModel.fromJson(event));
   }
 }
