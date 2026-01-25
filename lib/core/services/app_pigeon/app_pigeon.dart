@@ -15,7 +15,6 @@ part 'auth/auth_params.dart';
 
 class SocketConnetParamX {
   ///[Optional]
-  ///
   /// Leave this field null, if you want to use your current auth's access token instead.
   final String? token;
   final String socketUrl;
