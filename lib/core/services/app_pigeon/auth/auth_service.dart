@@ -91,7 +91,7 @@ class AuthService extends Interceptor {
       try {
         _refreshingToken = true;
         refreshTokenResponse = await refreshTokenManager.refreshToken(
-          refreshToken: refreshToken
+          refreshToken: refreshToken,
         );
         _refreshingToken = false;
         await updateCurrentAuth(
@@ -131,6 +131,39 @@ class AuthService extends Interceptor {
       return handler.next(err);
     }
     
+  }
+
+  Future<bool> refreshCurrentAuth() async {
+    if (_refreshingToken) {
+      _authDebugger.dekhao("Already refreshing token");
+      return false;
+    }
+    final auth = _cachedAuth ?? await _authStorage.getCurrentAuth();
+    if (auth != null) {
+      _cachedAuth = auth;
+    }
+    final refreshToken = auth?._refreshToken ?? "";
+    if (refreshToken.isEmpty) {
+      return false;
+    }
+    try {
+      _refreshingToken = true;
+      final refreshTokenResponse = await refreshTokenManager.refreshToken(
+        refreshToken: refreshToken,
+      );
+      await updateCurrentAuth(
+        updateAuthParams: UpdateAuthParams(
+          accessToken: refreshTokenResponse.accessToken,
+          refreshToken: refreshTokenResponse.refreshToken,
+          data: refreshTokenResponse.data,
+        ),
+      );
+      return true;
+    } catch (e) {
+      return false;
+    } finally {
+      _refreshingToken = false;
+    }
   }
 
   /// Saves the new auth as currentAuth.

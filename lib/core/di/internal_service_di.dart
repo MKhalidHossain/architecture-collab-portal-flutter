@@ -9,6 +9,8 @@ import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
 import 'package:dana_bozzetto/moduls/project/service/project_interface_impl.dart';
 import 'package:dana_bozzetto/moduls/notification/interface/notification_interface.dart';
 import 'package:dana_bozzetto/moduls/notification/service/notification_interface_impl.dart';
+import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
+import 'package:dana_bozzetto/moduls/message/service/message_interface_impl.dart';
 import 'package:get/get.dart';
 
 void initServices() {
@@ -40,6 +42,12 @@ void initServices() {
   if (!Get.isRegistered<NotificationInterface>()) {
     Get.put<NotificationInterface>(
       NotificationInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
+    );
+  }
+
+  if (!Get.isRegistered<MessageInterface>()) {
+    Get.put<MessageInterface>(
+      MessageInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
     );
   }
   

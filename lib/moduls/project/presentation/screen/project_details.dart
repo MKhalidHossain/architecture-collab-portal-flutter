@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/mileston_widget.dart';
@@ -118,7 +117,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       case "Tasks":
         return TeamMemberTasksTab(project: project);
       case "Team":
-        return TeamTab(teamMembers: project.teamMembers);
+        return TeamTab(
+          teamMembers: project.teamMembers,
+          projectId: project.id,
+        );
       case "Milestones":
         return MilestonesTab(milestones: project.milestones);
       default:

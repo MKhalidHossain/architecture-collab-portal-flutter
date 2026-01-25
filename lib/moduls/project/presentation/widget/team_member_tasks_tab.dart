@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:dana_bozzetto/moduls/project/controller/project_tasks_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/create_task_screen.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/upload_document_screen.dart';
@@ -20,6 +21,12 @@ class TeamMemberTasksTab extends StatefulWidget {
 
 class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
   late final ProjectTasksController _tasksController;
+  static const List<String> _defaultStageTitles = [
+    'Pre-Design',
+    'Schematic Design',
+    'Design Developed',
+    'Construction Documents',
+  ];
 
   @override
   void initState() {
@@ -97,7 +104,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     List<ProjectTaskResponseModel> tasks,
   ) {
     final milestones = widget.project.milestones;
-    if (milestones.isEmpty) {
+    if (milestones.isEmpty && tasks.isEmpty) {
       return _buildDefaultSections();
     }
 
@@ -111,32 +118,125 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
       tasksByMilestone[key]!.add(task);
     }
 
-    return milestones.map((milestone) {
-      final milestoneTasks = tasksByMilestone[milestone.id] ?? [];
-      final isCompleted = milestone.isCompleted;
-      return _TaskSection(
-        milestoneId: milestone.id,
-        title: milestone.name.trim().isNotEmpty ? milestone.name.trim() : 'Task',
-        statusLabel: isCompleted ? 'Approved' : 'Pending',
-        statusColor: isCompleted ? _accentColor : const Color(0xFFE8F1F1),
-        statusTextColor: isCompleted ? Colors.white : _accentColor,
-        showCompletedButton: isCompleted,
-        tasks: milestoneTasks
-            .map(
-              (task) => _TaskItem(
-                id: task.id,
-                title: task.name.isNotEmpty ? task.name : 'Task',
-                completed: _isTaskCompleted(task.status),
-              ),
-            )
-            .toList(),
+    final usedMilestoneIds = <String>{};
+    final sections = <_TaskSection>[];
+    for (final title in _defaultStageTitles) {
+      final milestone =
+          _matchMilestoneForStage(title, milestones, usedMilestoneIds);
+      if (milestone != null) {
+        usedMilestoneIds.add(milestone.id);
+      }
+      sections.add(
+        _buildSectionFromMilestone(
+          milestone: milestone,
+          titleFallback: title,
+          tasksByMilestone: tasksByMilestone,
+        ),
       );
-    }).toList();
+    }
+
+    for (final milestone in milestones) {
+      if (usedMilestoneIds.contains(milestone.id)) {
+        continue;
+      }
+      sections.add(
+        _buildSectionFromMilestone(
+          milestone: milestone,
+          titleFallback: milestone.name,
+          tasksByMilestone: tasksByMilestone,
+        ),
+      );
+    }
+
+    return sections;
   }
 
   bool _isTaskCompleted(String status) {
     final normalized = status.trim().toLowerCase();
     return normalized == 'completed' || normalized == 'done';
+  }
+
+  String _normalizeStageName(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  }
+
+  ProjectMilestone? _matchMilestoneForStage(
+    String stageTitle,
+    List<ProjectMilestone> milestones,
+    Set<String> usedIds,
+  ) {
+    final stageKey = _normalizeStageName(stageTitle);
+    for (final milestone in milestones) {
+      if (usedIds.contains(milestone.id)) {
+        continue;
+      }
+      if (_isStageMatch(stageKey, milestone.name)) {
+        return milestone;
+      }
+    }
+    return null;
+  }
+
+  bool _isStageMatch(String stageKey, String milestoneName) {
+    final name = _normalizeStageName(milestoneName);
+    if (name.isEmpty) {
+      return false;
+    }
+    switch (stageKey) {
+      case 'predesign':
+        return name.contains('predesign') ||
+            (name.contains('pre') && name.contains('design')) ||
+            name == 'pd';
+      case 'schematicdesign':
+        return name.contains('schematic') || name == 'sd';
+      case 'designdeveloped':
+        return name.contains('designdevelop') ||
+            (name.contains('design') && name.contains('develop')) ||
+            name == 'dd';
+      case 'constructiondocuments':
+        return name.contains('construction') &&
+            (name.contains('document') || name.contains('doc')) ||
+            name == 'cd';
+      default:
+        return name == stageKey || name.contains(stageKey);
+    }
+  }
+
+  _TaskSection _buildSectionFromMilestone({
+    required ProjectMilestone? milestone,
+    required String titleFallback,
+    required Map<String, List<ProjectTaskResponseModel>> tasksByMilestone,
+  }) {
+    final milestoneId = milestone?.id ?? '';
+    final milestoneTasks =
+        milestoneId.isNotEmpty ? (tasksByMilestone[milestoneId] ?? []) : [];
+    final tasksCompleted = milestoneTasks.isNotEmpty &&
+        milestoneTasks.every((task) => _isTaskCompleted(task.status));
+    final isCompleted = (milestone?.isCompleted ?? false) || tasksCompleted;
+    final title = milestone != null && milestone.name.trim().isNotEmpty
+        ? milestone.name.trim()
+        : (titleFallback.trim().isNotEmpty ? titleFallback.trim() : 'Task');
+    final visibleTasks = isCompleted
+        ? milestoneTasks.where((task) => _isTaskCompleted(task.status)).toList()
+        : milestoneTasks;
+
+    return _TaskSection(
+      milestoneId: milestoneId,
+      title: title,
+      statusLabel: isCompleted ? 'Approved' : 'Pending',
+      statusColor: isCompleted ? _accentColor : const Color(0xFFE8F1F1),
+      statusTextColor: isCompleted ? Colors.white : _accentColor,
+      showCompletedButton: isCompleted,
+      tasks: visibleTasks
+          .map(
+            (task) => _TaskItem(
+              id: task.id,
+              title: task.name.isNotEmpty ? task.name : 'Task',
+              completed: _isTaskCompleted(task.status),
+            ),
+          )
+          .toList(),
+    );
   }
 
   Future<void> _openAddTask({
@@ -234,13 +334,10 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
         Row(
           children: List.generate(stages.length * 2 - 1, (index) {
             if (index.isOdd) {
-              final lineIndex = index ~/ 2;
-              final isActive =
-                  completedIndex >= 0 && lineIndex <= completedIndex;
               return Expanded(
                 child: Container(
-                  height: 2,
-                  color: isActive ? _accentColor : Colors.white54,
+                  height: 3,
+                  color: Colors.white54,
                 ),
               );
             }
@@ -282,20 +379,22 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
         shape: BoxShape.circle,
         color: completed ? _accentColor : Colors.white70,
         border: Border.all(
-          color: completed ? _accentColor : Colors.white70,
+          color: completed ? Colors.white : Colors.white54,
           width: 2,
         ),
       ),
       child: completed
-          ? const Icon(Icons.check, size: 18, color: Colors.white)
+          ? const Icon(Icons.verified_rounded, size: 18, color: Colors.white)
           : null,
     );
   }
 
   Widget _sectionBlock(_TaskSection section) {
-    final sectionTaskId = section.tasks.isNotEmpty
-        ? section.tasks.first.id
-        : '';
+    final sectionTask = section.tasks.firstWhere(
+      (task) => task.id.isNotEmpty,
+      orElse: () => const _TaskItem(id: '', title: ''),
+    );
+    final sectionTaskId = sectionTask.id;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -323,7 +422,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
           const SizedBox(height: 14),
           _primaryActionButton(
             label: 'Completed',
-            icon: Icons.check,
+            icon: Icons.verified_rounded,
             onTap: () {},
           ),
         ],
@@ -336,6 +435,8 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
               stage: section.title,
               milestoneId: section.milestoneId,
             ),
+            alignLeft: true,
+            compact: true,
           ),
           const SizedBox(height: 12),
           _primaryActionButton(
@@ -350,7 +451,7 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
               }
               _openUploadForTask(
                 stage: section.title,
-                task: section.tasks.first,
+                task: sectionTask,
               );
             },
           ),
@@ -394,18 +495,18 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
 
   Widget _taskIndicator(bool completed) {
     return Container(
-      width: 26,
-      height: 26,
+      width: 20,
+      height: 20,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: completed ? _accentColor : Colors.white70,
         border: Border.all(
-          color: completed ? _accentColor : Colors.white70,
+          color: completed ? Colors.white : Colors.white54,
           width: 2,
         ),
       ),
       child: completed
-          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          ? const Icon(Icons.verified_rounded, size: 11, color: Colors.white)
           : null,
     );
   }
@@ -478,32 +579,39 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
     required String label,
     required IconData icon,
     required VoidCallback onTap,
+    bool alignLeft = false,
+    bool compact = false,
   }) {
-    return ClipRRect(
+    final button = ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: InkWell(
           onTap: onTap,
           child: Container(
-            height: 52,
-            width: double.infinity,
+            height: compact ? 44 : 52,
+            width: compact ? null : double.infinity,
+            padding: compact
+                ? const EdgeInsets.symmetric(horizontal: 16)
+                : EdgeInsets.zero,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withOpacity(0.35)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+              mainAxisAlignment:
+                  compact ? MainAxisAlignment.start : MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.white, size: 18),
+                Icon(icon, color: Colors.white, size: compact ? 16 : 18),
                 const SizedBox(width: 10),
                 Text(
                   label,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -512,6 +620,10 @@ class _TeamMemberTasksTabState extends State<TeamMemberTasksTab> {
         ),
       ),
     );
+    if (alignLeft) {
+      return Align(alignment: Alignment.centerLeft, child: button);
+    }
+    return button;
   }
 
   Widget _errorState(String message) {

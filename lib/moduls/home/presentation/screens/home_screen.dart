@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/home/model/home_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/documents_screen.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/project_base_Approval.dart';
 import 'package:flutter/material.dart';
 import 'package:dana_bozzetto/moduls/home/common/project_cart.dart';
 import 'package:dana_bozzetto/moduls/home/model/project_cart_model.dart';
@@ -262,7 +263,16 @@ class _HomeScreenTState extends State<HomeScreenT> {
                 _QuickActionData(
                   title: 'Approvals',
                   icon: Icons.check_circle_outline,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectBaseApproval(
+                          isTeamMember: widget.isTeamMember,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ]
             : [
@@ -281,7 +291,16 @@ class _HomeScreenTState extends State<HomeScreenT> {
                 _QuickActionData(
                   title: 'Approvals',
                   icon: Icons.check_circle_outline,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectBaseApproval(
+                          isTeamMember: widget.isTeamMember,
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 _QuickActionData(
                   title: 'Finance',

@@ -87,6 +87,10 @@ class AppPigeon {
     await _authService.updateCurrentAuth(updateAuthParams: updateAuthParams);
   }
 
+  Future<bool> refreshCurrentAuth() async {
+    return _authService.refreshCurrentAuth();
+  }
+
   Future<void> logOut() async{
     await _authService.clearCurrentAuthRecord();
   }

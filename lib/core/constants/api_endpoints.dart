@@ -178,6 +178,10 @@ base class ApiEndpoints {
   ///////////
   ///
   static String timeExtend(String chatId) => _Message.timeExtend(chatId);
+
+  // ---------------------- Chats -----------------------------
+  /// ### post/get
+  static const String chats = _Chats.chats;
 }
 
 //arrow360degree@gmail.com
@@ -190,7 +194,7 @@ class _RemoteServer {
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.85:5000/api';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
@@ -317,6 +321,12 @@ class _Message {
 
   static String timeExtend(String chatId) =>
       "$_messageRoute/extend-time/$chatId";
+}
+
+// ---------------------- Chats -----------------------------
+class _Chats {
+  static const String _chatsRoute = '${ApiEndpoints.baseUrl}/chats';
+  static const String chats = _chatsRoute;
 }
 
 // ---------------------- Finance -----------------------------
