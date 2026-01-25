@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
 import 'package:dana_bozzetto/moduls/message/controller/chats_controller.dart';
 import 'package:dana_bozzetto/moduls/message/model/chat_models.dart';
+import 'package:dana_bozzetto/moduls/message/model/message_model.dart';
+import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,6 +35,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
     if (!mounted) return;
     if (status is Authenticated) {
       setState(() => _currentUserId = status.auth.userId);
+      await Get.find<AppPigeon>().socketInit(
+        SocketConnetParamX(
+          token: null,
+          socketUrl: ApiEndpoints.socketUrl,
+          joinId: _currentUserId,
+        ),
+      );
     }
   }
 
@@ -169,8 +180,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => ProjectChatScreen(
+                                      chatId: thread.chatId,
                                       title: thread.name,
                                       avatarUrl: thread.avatarUrl,
+                                      currentUserId: _currentUserId,
                                     ),
                                   ),
                                 );
@@ -321,43 +334,50 @@ class _AvatarRing extends StatelessWidget {
 class ProjectChatScreen extends StatelessWidget {
   const ProjectChatScreen({
     super.key,
+    required this.chatId,
     required this.title,
     required this.avatarUrl,
+    required this.currentUserId,
   });
 
+  final String chatId;
   final String title;
   final String avatarUrl;
+  final String currentUserId;
 
-  static const List<_ChatMessage> _messages = [
-    _ChatMessage(
-      sender: 'Sarah Mitchell',
-      avatarUrl: 'https://i.pravatar.cc/150?img=11',
-      text: 'Hey, I just uploaded the latest floor plans',
-      time: '10:30 AM',
-      isMe: false,
-    ),
-    _ChatMessage(
-      sender: '',
-      avatarUrl: '',
-      text: 'Hey, I just uploaded the latest floor plans',
-      time: '10:30 AM',
-      isMe: true,
-    ),
-    _ChatMessage(
-      sender: 'Sarah Mitchell',
-      avatarUrl: 'https://i.pravatar.cc/150?img=12',
-      text: 'Hey, I just uploaded the latest floor plans',
-      time: '10:30 AM',
-      isMe: false,
-    ),
-    _ChatMessage(
-      sender: '',
-      avatarUrl: '',
-      text: 'Hey, I just uploaded the latest floor plans',
-      time: '10:30 AM',
-      isMe: true,
-    ),
-  ];
+  @override
+  Widget build(BuildContext context) {
+    return _ProjectChatBody(
+      chatId: chatId,
+      title: title,
+      avatarUrl: avatarUrl,
+      currentUserId: currentUserId,
+    );
+  }
+}
+
+class _ProjectChatBody extends StatefulWidget {
+  const _ProjectChatBody({
+    required this.chatId,
+    required this.title,
+    required this.avatarUrl,
+    required this.currentUserId,
+  });
+
+  final String chatId;
+  final String title;
+  final String avatarUrl;
+  final String currentUserId;
+
+  @override
+  State<_ProjectChatBody> createState() => _ProjectChatBodyState();
+}
+
+class _ProjectChatBodyState extends State<_ProjectChatBody> {
+  final List<_ChatMessage> _messages = <_ChatMessage>[];
+  final Set<String> _messageIds = <String>{};
+  final TextEditingController _composerController = TextEditingController();
+  StreamSubscription<MessageModel>? _messageSubscription;
 
   void _showChatMenu(BuildContext context) {
     showGeneralDialog<void>(
@@ -428,6 +448,99 @@ class ProjectChatScreen extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _ensureSocketConnected();
+    if (widget.chatId.isNotEmpty) {
+      Get.find<AppPigeon>().emit('join chat', widget.chatId);
+    }
+    _messageSubscription =
+        Get.find<MessageInterface>().subscribeToMessages().listen(_handleMessage);
+  }
+
+  Future<void> _ensureSocketConnected() async {
+    await Get.find<AppPigeon>().socketInit(
+      SocketConnetParamX(
+        token: null,
+        socketUrl: ApiEndpoints.socketUrl,
+        joinId: widget.currentUserId,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    if (widget.chatId.isNotEmpty) {
+      Get.find<AppPigeon>().emit('leave chat', widget.chatId);
+    }
+    _messageSubscription?.cancel();
+    _composerController.dispose();
+    super.dispose();
+  }
+
+  void _handleMessage(MessageModel message) {
+    if (message.chatId != widget.chatId || message.content.isEmpty) {
+      return;
+    }
+    if (message.id.isNotEmpty && _messageIds.contains(message.id)) {
+      return;
+    }
+    if (message.id.isNotEmpty) {
+      _messageIds.add(message.id);
+    }
+    final isMe = widget.currentUserId.isNotEmpty &&
+        widget.currentUserId == message.senderId;
+    setState(() {
+      _messages.add(
+        _ChatMessage(
+          id: message.id,
+          sender: message.senderName,
+          avatarUrl: message.senderAvatarUrl,
+          text: message.content,
+          time: _formatTime(message.createdAt),
+          isMe: isMe,
+        ),
+      );
+    });
+  }
+
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  void _sendMessage() {
+    final text = _composerController.text.trim();
+    if (text.isEmpty || widget.chatId.isEmpty) return;
+
+    final now = DateTime.now();
+    final localId = 'local-${now.microsecondsSinceEpoch}';
+    setState(() {
+      _messages.add(
+        _ChatMessage(
+          id: localId,
+          sender: '',
+          avatarUrl: '',
+          text: text,
+          time: _formatTime(now),
+          isMe: true,
+        ),
+      );
+    });
+    _composerController.clear();
+
+    Get.find<AppPigeon>().emit('message:send', {
+      'chatId': widget.chatId,
+      'content': text,
+      'attachments': [],
+      'replyTo': null,
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -455,8 +568,8 @@ class ProjectChatScreen extends StatelessWidget {
             child: Column(
               children: [
                 _ChatHeader(
-                  title: title,
-                  avatarUrl: avatarUrl,
+                  title: widget.title,
+                  avatarUrl: widget.avatarUrl,
                   onMenuTap: () => _showChatMenu(context),
                 ),
                 const SizedBox(height: 10),
@@ -487,7 +600,10 @@ class ProjectChatScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                const _ChatComposer(),
+                _ChatComposer(
+                  controller: _composerController,
+                  onSend: _sendMessage,
+                ),
               ],
             ),
           ),
@@ -602,6 +718,14 @@ class _ChatBubble extends StatelessWidget {
 
   final _ChatMessage message;
 
+  ImageProvider _resolveAvatar() {
+    if (message.avatarUrl.startsWith('http://') ||
+        message.avatarUrl.startsWith('https://')) {
+      return NetworkImage(message.avatarUrl);
+    }
+    return const AssetImage('assets/image/aa.png');
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * 0.74;
@@ -635,7 +759,7 @@ class _ChatBubble extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 14,
-                          backgroundImage: NetworkImage(message.avatarUrl),
+                          backgroundImage: _resolveAvatar(),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -685,7 +809,13 @@ class _ChatBubble extends StatelessWidget {
 }
 
 class _ChatComposer extends StatelessWidget {
-  const _ChatComposer();
+  const _ChatComposer({
+    required this.controller,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback onSend;
 
   @override
   Widget build(BuildContext context) {
@@ -711,23 +841,30 @@ class _ChatComposer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
-                  child: const TextField(
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                    decoration: InputDecoration(
+                  child: TextField(
+                    controller: controller,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: const InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Type a message',
                       hintStyle: TextStyle(color: Colors.white70),
                     ),
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => onSend(),
                   ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          _roundIcon(
-            icon: Icons.send_rounded,
-            backgroundColor: const Color(0xFF0E7A73),
-            iconColor: Colors.white,
+          InkWell(
+            onTap: onSend,
+            borderRadius: BorderRadius.circular(24),
+            child: _roundIcon(
+              icon: Icons.send_rounded,
+              backgroundColor: const Color(0xFF0E7A73),
+              iconColor: Colors.white,
+            ),
           ),
         ],
       ),
@@ -766,6 +903,7 @@ class _ThreadPreview {
 }
 
 class _ChatMessage {
+  final String id;
   final String sender;
   final String avatarUrl;
   final String text;
@@ -773,6 +911,7 @@ class _ChatMessage {
   final bool isMe;
 
   const _ChatMessage({
+    required this.id,
     required this.sender,
     required this.avatarUrl,
     required this.text,

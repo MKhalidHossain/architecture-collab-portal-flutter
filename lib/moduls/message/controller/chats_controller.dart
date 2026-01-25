@@ -6,11 +6,13 @@ import 'package:dana_bozzetto/moduls/message/model/create_chat_request_model.dar
 import 'package:dana_bozzetto/moduls/message/model/message_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 
 class ChatsController extends ChangeNotifier {
   bool _isLoading = false;
   String _errorMessage = '';
   List<ChatModel> _chats = <ChatModel>[];
+  bool _isListening = false;
 
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
@@ -18,10 +20,48 @@ class ChatsController extends ChangeNotifier {
 
   StreamSubscription<MessageModel>? _messageSubscription;
 
-  _listenToMessages() {
+  void _listenToMessages() {
+    if (_isListening) return;
+    _isListening = true;
     _messageSubscription =
         Get.find<MessageInterface>().subscribeToMessages().listen((message) {
-
+          if (message.chatId.isEmpty) {
+            return;
+          }
+          final index = _chats.indexWhere((chat) => chat.id == message.chatId);
+          if (index < 0) {
+            return;
+          }
+          final chat = _chats[index];
+          final latestMessage = ChatLatestMessage(
+            id: message.id,
+            sender: ChatUser(
+              id: message.senderId,
+              name: message.senderName,
+              email: '',
+              role: '',
+              avatar: ChatAvatar(publicId: '', url: message.senderAvatarUrl),
+            ),
+            content: message.content,
+            chatId: message.chatId,
+            createdAt: message.createdAt,
+            updatedAt: message.updatedAt,
+          );
+          final updated = ChatModel(
+            id: chat.id,
+            projectId: chat.projectId,
+            chatName: chat.chatName,
+            isGroupChat: chat.isGroupChat,
+            users: chat.users,
+            latestMessage: latestMessage,
+            createdAt: chat.createdAt,
+            updatedAt: message.updatedAt ?? chat.updatedAt,
+          );
+          _chats = [
+            updated,
+            ..._chats.where((item) => item.id != chat.id),
+          ];
+          notifyListeners();
         });
   } 
 
@@ -40,11 +80,17 @@ class ChatsController extends ChangeNotifier {
       },
       (success) {
         _chats = success.data ?? <ChatModel>[];
+        for (final chat in _chats) {
+          if (chat.id.isNotEmpty) {
+            Get.find<AppPigeon>().emit('join chat', chat.id);
+          }
+        }
       },
     );
 
     _isLoading = false;
     notifyListeners();
+    _listenToMessages();
   }
 
   Future<ChatModel?> createChat({
