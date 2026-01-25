@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_details.dart';
 import 'package:flutter/material.dart';
+import 'package:dana_bozzetto/core/utils/helpers/network_image_helper.dart';
 import '../model/project_cart_model.dart';
 
 const Color _accentColor = Color(0xFF0C7C84);
@@ -17,11 +18,12 @@ class ProjectCard extends StatelessWidget {
   });
 
   ImageProvider _resolveImage(String source) {
-    final value = source.trim();
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return NetworkImage(value);
+    final safeUrl = safeNetworkImageUrl(source);
+    if (safeUrl != null) {
+      return NetworkImage(safeUrl);
     }
-    if (value.isNotEmpty) {
+    final value = source.trim();
+    if (value.isNotEmpty && !value.startsWith('http')) {
       return AssetImage(value);
     }
     return const AssetImage('assets/image/aa.png');

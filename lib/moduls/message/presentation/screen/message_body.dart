@@ -72,10 +72,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   _ThreadPreview _buildThreadPreview(ChatModel chat) {
     final otherUser = _resolveOtherUser(chat);
-    final name = chat.chatName.trim().isNotEmpty
-        ? chat.chatName.trim()
-        : otherUser?.name.trim().isNotEmpty == true
-            ? otherUser!.name.trim()
+    final name = otherUser?.name.trim().isNotEmpty == true
+        ? otherUser!.name.trim()
+        : chat.chatName.trim().isNotEmpty
+            ? chat.chatName.trim()
             : 'Chat';
     final avatarUrl = otherUser?.avatar.url ?? '';
     final latestText = chat.latestMessage?.content ?? 'No messages yet';

@@ -16,6 +16,7 @@ import 'package:dana_bozzetto/moduls/profile/presentation/screen/profile_screen.
 import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dana_bozzetto/core/utils/helpers/network_image_helper.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   final Future<HomeDashboardResponse>? dashboardFuture;
@@ -383,8 +384,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           final name = isLoading ? 'Loading...' : readString('name');
           final employeeId = readString('employeeId');
           final avatarUrl = readAvatarUrl();
-          final avatarImage = avatarUrl.isNotEmpty
-              ? NetworkImage(avatarUrl)
+          final safeAvatarUrl = safeNetworkImageUrl(avatarUrl);
+          final avatarImage = safeAvatarUrl != null
+              ? NetworkImage(safeAvatarUrl)
               : const AssetImage('assets/image/aa.png') as ImageProvider;
 
           return Column(
