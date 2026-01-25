@@ -62,9 +62,6 @@ class AppPigeon {
     if (token == null) {
       return;
     }
-    if(_socketService._socket != null) {
-      _socketService._disposeSocket();
-    }
     final socketConnectParam = SocketConnectParam(
       url: param.socketUrl,
       token: token,

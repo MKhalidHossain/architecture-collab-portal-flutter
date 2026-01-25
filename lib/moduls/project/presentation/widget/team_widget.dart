@@ -96,8 +96,10 @@ class _TeamTabState extends State<TeamTab> {
         context,
         MaterialPageRoute(
           builder: (_) => ProjectChatScreen(
+            chatId: chat!.id,
             title: preview.name,
             avatarUrl: preview.avatarUrl,
+            currentUserId: currentUserId,
           ),
         ),
       );
