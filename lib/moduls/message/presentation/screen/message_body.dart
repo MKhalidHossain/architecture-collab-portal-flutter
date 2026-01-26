@@ -587,7 +587,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     _messages.sort((a, b) {
       final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      return aTime.compareTo(bTime);
+      return bTime.compareTo(aTime);
     });
   }
 
@@ -627,8 +627,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 260),
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
     });
@@ -670,6 +670,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                 Expanded(
                   child: ListView.separated(
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 12,
@@ -680,7 +681,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                       final message = _messages[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
-                        duration: Duration(milliseconds: 280 + index * 60),
+                        duration: Duration(milliseconds: 160 + index * 20),
                         builder: (context, value, child) {
                           return Opacity(
                             opacity: value,
