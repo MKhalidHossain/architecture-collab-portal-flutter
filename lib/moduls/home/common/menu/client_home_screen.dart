@@ -118,6 +118,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       endDrawer: SideMenu(
         selectedMenu: _selectedMenu,
         showCalendar: widget.showCalendarMenu,
+        profileFuture: _profileFuture,
         onSelect: (menu) {
           setState(() {
             _selectedMenu = menu;
