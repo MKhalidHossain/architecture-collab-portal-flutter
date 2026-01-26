@@ -373,8 +373,9 @@ class _HomeScreenTState extends State<HomeScreenT> {
                   scrollDirection: Axis.horizontal,
                   itemCount: projectModels.length,
                   itemBuilder: (context, index) {
+                    final cardWidth = MediaQuery.of(context).size.width - 32;
                     return Container(
-                      width: 340,
+                      width: cardWidth,
                       margin: const EdgeInsets.only(right: 16),
                       child: ProjectCard(
                         project: projectModels[index],
