@@ -39,6 +39,7 @@ base class ApiEndpoints {
   static const String clientPortalDashboard = _ClientPortal.dashboard;
   static const String getClientDocuments = _ClientPortal.getClientDocuments;
   static const String getClientApprovals = _ClientPortal.getClientApprovals;
+  static const String clientPortalSearch = _ClientPortal.search;
   static String updateClientApproval(String approvalId) =>
       _ClientPortal.updateClientApproval(approvalId);
 
@@ -47,6 +48,7 @@ base class ApiEndpoints {
   static const String teamMemberDashboard = _TeamPortal.dashboard;
   static const String getTeamMemberDocuments =
       _TeamPortal.getTeamMemberDocuments;
+  static const String teamPortalSearch = _TeamPortal.search;
 
   // ---------------------- Projects -----------------------------
   /// ### get
@@ -342,6 +344,7 @@ class _ClientPortal {
   static const String dashboard = '$_clientPortalRoute/dashboard';
   static const String getClientDocuments = '$_clientPortalRoute/documents';
   static const String getClientApprovals = '$_clientPortalRoute/approvals';
+  static const String search = '$_clientPortalRoute/search';
   static String updateClientApproval(String approvalId) =>
       '$_clientPortalRoute/approvals/$approvalId';
 }
@@ -351,6 +354,7 @@ class _TeamPortal {
   static const String _teamPortalRoute = '${ApiEndpoints.baseUrl}/team-portal';
   static const String dashboard = '$_teamPortalRoute/dashboard';
   static const String getTeamMemberDocuments = '$_teamPortalRoute/documents';
+  static const String search = '$_teamPortalRoute/search';
 }
 
 // ---------------------- Projects -----------------------------
