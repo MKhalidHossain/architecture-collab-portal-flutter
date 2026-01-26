@@ -378,6 +378,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
   final Set<String> _messageIds = <String>{};
   final TextEditingController _composerController = TextEditingController();
   StreamSubscription<MessageModel>? _messageSubscription;
+  bool _isLoadingHistory = false;
 
   void _showChatMenu(BuildContext context) {
     showGeneralDialog<void>(
@@ -454,6 +455,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     if (widget.chatId.isNotEmpty) {
       Get.find<AppPigeon>().emit('join chat', widget.chatId);
     }
+    _loadHistory();
     _messageSubscription =
         Get.find<MessageInterface>().subscribeToMessages().listen(_handleMessage);
   }
@@ -490,6 +492,29 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     }
     final isMe = widget.currentUserId.isNotEmpty &&
         widget.currentUserId == message.senderId;
+    if (isMe) {
+      final localIndex = _messages.indexWhere(
+        (item) =>
+            item.id.startsWith('local-') &&
+            item.isMe &&
+            item.text == message.content,
+      );
+      if (localIndex != -1) {
+        setState(() {
+          _messages[localIndex] = _ChatMessage(
+            id: message.id,
+            sender: message.senderName,
+            avatarUrl: message.senderAvatarUrl,
+            text: message.content,
+            time: _formatTime(message.createdAt),
+            isMe: isMe,
+            createdAt: message.createdAt,
+          );
+          _sortMessages();
+        });
+        return;
+      }
+    }
     setState(() {
       _messages.add(
         _ChatMessage(
@@ -499,8 +524,10 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
           text: message.content,
           time: _formatTime(message.createdAt),
           isMe: isMe,
+          createdAt: message.createdAt,
         ),
       );
+      _sortMessages();
     });
   }
 
@@ -510,6 +537,60 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minute $period';
+  }
+
+  Future<void> _loadHistory() async {
+    if (_isLoadingHistory || widget.chatId.isEmpty) return;
+    _isLoadingHistory = true;
+    final result = await Get.find<MessageInterface>()
+        .fetchMessages(chatId: widget.chatId);
+    if (!mounted) return;
+    result.fold(
+      (_) {
+        _isLoadingHistory = false;
+      },
+      (success) {
+        final history = success.data ?? <MessageModel>[];
+        bool didAdd = false;
+        for (final message in history) {
+          if (message.chatId != widget.chatId || message.content.isEmpty) {
+            continue;
+          }
+          if (message.id.isNotEmpty && _messageIds.contains(message.id)) {
+            continue;
+          }
+          if (message.id.isNotEmpty) {
+            _messageIds.add(message.id);
+          }
+          final isMe = widget.currentUserId.isNotEmpty &&
+              widget.currentUserId == message.senderId;
+          _messages.add(
+            _ChatMessage(
+              id: message.id,
+              sender: message.senderName,
+              avatarUrl: message.senderAvatarUrl,
+              text: message.content,
+              time: _formatTime(message.createdAt),
+              isMe: isMe,
+              createdAt: message.createdAt,
+            ),
+          );
+          didAdd = true;
+        }
+        if (didAdd) {
+          setState(() => _sortMessages());
+        }
+        _isLoadingHistory = false;
+      },
+    );
+  }
+
+  void _sortMessages() {
+    _messages.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return aTime.compareTo(bTime);
+    });
   }
 
   void _sendMessage() {
@@ -527,8 +608,10 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
           text: text,
           time: _formatTime(now),
           isMe: true,
+          createdAt: now,
         ),
       );
+      _sortMessages();
     });
     _composerController.clear();
 
@@ -909,6 +992,7 @@ class _ChatMessage {
   final String text;
   final String time;
   final bool isMe;
+  final DateTime? createdAt;
 
   const _ChatMessage({
     required this.id,
@@ -917,5 +1001,6 @@ class _ChatMessage {
     required this.text,
     required this.time,
     required this.isMe,
+    required this.createdAt,
   });
 }

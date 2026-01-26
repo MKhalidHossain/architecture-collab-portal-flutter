@@ -19,6 +19,16 @@ class MessageModel {
     required this.updatedAt,
   });
 
+  static List<MessageModel> fromJsonList(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => MessageModel.fromJson(item))
+          .toList();
+    }
+    return <MessageModel>[];
+  }
+
   factory MessageModel.fromJson(dynamic data) {
     if (data is! Map) {
       return const MessageModel(

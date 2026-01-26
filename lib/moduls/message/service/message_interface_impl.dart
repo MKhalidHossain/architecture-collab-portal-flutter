@@ -58,6 +58,20 @@ final class MessageInterfaceImpl extends MessageInterface {
     );
   }
 
+  @override
+  Future<Either<DataCRUDFailure, Success<List<MessageModel>>>> fetchMessages({
+    required String chatId,
+  }) {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getMessages(chatId));
+        final payload = _extractPayload(response.data);
+        final messages = MessageModel.fromJsonList(payload);
+        return Success(data: messages);
+      },
+    );
+  }
+
   dynamic _extractPayload(dynamic data) {
     if (data is Map) {
       final map = Map<String, dynamic>.from(data);

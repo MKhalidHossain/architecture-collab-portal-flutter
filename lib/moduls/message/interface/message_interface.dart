@@ -13,5 +13,9 @@ abstract base class MessageInterface extends BaseRepository {
     required CreateChatRequestModel param,
   });
 
+  Future<Either<DataCRUDFailure, Success<List<MessageModel>>>> fetchMessages({
+    required String chatId,
+  });
+
   Stream<MessageModel> subscribeToMessages();
 }
