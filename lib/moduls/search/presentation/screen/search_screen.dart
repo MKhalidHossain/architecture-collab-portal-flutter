@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:dana_bozzetto/moduls/project/presentation/screen/document_preview_screen.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/documents_screen.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_details.dart';
 import 'package:dana_bozzetto/moduls/search/interface/search_interface.dart';
 import 'package:dana_bozzetto/moduls/search/model/search_response_model.dart';
@@ -177,7 +177,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             ? item.type
                             : 'Document',
                         icon: Icons.description_outlined,
-                        onTap: () => _openDocument(item.name, item.fileUrl),
+                        onTap: () => _openDocuments(item.name),
                       ),
                     )
                     .toList(),
@@ -308,18 +308,16 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _openDocument(String title, String url) {
-    if (url.trim().isEmpty) {
-      _showSnack('Document link not available.');
+  void _openDocuments(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      _showSnack('Document name not available.');
       return;
     }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DocumentPreviewScreen(
-          url: url,
-          title: title.isNotEmpty ? title : 'Document',
-        ),
+        builder: (_) => DocumentsScreen(initialQuery: trimmed),
       ),
     );
   }
