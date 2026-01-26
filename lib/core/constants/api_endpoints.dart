@@ -213,7 +213,7 @@ class _Auth {
   static const String verifyCode = '$_authRoute/verify-otp';
   static const String verifyEmail = '$_authRoute/verify-email';
   //static const String registerVerify = '$_authRoute/verify-otp';
-  static const String changePassword = '$_authRoute/change-password';
+  static const String changePassword = '$_authRoute/password';
   static const String resetPassword = '$_authRoute/reset-password';
 }
 
