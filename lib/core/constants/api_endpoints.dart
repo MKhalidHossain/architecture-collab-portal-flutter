@@ -48,6 +48,7 @@ base class ApiEndpoints {
   static const String teamMemberDashboard = _TeamPortal.dashboard;
   static const String getTeamMemberDocuments =
       _TeamPortal.getTeamMemberDocuments;
+  static const String getTeamApprovals = _TeamPortal.approvals;
   static const String teamPortalSearch = _TeamPortal.search;
 
   // ---------------------- Projects -----------------------------
@@ -355,6 +356,7 @@ class _TeamPortal {
   static const String dashboard = '$_teamPortalRoute/dashboard';
   static const String getTeamMemberDocuments = '$_teamPortalRoute/documents';
   static const String search = '$_teamPortalRoute/search';
+  static const String approvals = '$_teamPortalRoute/approvals';
 }
 
 // ---------------------- Projects -----------------------------

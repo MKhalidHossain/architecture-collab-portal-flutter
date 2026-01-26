@@ -3,6 +3,7 @@ import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/moduls/project/controller/project_approvals_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/client_get_approvals_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/approval_details_screen.dart';
+import 'package:dana_bozzetto/moduls/project/model/team_portal_approvals_response_model.dart';
 import 'package:flutter/material.dart';
 
 const Color _accentColor = Color(0xFF0C7A7E);
@@ -51,14 +52,19 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-          final approvals = _controller.approvals;
-          final counts = _countApprovals(approvals);
+          final approvals =
+              widget.isTeamMember ? _controller.teamApprovals : _controller.approvals;
+          final counts = widget.isTeamMember
+              ? _countTeamApprovals(_controller.teamApprovals)
+              : _countApprovals(_controller.approvals);
           final tabs = [
             "All (${counts.total})",
             "Pending (${counts.pending})",
             "Approved (${counts.approved})",
           ];
-          final filteredApprovals = _filterApprovals(approvals);
+          final filteredApprovals = widget.isTeamMember
+              ? _filterTeamApprovals(_controller.teamApprovals)
+              : _filterApprovals(_controller.approvals);
           final hasData = approvals.isNotEmpty;
           final showLoading = _controller.isLoading && !hasData;
           final showError = _controller.errorMessage.isNotEmpty && !hasData;
@@ -66,7 +72,11 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
           return Column(
             children: [
               widget.isTeamMember
-                  ? _buildTeamMemberHeader(context, tabs, approvals)
+                  ? _buildTeamMemberHeader(
+                      context,
+                      tabs,
+                      _controller.teamApprovals,
+                    )
                   : _buildHeader(context, tabs),
               Expanded(
                 child: Stack(
@@ -102,9 +112,14 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 14),
-                            child: _buildApprovalCard(
-                              filteredApprovals[index],
-                            ),
+                            child: widget.isTeamMember
+                                ? _buildTeamMemberApprovalCard(
+                                    filteredApprovals[index] as TeamApprovalItem,
+                                  )
+                                : _buildApprovalCard(
+                                    filteredApprovals[index]
+                                        as ClientGetApprovalsResponseModel,
+                                  ),
                           );
                         },
                       ),
@@ -237,7 +252,7 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
   Widget _buildTeamMemberHeader(
     BuildContext context,
     List<String> tabs,
-    List<ClientGetApprovalsResponseModel> approvals,
+    List<TeamApprovalItem> approvals,
   ) {
     final headerTitle = _firstNonEmpty(
       widget.projectTitle,
@@ -373,9 +388,6 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
   }
 
   Widget _buildApprovalCard(ClientGetApprovalsResponseModel approval) {
-    if (widget.isTeamMember) {
-      return _buildTeamMemberApprovalCard(approval);
-    }
     final statusView = _statusView(approval.status);
     final showActions = statusView.category == _ApprovalStatusCategory.pending;
     final title = approval.title?.trim();
@@ -540,23 +552,23 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
   }
 
   Widget _buildTeamMemberApprovalCard(
-    ClientGetApprovalsResponseModel approval,
+    TeamApprovalItem approval,
   ) {
     final badgeStyle = _teamStatusBadge(approval.status);
-    final title = approval.title?.trim().isNotEmpty == true
-        ? approval.title!.trim()
+    final title = approval.title.trim().isNotEmpty
+        ? approval.title.trim()
         : 'Approval Request';
-    final description = approval.description?.trim().isNotEmpty == true
-        ? approval.description!.trim()
+    final description = approval.description.trim().isNotEmpty
+        ? approval.description.trim()
         : 'Please review and approve the final design proposal.';
     final isApproved =
         _statusCategory(approval.status) == _ApprovalStatusCategory.approved;
     final fallbackBy = isApproved ? 'Admin' : 'Team';
-    final requestedBy = approval.requestedBy?.trim().isNotEmpty == true
-        ? approval.requestedBy!.trim()
+    final requestedBy = approval.requestedBy.trim().isNotEmpty
+        ? approval.requestedBy.trim()
         : fallbackBy;
     final requestedDate = approval.requestedDate;
-    final approvedDate = approval.dueDate ?? approval.requestedDate;
+    final approvedDate = approval.approvedDate ?? approval.requestedDate;
     final byLabelPrefix = isApproved ? 'Accepted by' : 'Requested by';
 
     return ClipRRect(
@@ -817,9 +829,46 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
     return filtered;
   }
 
+  List<TeamApprovalItem> _filterTeamApprovals(
+    List<TeamApprovalItem> approvals,
+  ) {
+    if (_selectedTab == 0) {
+      return approvals;
+    }
+    final filtered = <TeamApprovalItem>[];
+    for (final approval in approvals) {
+      final category = _statusCategory(approval.status);
+      if (_selectedTab == 1 && category == _ApprovalStatusCategory.pending) {
+        filtered.add(approval);
+      }
+      if (_selectedTab == 2 && category == _ApprovalStatusCategory.approved) {
+        filtered.add(approval);
+      }
+    }
+    return filtered;
+  }
+
   _ApprovalCounts _countApprovals(
     List<ClientGetApprovalsResponseModel> approvals,
   ) {
+    var pending = 0;
+    var approved = 0;
+    for (final approval in approvals) {
+      final category = _statusCategory(approval.status);
+      if (category == _ApprovalStatusCategory.pending) {
+        pending += 1;
+      } else if (category == _ApprovalStatusCategory.approved) {
+        approved += 1;
+      }
+    }
+    return _ApprovalCounts(
+      total: approvals.length,
+      pending: pending,
+      approved: approved,
+    );
+  }
+
+  _ApprovalCounts _countTeamApprovals(List<TeamApprovalItem> approvals) {
     var pending = 0;
     var approved = 0;
     for (final approval in approvals) {
@@ -862,7 +911,9 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
     if (normalized == 'approved') {
       return _ApprovalStatusCategory.approved;
     }
-    if (normalized == 'pending' || normalized == 'review') {
+    if (normalized == 'pending' ||
+        normalized == 'review' ||
+        normalized.contains('waiting')) {
       return _ApprovalStatusCategory.pending;
     }
     return _ApprovalStatusCategory.other;
