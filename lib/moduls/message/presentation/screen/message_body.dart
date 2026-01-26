@@ -860,7 +860,7 @@ class _ChatBubble extends StatelessWidget {
                   ],
                   Text(
                     message.text,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style:  TextStyle(color: Colors.white70, fontSize: 15),
                   ),
                   const SizedBox(height: 10),
                   Row(

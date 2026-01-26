@@ -295,6 +295,7 @@ class _Booking {
 // ---------------------- MESSAGE -----------------------------
 class _Message {
   static const String _messageRoute = '${ApiEndpoints.baseUrl}/chat';
+  static const String _messagesRoute = '${ApiEndpoints.baseUrl}/messages';
 
   static const String getAllChat = "$_messageRoute/get-chat";
 
@@ -302,7 +303,7 @@ class _Message {
       "$_messageRoute/get-single-chat/$chatId";
 
   /// Get
-  static String getMessages(String chatId) => "$_messageRoute/messages/$chatId";
+  static String getMessages(String chatId) => "$_messagesRoute/$chatId";
 
   /// Post
   static String sendMessage(String chatId) => "$_messageRoute/send-message";
