@@ -14,6 +14,7 @@ import 'package:dana_bozzetto/moduls/message/presentation/screen/message_body.da
 import 'package:dana_bozzetto/moduls/notification/presentation/screen/notification_screen.dart';
 import 'package:dana_bozzetto/moduls/profile/presentation/screen/profile_screen.dart';
 import 'package:dana_bozzetto/moduls/setting/presentation/screen/setting_body.dart';
+import 'package:dana_bozzetto/moduls/search/presentation/screen/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dana_bozzetto/core/utils/helpers/network_image_helper.dart';
@@ -37,6 +38,7 @@ class ClientHomeScreen extends StatefulWidget {
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
 
   MenuType _selectedMenu = MenuType.home;
   bool _calendarExpanded = false;
@@ -65,6 +67,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         joinId: widget.userId,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<Map<String, dynamic>> _fetchProfile() async {
@@ -111,6 +119,20 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     });
   }
 
+  void _openSearch(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(
+          isTeamMember: widget.isTeamMember,
+          initialQuery: trimmed,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,6 +140,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       endDrawer: SideMenu(
         selectedMenu: _selectedMenu,
         showCalendar: widget.showCalendarMenu,
+        profileFuture: _profileFuture,
         onSelect: (menu) {
           setState(() {
             _selectedMenu = menu;
@@ -220,7 +243,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _searchBar(hintText: 'Search Projects, Documents......'),
+              _searchBar(
+                hintText: 'Search Projects, Documents......',
+                controller: _searchController,
+                onSubmitted: _openSearch,
+              ),
             ],
           );
         },
@@ -271,7 +298,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _searchBar(hintText: 'Search Projects, Documents....'),
+          _searchBar(
+            hintText: 'Search Projects, Documents....',
+            controller: _searchController,
+            onSubmitted: _openSearch,
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -285,7 +316,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         children: [
           _topRow('Messages'),
           const SizedBox(height: 12),
-          _searchBar(),
+          _searchBar(
+            controller: _searchController,
+            onSubmitted: _openSearch,
+          ),
         ],
       ),
     );
@@ -629,7 +663,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  Widget _searchBar({String hintText = 'Search...'}) {
+  Widget _searchBar({
+    String hintText = 'Search...',
+    TextEditingController? controller,
+    ValueChanged<String>? onSubmitted,
+  }) {
     return Container(
       height: 52,
       decoration: BoxDecoration(
@@ -638,7 +676,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
       child: TextField(
+        controller: controller,
         style: const TextStyle(color: Colors.white),
+        textInputAction: TextInputAction.search,
+        onSubmitted: onSubmitted,
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
           prefixIcon: const Icon(Icons.search, color: Colors.white70),

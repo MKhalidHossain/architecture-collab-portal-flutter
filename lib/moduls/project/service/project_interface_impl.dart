@@ -15,6 +15,7 @@ import 'package:dana_bozzetto/moduls/project/model/create_task_request_model.dar
 import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/task_submit_request_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/task_submit_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/team_portal_approvals_response_model.dart';
 import 'package:dartz/dartz.dart';
 
 final class ProjectInterfaceImpl extends ProjectInterface {
@@ -69,6 +70,25 @@ final class ProjectInterfaceImpl extends ProjectInterface {
         return Success(
           data: ClientGetApprovalsResponseModel.fromJsonList(response.data),
         );
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<TeamPortalApprovalsResponse>>>
+      fetchTeamApprovals() {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.get(ApiEndpoints.getTeamApprovals);
+        final data = response.data;
+        var payload = <String, dynamic>{};
+        if (data is Map) {
+          final map = Map<String, dynamic>.from(data);
+          payload = map['data'] is Map
+              ? Map<String, dynamic>.from(map['data'])
+              : map;
+        }
+        return Success(data: TeamPortalApprovalsResponse.fromJson(payload));
       },
     );
   }

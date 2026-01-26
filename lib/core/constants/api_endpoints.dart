@@ -39,6 +39,7 @@ base class ApiEndpoints {
   static const String clientPortalDashboard = _ClientPortal.dashboard;
   static const String getClientDocuments = _ClientPortal.getClientDocuments;
   static const String getClientApprovals = _ClientPortal.getClientApprovals;
+  static const String clientPortalSearch = _ClientPortal.search;
   static String updateClientApproval(String approvalId) =>
       _ClientPortal.updateClientApproval(approvalId);
 
@@ -47,6 +48,8 @@ base class ApiEndpoints {
   static const String teamMemberDashboard = _TeamPortal.dashboard;
   static const String getTeamMemberDocuments =
       _TeamPortal.getTeamMemberDocuments;
+  static const String getTeamApprovals = _TeamPortal.approvals;
+  static const String teamPortalSearch = _TeamPortal.search;
 
   // ---------------------- Projects -----------------------------
   /// ### get
@@ -66,6 +69,10 @@ base class ApiEndpoints {
   /// ### get
   static String getProjectDocuments(String projectId) =>
       _Documents.projectDocuments(projectId);
+
+  // ---------------------- Settings -----------------------------
+  /// ### get/put
+  static const String settings = _Settings.settings;
 
   //------------interest----------------
   /// ### get
@@ -194,7 +201,7 @@ class _RemoteServer {
 
 class _LocalHostWifi {
   static const String socketUrl = 'http://localhost:5000';
-  static const String baseUrl = 'http://10.10.5.85:5000/api';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
@@ -210,7 +217,7 @@ class _Auth {
   static const String verifyCode = '$_authRoute/verify-otp';
   static const String verifyEmail = '$_authRoute/verify-email';
   //static const String registerVerify = '$_authRoute/verify-otp';
-  static const String changePassword = '$_authRoute/change-password';
+  static const String changePassword = '$_authRoute/password';
   static const String resetPassword = '$_authRoute/reset-password';
 }
 
@@ -245,9 +252,9 @@ class _Report {
 class _Notification {
   static const String _notificationRoute =
       '${ApiEndpoints.baseUrl}/notifications';
-  static const String getAllNotifications = '$_notificationRoute/';
+  static const String getAllNotifications = _notificationRoute;
   static String markNotificationAsRead(String notificationId) =>
-      '$_notificationRoute/$notificationId/read/';
+      '$_notificationRoute/$notificationId/read';
   // static const String readAllNotifications =
   //     '$_notificationRoute/mark-all-as-read';
   static const String marksRead = '$_notificationRoute/read-all';
@@ -342,6 +349,7 @@ class _ClientPortal {
   static const String dashboard = '$_clientPortalRoute/dashboard';
   static const String getClientDocuments = '$_clientPortalRoute/documents';
   static const String getClientApprovals = '$_clientPortalRoute/approvals';
+  static const String search = '$_clientPortalRoute/search';
   static String updateClientApproval(String approvalId) =>
       '$_clientPortalRoute/approvals/$approvalId';
 }
@@ -351,6 +359,8 @@ class _TeamPortal {
   static const String _teamPortalRoute = '${ApiEndpoints.baseUrl}/team-portal';
   static const String dashboard = '$_teamPortalRoute/dashboard';
   static const String getTeamMemberDocuments = '$_teamPortalRoute/documents';
+  static const String search = '$_teamPortalRoute/search';
+  static const String approvals = '$_teamPortalRoute/approvals';
 }
 
 // ---------------------- Projects -----------------------------
@@ -374,4 +384,9 @@ class _Documents {
   static const String _documentsRoute = '${ApiEndpoints.baseUrl}/documents';
   static String projectDocuments(String projectId) =>
       '$_documentsRoute/project/$projectId';
+}
+
+// ---------------------- Settings -----------------------------
+class _Settings {
+  static const String settings = '${ApiEndpoints.baseUrl}/settings';
 }

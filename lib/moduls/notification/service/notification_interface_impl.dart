@@ -36,7 +36,7 @@ final class NotificationInterfaceImpl extends NotificationInterface {
   }) async {
     return asyncTryCatch(
       tryFunc: () async {
-        await appPigeon.patch(
+        await appPigeon.put(
           ApiEndpoints.markNotificationAsRead(notificationId: notificationId),
         );
         return Success<void>(data: null);
@@ -48,7 +48,7 @@ final class NotificationInterfaceImpl extends NotificationInterface {
   Future<Either<DataCRUDFailure, Success<void>>> markAllRead() async {
     return asyncTryCatch(
       tryFunc: () async {
-        await appPigeon.patch(ApiEndpoints.markAllRead);
+        await appPigeon.put(ApiEndpoints.markAllRead);
         return Success<void>(data: null);
       },
     );

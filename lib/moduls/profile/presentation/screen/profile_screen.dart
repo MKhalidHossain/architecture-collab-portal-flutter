@@ -5,7 +5,9 @@ import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
 import 'package:dana_bozzetto/moduls/auth/model/logout_request_model.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
+import 'package:dana_bozzetto/moduls/notification/presentation/screen/notification_screen.dart';
 import 'package:dana_bozzetto/moduls/profile/presentation/screen/edit_profile.dart';
+import 'package:dana_bozzetto/moduls/profile/presentation/screen/simple_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -104,7 +106,10 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Scaffold()),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const NotificationScreen(showBackground: true),
+                        ),
                       );
                     },
                   ),
@@ -116,7 +121,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Scaffold()),
+                        MaterialPageRoute(
+                          builder: (_) => const SimpleInfoScreen(
+                            title: 'Privacy & Security',
+                            message:
+                                'This is a placeholder screen. Add privacy controls, '
+                                'security tips, and account protection options here.',
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -136,7 +148,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Scaffold()),
+                        MaterialPageRoute(
+                          builder: (_) => const SimpleInfoScreen(
+                            title: 'Help & Support',
+                            message:
+                                'This is a placeholder screen. Add FAQs, contact '
+                                'details, and support hours here.',
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -148,7 +167,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Scaffold()),
+                        MaterialPageRoute(
+                          builder: (_) => const SimpleInfoScreen(
+                            title: 'Privacy Policy',
+                            message:
+                                'This is a placeholder screen. Add the privacy '
+                                'policy summary and full policy links here.',
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -160,7 +186,14 @@ class _ProfileBodyState extends State<ProfileBody> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Scaffold()),
+                        MaterialPageRoute(
+                          builder: (_) => const SimpleInfoScreen(
+                            title: 'Terms & Conditions',
+                            message:
+                                'This is a placeholder screen. Add the terms of '
+                                'service and usage guidelines here.',
+                          ),
+                        ),
                       );
                     },
                   ),

@@ -1,5 +1,9 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
+import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
+import 'package:dana_bozzetto/moduls/auth/model/change_password_request_model.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -12,10 +16,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool showOld = false;
   bool showNew = false;
   bool showConfirm = false;
+  bool _isSubmitting = false;
 
   final oldController = TextEditingController();
   final newController = TextEditingController();
   final confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    oldController.dispose();
+    newController.dispose();
+    confirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,15 +91,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {},
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  onPressed: _isSubmitting ? null : _handleChangePassword,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -98,6 +120,51 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       ),
 
     );
+  }
+
+  Future<void> _handleChangePassword() async {
+    final notifier = SnackbarNotifier(context: context);
+    final oldPassword = oldController.text.trim();
+    final newPassword = newController.text.trim();
+    final confirmPassword = confirmController.text.trim();
+
+    if (oldPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      notifier.notifyError(message: 'Please fill all password fields.');
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      notifier.notifyError(message: 'New password and confirm do not match.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    final authInterface = Get.find<AuthInterface>();
+    final result = await authInterface.changePassword(
+      param: ChangePasswordRequestModel(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      ),
+    );
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        notifier.notifyError(
+          message: failure.uiMessage.isNotEmpty
+              ? failure.uiMessage
+              : failure.fullError,
+        );
+      },
+      (success) {
+        notifier.notifySuccess(message: success.message);
+        oldController.clear();
+        newController.clear();
+        confirmController.clear();
+        Navigator.pop(context);
+      },
+    );
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+    }
   }
 
   /// ================= GLASS CARD =================
