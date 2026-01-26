@@ -278,10 +278,10 @@ class ProjectCard extends StatelessWidget {
                       child: Text(
                         'View Details',
                         style: TextStyle(
-                          color: _accentColor,
+                          color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
+                          // decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
@@ -347,8 +347,7 @@ class _ProgressCircle extends StatelessWidget {
       ),
       child: Center(
         child: active
-            ? const Icon(Icons.verified_rounded,
-                size: 18, color: Colors.white)
+            ? const Icon(Icons.verified_rounded, size: 18, color: Colors.white)
             : const SizedBox.shrink(),
       ),
     );

@@ -9,8 +9,13 @@ enum NotificationFilter { all, unread }
 
 class NotificationScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final bool showBackground;
 
-  const NotificationScreen({super.key, this.onBack});
+  const NotificationScreen({
+    super.key,
+    this.onBack,
+    this.showBackground = false,
+  });
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -44,53 +49,70 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              _notificationsHeader(),
-              const SizedBox(height: 14),
-              Expanded(
-                child: Obx(() {
-                  final items = _filteredNotifications(
-                    _controller.notifications.toList(),
-                  );
-                  if (_controller.isLoading.value) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  }
-                  if (_controller.errorMessage.value.isNotEmpty) {
-                    return _errorState(_controller.errorMessage.value);
-                  }
-                  if (items.isEmpty) {
-                    return _emptyState();
-                  }
-                  return RefreshIndicator(
-                    onRefresh: _controller.fetchNotifications,
-                    color: const Color(0xFF01676C),
-                    child: ListView.separated(
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return NotificationItem(
-                          item: item,
-                          timeLabel: _formatTimeAgo(item.createdAt),
-                          onMarkRead: () =>
-                              _controller.markNotificationRead(item.id),
-                          onDelete: () =>
-                              _controller.deleteNotification(item.id),
+      body: Stack(
+        children: [
+          if (widget.showBackground) _background(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  _notificationsHeader(),
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: Obx(() {
+                      final items = _filteredNotifications(
+                        _controller.notifications.toList(),
+                      );
+                      if (_controller.isLoading.value) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
                         );
-                      },
-                    ),
-                  );
-                }),
+                      }
+                      if (_controller.errorMessage.value.isNotEmpty) {
+                        return _errorState(_controller.errorMessage.value);
+                      }
+                      if (items.isEmpty) {
+                        return _emptyState();
+                      }
+                      return RefreshIndicator(
+                        onRefresh: _controller.fetchNotifications,
+                        color: const Color(0xFF01676C),
+                        child: ListView.separated(
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return NotificationItem(
+                              item: item,
+                              timeLabel: _formatTimeAgo(item.createdAt),
+                              onMarkRead: () =>
+                                  _controller.markNotificationRead(item.id),
+                              onDelete: () =>
+                                  _controller.deleteNotification(item.id),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _background() {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/image/ab.png'),
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -117,7 +139,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   if (widget.onBack != null) {
                     widget.onBack!();
                   } else {
-                    Get.back();
+                    Navigator.of(context).maybePop();
                   }
                 },
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
