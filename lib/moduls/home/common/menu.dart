@@ -138,7 +138,7 @@ class SideMenu extends StatelessWidget {
                               _menuItem(
                                 context,
                                 Icons.settings_outlined,
-                                'Setting',
+                                'Settings',
                                 MenuType.settings,
                               ),
                             ],
@@ -252,15 +252,13 @@ class SideMenu extends StatelessWidget {
       final result = await authInterface.logout(
         param: LogoutRequestModel(refreshToken: refreshToken),
       );
-      result.fold(
-        (failure) {
-          snackbarNotifier.notifyError(
-            message:
-                failure.uiMessage.isNotEmpty ? failure.uiMessage : 'Logout failed',
-          );
-        },
-        (_) {},
-      );
+      result.fold((failure) {
+        snackbarNotifier.notifyError(
+          message: failure.uiMessage.isNotEmpty
+              ? failure.uiMessage
+              : 'Logout failed',
+        );
+      }, (_) {});
     } else {
       await appPigeon.logOut();
     }
@@ -304,9 +302,10 @@ class SideMenu extends StatelessWidget {
     BuildContext context,
     IconData icon,
     String title,
-    MenuType type,
-    {String? badge, bool showDot = false}
-  ) {
+    MenuType type, {
+    String? badge,
+    bool showDot = false,
+  }) {
     final isActive = selectedMenu == type;
 
     return InkWell(
@@ -323,10 +322,7 @@ class SideMenu extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: isActive
               ? const Border(
-                  left: BorderSide(
-                    color: Color(0xFF00D4AA),
-                    width: 3,
-                  ),
+                  left: BorderSide(color: Color(0xFF00D4AA), width: 3),
                 )
               : null,
         ),
@@ -350,8 +346,7 @@ class SideMenu extends StatelessWidget {
             ),
             if (badge != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00D4AA),
                   borderRadius: BorderRadius.circular(12),

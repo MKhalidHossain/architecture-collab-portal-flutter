@@ -70,6 +70,10 @@ base class ApiEndpoints {
   static String getProjectDocuments(String projectId) =>
       _Documents.projectDocuments(projectId);
 
+  // ---------------------- Settings -----------------------------
+  /// ### get/put
+  static const String settings = _Settings.settings;
+
   //------------interest----------------
   /// ### get
   static const String getInterests = _Interest.getallInterests;
@@ -380,4 +384,9 @@ class _Documents {
   static const String _documentsRoute = '${ApiEndpoints.baseUrl}/documents';
   static String projectDocuments(String projectId) =>
       '$_documentsRoute/project/$projectId';
+}
+
+// ---------------------- Settings -----------------------------
+class _Settings {
+  static const String settings = '${ApiEndpoints.baseUrl}/settings';
 }
