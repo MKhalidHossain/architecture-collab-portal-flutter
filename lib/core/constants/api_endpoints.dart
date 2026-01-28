@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 base class ApiEndpoints {
-  static const String socketUrl = _RemoteServer.socketUrl;
+  static const String socketUrl = _LocalHostWifi.socketUrl;
 
-  static const String baseUrl = _RemoteServer.baseUrl;
+  static const String baseUrl = _LocalHostWifi.baseUrl;
 
   /// ### post
   static const String login = _Auth.login;
@@ -194,16 +194,16 @@ base class ApiEndpoints {
 //arrow360degree@gmail.com
 
 class _RemoteServer {
-  static const String socketUrl =
-      'https://backend-dana-bozzetto-7q5g.onrender.com';
+  // static const String socketUrl =
+  // 'https://backend-dana-bozzetto-7q5g.onrender.com';
 
-  static const String baseUrl =
-      'https://backend-dana-bozzetto-7q5g.onrender.com/api';
+  // static const String baseUrl =
+  // 'https://backend-dana-bozzetto-7q5g.onrender.com/api';
 }
 
 class _LocalHostWifi {
-  // static const String socketUrl = 'http://localhost:5000';
-  // static const String baseUrl = 'http://10.10.5.94:5000/api';
+  static const String socketUrl = 'http://localhost:5000';
+  static const String baseUrl = 'http://10.10.5.94:5000/api';
 }
 
 class _Auth {
