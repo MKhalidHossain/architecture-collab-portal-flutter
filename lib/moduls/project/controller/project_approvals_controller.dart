@@ -82,6 +82,7 @@ class ProjectApprovalsController extends ChangeNotifier {
           title: title,
           description: description,
           status: task.status,
+          projectId: task.project.id,
           projectName: task.project.name,
           requestedBy: '',
           requestedDate: task.submission.submittedAt ?? task.createdAt,
@@ -98,6 +99,7 @@ class ProjectApprovalsController extends ChangeNotifier {
               ? doc.notes
               : 'Please review and approve the document.',
           status: doc.status,
+          projectId: doc.project.id,
           projectName: doc.project.name,
           requestedBy: '',
           requestedDate: doc.createdAt,

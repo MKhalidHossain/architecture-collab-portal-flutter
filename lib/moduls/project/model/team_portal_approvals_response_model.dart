@@ -165,6 +165,7 @@ class TeamApprovalItem {
   final String title;
   final String description;
   final String status;
+  final String projectId;
   final String projectName;
   final String requestedBy;
   final DateTime? requestedDate;
@@ -175,6 +176,7 @@ class TeamApprovalItem {
     required this.title,
     required this.description,
     required this.status,
+    required this.projectId,
     required this.projectName,
     required this.requestedBy,
     required this.requestedDate,

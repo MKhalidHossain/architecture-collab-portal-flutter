@@ -119,6 +119,8 @@ class DocumentPreviewCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -127,9 +129,13 @@ class DocumentPreviewCard extends StatelessWidget {
                             color: Colors.white,
                             fontSize: 16,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-                        Row(
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
                           children: [
                             _meta(size),
                             _dot(),

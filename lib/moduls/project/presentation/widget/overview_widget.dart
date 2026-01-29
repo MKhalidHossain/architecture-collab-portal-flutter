@@ -205,6 +205,7 @@ class OverviewTab extends StatelessWidget {
             badgeColor: const Color(0xFFE74C3C),
             navigateTo: ProjectBaseApproval(
               isTeamMember: isTeamMember,
+              projectId: project.id,
               projectTitle: project.name,
               projectSubtitle: project.client.name,
               projectStatus: project.status,
@@ -220,6 +221,7 @@ class OverviewTab extends StatelessWidget {
               badgeColor: const Color(0xFFE74C3C),
               navigateTo: ProjectBaseApproval(
                 isTeamMember: isTeamMember,
+                projectId: project.id,
                 projectTitle: project.name,
                 projectSubtitle: project.client.name,
                 projectStatus: project.status,

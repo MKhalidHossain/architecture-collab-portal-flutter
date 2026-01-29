@@ -10,6 +10,7 @@ const Color _accentColor = Color(0xFF0C7A7E);
 
 class ProjectBaseApproval extends StatefulWidget {
   final bool isTeamMember;
+  final String? projectId;
   final String? projectTitle;
   final String? projectSubtitle;
   final String? projectStatus;
@@ -18,6 +19,7 @@ class ProjectBaseApproval extends StatefulWidget {
   const ProjectBaseApproval({
     super.key,
     this.isTeamMember = false,
+    this.projectId,
     this.projectTitle,
     this.projectSubtitle,
     this.projectStatus,
@@ -54,17 +56,23 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
         builder: (context, _) {
           final approvals =
               widget.isTeamMember ? _controller.teamApprovals : _controller.approvals;
+          final teamScopedApprovals = widget.isTeamMember
+              ? _scopeTeamApprovals(_controller.teamApprovals)
+              : <TeamApprovalItem>[];
+          final clientScopedApprovals = widget.isTeamMember
+              ? <ClientGetApprovalsResponseModel>[]
+              : _scopeApprovals(_controller.approvals);
           final counts = widget.isTeamMember
-              ? _countTeamApprovals(_controller.teamApprovals)
-              : _countApprovals(_controller.approvals);
+              ? _countTeamApprovals(teamScopedApprovals)
+              : _countApprovals(clientScopedApprovals);
           final tabs = [
             "All (${counts.total})",
             "Pending (${counts.pending})",
             "Approved (${counts.approved})",
           ];
           final filteredApprovals = widget.isTeamMember
-              ? _filterTeamApprovals(_controller.teamApprovals)
-              : _filterApprovals(_controller.approvals);
+              ? _filterTeamApprovals(teamScopedApprovals)
+              : _filterApprovals(clientScopedApprovals);
           final hasData = approvals.isNotEmpty;
           final showLoading = _controller.isLoading && !hasData;
           final showError = _controller.errorMessage.isNotEmpty && !hasData;
@@ -75,7 +83,7 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
                   ? _buildTeamMemberHeader(
                       context,
                       tabs,
-                      _controller.teamApprovals,
+                      teamScopedApprovals,
                     )
                   : _buildHeader(context, tabs),
               Expanded(
@@ -808,6 +816,45 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
         ),
       ),
     );
+  }
+
+  List<ClientGetApprovalsResponseModel> _scopeApprovals(
+    List<ClientGetApprovalsResponseModel> approvals,
+  ) {
+    final projectId = widget.projectId?.trim() ?? '';
+    final projectTitle = widget.projectTitle?.trim() ?? '';
+    if (projectId.isEmpty && projectTitle.isEmpty) {
+      return approvals;
+    }
+    return approvals.where((item) {
+      if (projectId.isNotEmpty && item.projectId?.trim() == projectId) {
+        return true;
+      }
+      if (projectTitle.isNotEmpty) {
+        final name = item.projectName?.trim() ?? '';
+        return name.toLowerCase() == projectTitle.toLowerCase();
+      }
+      return false;
+    }).toList();
+  }
+
+  List<TeamApprovalItem> _scopeTeamApprovals(
+    List<TeamApprovalItem> approvals,
+  ) {
+    final projectId = widget.projectId?.trim() ?? '';
+    final projectTitle = widget.projectTitle?.trim() ?? '';
+    if (projectId.isEmpty && projectTitle.isEmpty) {
+      return approvals;
+    }
+    return approvals.where((item) {
+      if (projectId.isNotEmpty && item.projectId == projectId) {
+        return true;
+      }
+      if (projectTitle.isNotEmpty) {
+        return item.projectName.toLowerCase() == projectTitle.toLowerCase();
+      }
+      return false;
+    }).toList();
   }
 
   List<ClientGetApprovalsResponseModel> _filterApprovals(
