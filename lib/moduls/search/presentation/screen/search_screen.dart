@@ -171,14 +171,20 @@ class _SearchScreenState extends State<SearchScreen> {
                 title: 'Documents',
                 children: data.documents
                     .map(
-                      (item) => _resultTile(
-                        title: item.name,
-                        subtitle: item.type.isNotEmpty
-                            ? item.type
-                            : 'Document',
-                        icon: Icons.description_outlined,
-                        onTap: () => _openDocuments(item.name),
-                      ),
+                      (item) {
+                        final typeLabel =
+                            item.type.isNotEmpty ? item.type : 'Document';
+                        final projectLabel = item.projectName.trim();
+                        final subtitle = projectLabel.isNotEmpty
+                            ? '$typeLabel • $projectLabel'
+                            : typeLabel;
+                        return _resultTile(
+                          title: item.name,
+                          subtitle: subtitle,
+                          icon: Icons.description_outlined,
+                          onTap: () => _openDocuments(item.name),
+                        );
+                      },
                     )
                     .toList(),
               ),

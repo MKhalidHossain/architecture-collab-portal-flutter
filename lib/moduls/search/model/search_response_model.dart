@@ -63,21 +63,30 @@ class SearchDocument {
   final String name;
   final String type;
   final String fileUrl;
+  final String projectName;
 
   const SearchDocument({
     required this.id,
     required this.name,
     required this.type,
     required this.fileUrl,
+    required this.projectName,
   });
 
   factory SearchDocument.fromJson(Map<String, dynamic> json) {
     final file = _readMap(json['file']);
+    final project = _readMap(json['project']);
+    final projectName = _readFirstString(
+      json,
+      const ['projectName', 'project_name'],
+    );
     return SearchDocument(
       id: _readString(json['_id']),
       name: _readString(json['name']),
       type: _readString(json['type']),
       fileUrl: _readString(file['url']),
+      projectName:
+          projectName.isNotEmpty ? projectName : _readString(project['name']),
     );
   }
 }
