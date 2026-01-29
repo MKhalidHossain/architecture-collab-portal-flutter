@@ -195,12 +195,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 title: 'Invoices',
                 children: data.invoices
                     .map(
-                      (item) => _resultTile(
-                        title: item.title.isNotEmpty ? item.title : 'Invoice',
-                        subtitle:
-                            item.status.isNotEmpty ? item.status : 'Invoice',
-                        icon: Icons.receipt_long_outlined,
-                      ),
+                      (item) {
+                        final statusLabel =
+                            item.status.isNotEmpty ? item.status : 'Invoice';
+                        final projectLabel = item.projectName.trim();
+                        final subtitle = projectLabel.isNotEmpty &&
+                                statusLabel.isNotEmpty
+                            ? '$projectLabel • $statusLabel'
+                            : projectLabel.isNotEmpty
+                                ? projectLabel
+                                : statusLabel;
+                        return _resultTile(
+                          title: item.title.isNotEmpty ? item.title : 'Invoice',
+                          subtitle: subtitle,
+                          icon: Icons.receipt_long_outlined,
+                        );
+                      },
                     )
                     .toList(),
               ),

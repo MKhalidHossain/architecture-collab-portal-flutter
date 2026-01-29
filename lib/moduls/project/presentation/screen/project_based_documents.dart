@@ -7,10 +7,18 @@ import 'package:flutter/material.dart';
 
 class ProjectBasedDocuments extends StatefulWidget {
   final String projectId;
+  final String? projectTitle;
+  final String? projectSubtitle;
+  final String? projectStatus;
+  final String? coverImageUrl;
 
   const ProjectBasedDocuments({
     super.key,
     required this.projectId,
+    this.projectTitle,
+    this.projectSubtitle,
+    this.projectStatus,
+    this.coverImageUrl,
   });
 
   @override
@@ -98,8 +106,8 @@ class _ProjectBasedDocumentsState extends State<ProjectBasedDocuments> {
   Widget _header(BuildContext context) {
     return Stack(
       children: [
-        Image.asset(
-          'assets/image/aa.png',
+        Image(
+          image: _resolveImage(widget.coverImageUrl ?? ''),
           width: double.infinity,
           height: 320,
           fit: BoxFit.cover,
@@ -129,33 +137,43 @@ class _ProjectBasedDocumentsState extends State<ProjectBasedDocuments> {
                   ],
                 ),
                 Text(
-                  "Moderman Villa Design",
-                  style: TextStyle(
+                  _headerTitle(),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 24,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  "Smith Residence",
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                if (_headerSubtitle().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _headerSubtitle(),
+                    style: const TextStyle(color: Colors.white, fontSize: 20),
                   ),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF01676C),
-                    borderRadius: BorderRadius.circular(20),
+                ],
+                if (_headerStatus().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _isActiveStatus(_headerStatus())
+                          ? const Color(0xFF01676C)
+                          : Colors.white70,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _formatStatusLabel(_headerStatus()),
+                      style: TextStyle(
+                        color: _isActiveStatus(_headerStatus())
+                            ? Colors.white
+                            : Colors.black87,
+                      ),
+                    ),
                   ),
-                  child: const Text(
-                    "Active",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
+                ],
                 const SizedBox(height: 16),
 
                 /// Tabs
@@ -198,6 +216,40 @@ class _ProjectBasedDocumentsState extends State<ProjectBasedDocuments> {
         ),
       ],
     );
+  }
+
+  ImageProvider _resolveImage(String source) {
+    final value = source.trim();
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return NetworkImage(value);
+    }
+    if (value.isNotEmpty && !value.startsWith('http')) {
+      return AssetImage(value);
+    }
+    return const AssetImage('assets/image/aa.png');
+  }
+
+  String _headerTitle() {
+    final title = widget.projectTitle?.trim() ?? '';
+    return title.isNotEmpty ? title : 'Documents';
+  }
+
+  String _headerSubtitle() => widget.projectSubtitle?.trim() ?? '';
+
+  String _headerStatus() => widget.projectStatus?.trim() ?? '';
+
+  bool _isActiveStatus(String status) =>
+      status.trim().toLowerCase() == 'active';
+
+  String _formatStatusLabel(String status) {
+    final trimmed = status.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    if (trimmed.length == 1) {
+      return trimmed.toUpperCase();
+    }
+    return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
   }
 
   Widget _buildMessage(String message, {VoidCallback? onRetry}) {

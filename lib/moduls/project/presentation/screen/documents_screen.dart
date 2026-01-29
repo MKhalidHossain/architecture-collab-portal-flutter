@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:dana_bozzetto/core/helpers/file_downloader.dart';
 import 'package:dana_bozzetto/moduls/project/controller/project_details_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
@@ -170,7 +171,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                   ),
                                 );
                               },
-                              onDownload: () {},
+                              onDownload: () =>
+                                  _handleDownload(context, filteredDocs[i]),
                             ),
                           ),
                   ),
@@ -423,5 +425,38 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return "$day/$month/${date.year}";
+  }
+
+  Future<void> _handleDownload(
+    BuildContext context,
+    DocumentModel document,
+  ) async {
+    final url = document.url?.trim() ?? '';
+    final title = (document.subtitle ?? document.title ?? '').trim();
+    if (url.isEmpty) {
+      _showMessage(context, "No file URL found.");
+      return;
+    }
+    try {
+      final filePath = await FileDownloader.download(
+        url: url,
+        filenameHint: title.isNotEmpty ? title : document.category,
+      );
+      if (!context.mounted) {
+        return;
+      }
+      _showMessage(context, "Saved to $filePath");
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      _showMessage(context, "Download failed. Please try again.");
+    }
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }

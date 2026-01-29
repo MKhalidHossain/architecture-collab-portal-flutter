@@ -96,16 +96,23 @@ class SearchInvoice {
   final String title;
   final String status;
   final String fileUrl;
+  final String projectName;
 
   const SearchInvoice({
     required this.id,
     required this.title,
     required this.status,
     required this.fileUrl,
+    required this.projectName,
   });
 
   factory SearchInvoice.fromJson(Map<String, dynamic> json) {
     final file = _readMap(json['file']);
+    final project = _readMap(json['project']);
+    final projectName = _readFirstString(
+      json,
+      const ['projectName', 'project_name'],
+    );
     return SearchInvoice(
       id: _readString(json['_id']),
       title: _readFirstString(
@@ -114,6 +121,8 @@ class SearchInvoice {
       ),
       status: _readString(json['status']),
       fileUrl: _readString(file['url']),
+      projectName:
+          projectName.isNotEmpty ? projectName : _readString(project['name']),
     );
   }
 }

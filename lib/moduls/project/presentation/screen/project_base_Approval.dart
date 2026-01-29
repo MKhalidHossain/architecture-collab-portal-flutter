@@ -142,10 +142,19 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
   }
 
   Widget _buildHeader(BuildContext context, List<String> tabs) {
+    final headerTitle = _firstNonEmpty(
+      widget.projectTitle,
+      null,
+      fallback: 'Approvals',
+    );
+    final headerSubtitle =
+        _firstNonEmpty(widget.projectSubtitle, null, fallback: '');
+    final headerStatus = _formatStatusLabel(widget.projectStatus);
+
     return Stack(
       children: [
-        Image.asset(
-          'assets/image/aa.png',
+        Image(
+          image: _resolveImage(widget.coverImageUrl ?? ''),
           width: double.infinity,
           height: 300,
           fit: BoxFit.cover,
@@ -183,38 +192,45 @@ class _ProjectBaseApprovalState extends State<ProjectBaseApproval> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "Modern Villa Design",
+                Text(
+                  headerTitle,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Smith Residence",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF01676C),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    "Active",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                if (headerSubtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    headerSubtitle,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
                     ),
                   ),
-                ),
+                ],
+                if (headerStatus.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _accentColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      headerStatus,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,

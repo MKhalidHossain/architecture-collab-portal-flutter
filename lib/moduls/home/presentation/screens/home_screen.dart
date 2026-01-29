@@ -310,7 +310,7 @@ class _HomeScreenTState extends State<HomeScreenT> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ProjectInvoicesScreen(),
+                        builder: (_) => const ProjectInvoicesScreen(),
                       ),
                     );
                   },

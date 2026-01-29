@@ -1,10 +1,9 @@
 import 'dart:ui';
-import 'package:dio/dio.dart';
+import 'package:dana_bozzetto/core/helpers/file_downloader.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/document_preview_screen.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/full_screen_image_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DocumentDetailScreen extends StatefulWidget {
   final DocumentModel document;
@@ -342,18 +341,15 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       _downloadProgress = 0;
     });
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final fileName = _buildFileName(title, url);
-      final filePath = '${dir.path}/$fileName';
-      await Dio().download(
-        url,
-        filePath,
-        onReceiveProgress: (received, total) {
-          if (total <= 0) {
+      final filePath = await FileDownloader.download(
+        url: url,
+        filenameHint: title,
+        onProgress: (progress) {
+          if (!mounted) {
             return;
           }
           setState(() {
-            _downloadProgress = received / total;
+            _downloadProgress = progress;
           });
         },
       );
@@ -374,19 +370,6 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         });
       }
     }
-  }
-
-  String _buildFileName(String title, String url) {
-    final uri = Uri.tryParse(url);
-    final lastSegment = uri?.pathSegments.isNotEmpty == true
-        ? uri!.pathSegments.last
-        : '';
-    if (lastSegment.isNotEmpty && lastSegment.contains('.')) {
-      return lastSegment;
-    }
-    final cleaned = title.trim().isEmpty ? 'document' : title.trim();
-    final safe = cleaned.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    return '$safe.pdf';
   }
 
   void _showMessage(BuildContext context, String message) {

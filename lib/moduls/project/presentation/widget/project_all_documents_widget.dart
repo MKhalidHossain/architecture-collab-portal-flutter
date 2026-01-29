@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/common/widget/glass_card.dart';
+import 'package:dana_bozzetto/core/helpers/file_downloader.dart';
 import 'package:dana_bozzetto/moduls/project/model/documents_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/view_documents.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class AllTab extends StatelessWidget {
               );
             },
             onDownload: () {
-              // Add download logic here
+              _downloadDocument(context, doc);
             },
           ),
         ),
@@ -210,4 +211,34 @@ class DocumentPreviewCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _downloadDocument(BuildContext context, DocumentModel doc) async {
+  final url = doc.url?.trim() ?? '';
+  final title = (doc.subtitle ?? doc.title ?? '').trim();
+  if (url.isEmpty) {
+    _showMessage(context, "No file URL found.");
+    return;
+  }
+  try {
+    final filePath = await FileDownloader.download(
+      url: url,
+      filenameHint: title.isNotEmpty ? title : doc.category,
+    );
+    if (!context.mounted) {
+      return;
+    }
+    _showMessage(context, "Saved to $filePath");
+  } catch (_) {
+    if (!context.mounted) {
+      return;
+    }
+    _showMessage(context, "Download failed. Please try again.");
+  }
+}
+
+void _showMessage(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message)),
+  );
 }

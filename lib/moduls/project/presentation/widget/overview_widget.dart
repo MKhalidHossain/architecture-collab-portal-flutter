@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_base_Approval.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
@@ -49,11 +50,20 @@ class _OverviewTabState extends State<OverviewTab> {
       return 0;
     }
     final result = await Get.find<ProjectInterface>()
-        .fetchFinances(projectId: projectId, type: 'Invoice');
+        .fetchFinances(projectId: projectId);
     return result.fold(
       (_) => 0,
-      (success) => success.data?.length ?? 0,
+      (success) {
+        final items = success.data ?? <ProjectFinanceItem>[];
+        return items.where(_isInvoiceType).length;
+      },
     );
+  }
+
+  bool _isInvoiceType(ProjectFinanceItem item) {
+    final type = item.type?.toLowerCase().trim() ?? '';
+    if (type.isEmpty) return false;
+    return type == 'invoice' || type.contains('invoice');
   }
 
   String _formatCount(int value) => value.toString().padLeft(2, '0');
@@ -283,7 +293,13 @@ class _OverviewTabState extends State<OverviewTab> {
             icon: Icons.description_outlined,
             count: _formatCount(documentsCount),
             badgeColor: const Color(0xFF0C7A7E),
-            navigateTo: ProjectBasedDocuments(projectId: _project.id),
+            navigateTo: ProjectBasedDocuments(
+              projectId: _project.id,
+              projectTitle: _project.name,
+              projectSubtitle: _project.client.name,
+              projectStatus: _project.status,
+              coverImageUrl: _project.coverImage.url,
+            ),
           ),
           const SizedBox(height: 10),
           _ActionTile(
@@ -326,7 +342,10 @@ class _OverviewTabState extends State<OverviewTab> {
                   icon: Icons.attach_money,
                   count: _formatCount(count),
                   badgeColor: const Color(0xFF0C7A7E),
-                  navigateTo: const ProjectInvoicesScreen(),
+                  navigateTo: ProjectInvoicesScreen(
+                    projectId: _project.id,
+                    projectTitle: _project.name,
+                  ),
                 );
               },
             ),
