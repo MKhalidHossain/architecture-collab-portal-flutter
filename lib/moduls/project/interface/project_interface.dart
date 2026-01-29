@@ -49,7 +49,7 @@ abstract base class ProjectInterface extends BaseRepository {
       fetchTeamMemberDocuments();
 
   Future<Either<DataCRUDFailure, Success<List<ProjectFinanceItem>>>>
-      fetchFinances();
+      fetchFinances({String? projectId, String? type});
   Future<Either<DataCRUDFailure, Success<ProjectTaskResponseModel>>>
       createTask({required CreateTaskRequestModel param});
 

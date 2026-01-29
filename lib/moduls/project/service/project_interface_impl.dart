@@ -153,10 +153,22 @@ final class ProjectInterfaceImpl extends ProjectInterface {
 
   @override
   Future<Either<DataCRUDFailure, Success<List<ProjectFinanceItem>>>>
-      fetchFinances() {
+      fetchFinances({String? projectId, String? type}) {
     return asyncTryCatch(
       tryFunc: () async {
-        final response = await appPigeon.get(ApiEndpoints.getFinances);
+        final query = <String, dynamic>{};
+        final trimmedProject = projectId?.trim() ?? '';
+        final trimmedType = type?.trim() ?? '';
+        if (trimmedProject.isNotEmpty) {
+          query['projectId'] = trimmedProject;
+        }
+        if (trimmedType.isNotEmpty) {
+          query['type'] = trimmedType;
+        }
+        final response = await appPigeon.get(
+          ApiEndpoints.getFinances,
+          query: query.isEmpty ? null : query,
+        );
         final data = response.data;
         final payload =
             data is Map && data['data'] is List ? data['data'] : data;
