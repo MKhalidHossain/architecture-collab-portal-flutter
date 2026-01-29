@@ -97,6 +97,7 @@ class SearchInvoice {
   final String status;
   final String fileUrl;
   final String projectName;
+  final String projectId;
 
   const SearchInvoice({
     required this.id,
@@ -104,6 +105,7 @@ class SearchInvoice {
     required this.status,
     required this.fileUrl,
     required this.projectName,
+    required this.projectId,
   });
 
   factory SearchInvoice.fromJson(Map<String, dynamic> json) {
@@ -123,8 +125,21 @@ class SearchInvoice {
       fileUrl: _readString(file['url']),
       projectName:
           projectName.isNotEmpty ? projectName : _readString(project['name']),
+      projectId: _readProjectId(json),
     );
   }
+}
+
+String _readProjectId(Map<String, dynamic> json) {
+  final direct = _readString(json['projectId']);
+  if (direct.isNotEmpty) {
+    return direct;
+  }
+  final project = _readMap(json['project']);
+  final nested = _readString(project['_id']).isNotEmpty
+      ? _readString(project['_id'])
+      : _readString(project['id']);
+  return nested;
 }
 
 String _readString(dynamic value) => value?.toString() ?? '';

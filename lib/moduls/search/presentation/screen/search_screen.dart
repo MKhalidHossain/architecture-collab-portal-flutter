@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:dana_bozzetto/moduls/project/presentation/screen/documents_screen.dart';
+import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_invoices.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_details.dart';
 import 'package:dana_bozzetto/moduls/search/interface/search_interface.dart';
 import 'package:dana_bozzetto/moduls/search/model/search_response_model.dart';
@@ -196,19 +197,29 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: data.invoices
                     .map(
                       (item) {
+                        final projectLabel = item.projectName.trim();
                         final statusLabel =
                             item.status.isNotEmpty ? item.status : 'Invoice';
-                        final projectLabel = item.projectName.trim();
-                        final subtitle = projectLabel.isNotEmpty &&
-                                statusLabel.isNotEmpty
-                            ? '$projectLabel • $statusLabel'
-                            : projectLabel.isNotEmpty
-                                ? projectLabel
-                                : statusLabel;
+                        final subtitle =
+                            projectLabel.isNotEmpty ? projectLabel : statusLabel;
                         return _resultTile(
                           title: item.title.isNotEmpty ? item.title : 'Invoice',
                           subtitle: subtitle,
                           icon: Icons.receipt_long_outlined,
+                          onTap: () {
+                            final projectId = item.projectId.trim();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProjectInvoicesScreen(
+                                  projectId:
+                                      projectId.isNotEmpty ? projectId : null,
+                                  projectTitle: item.projectName.isNotEmpty
+                                      ? item.projectName
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     )
