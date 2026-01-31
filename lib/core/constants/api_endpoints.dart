@@ -152,6 +152,9 @@ base class ApiEndpoints {
 
   /// ### Get
   static String getMessages(String chatId) => _Message.getMessages(chatId);
+  /// ### Post
+  static String uploadMessageAttachments() =>
+      _Message.uploadMessageAttachments();
 
   static String getSingleChat(String chatId) => _Message.getSingleChat(chatId);
 
@@ -304,6 +307,7 @@ class _Message {
 
   /// Get
   static String getMessages(String chatId) => "$_messagesRoute/$chatId";
+  static String uploadMessageAttachments() => "$_messagesRoute/upload";
 
   /// Post
   static String sendMessage(String chatId) => "$_messageRoute/send-message";

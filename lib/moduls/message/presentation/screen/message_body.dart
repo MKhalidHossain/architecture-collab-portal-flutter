@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:dana_bozzetto/core/constants/api_endpoints.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
 import 'package:dana_bozzetto/core/utils/helpers/auth_role.dart';
@@ -6,8 +8,11 @@ import 'package:dana_bozzetto/moduls/message/controller/chats_controller.dart';
 import 'package:dana_bozzetto/moduls/message/model/chat_models.dart';
 import 'package:dana_bozzetto/moduls/message/model/message_model.dart';
 import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
+import 'package:dio/dio.dart' as dio;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -376,6 +381,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
   final Set<String> _messageIds = <String>{};
   final TextEditingController _composerController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final List<_MessageAttachment> _pendingAttachments = <_MessageAttachment>[];
+  final ImagePicker _imagePicker = ImagePicker();
   StreamSubscription<MessageModel>? _messageSubscription;
   bool _isLoadingHistory = false;
 
@@ -476,7 +483,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
   }
 
   void _handleMessage(MessageModel message) {
-    if (message.chatId != widget.chatId || message.content.isEmpty) {
+    if (message.chatId != widget.chatId ||
+        (message.content.isEmpty && message.attachments.isEmpty)) {
       return;
     }
     if (message.id.isNotEmpty && _messageIds.contains(message.id)) {
@@ -492,7 +500,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
         (item) =>
             item.id.startsWith('local-') &&
             item.isMe &&
-            item.text == message.content,
+            item.text == message.content &&
+            item.attachments.length == message.attachments.length,
       );
       if (localIndex != -1) {
         setState(() {
@@ -504,6 +513,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
             time: _formatTime(message.createdAt),
             isMe: isMe,
             createdAt: message.createdAt,
+            attachments: _mapMessageAttachments(message.attachments),
           );
           _sortMessages();
         });
@@ -521,6 +531,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
           time: _formatTime(message.createdAt),
           isMe: isMe,
           createdAt: message.createdAt,
+          attachments: _mapMessageAttachments(message.attachments),
         ),
       );
       _sortMessages();
@@ -550,7 +561,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
         final history = success.data ?? <MessageModel>[];
         bool didAdd = false;
         for (final message in history) {
-          if (message.chatId != widget.chatId || message.content.isEmpty) {
+          if (message.chatId != widget.chatId ||
+              (message.content.isEmpty && message.attachments.isEmpty)) {
             continue;
           }
           if (message.id.isNotEmpty && _messageIds.contains(message.id)) {
@@ -570,6 +582,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
               time: _formatTime(message.createdAt),
               isMe: isMe,
               createdAt: message.createdAt,
+              attachments: _mapMessageAttachments(message.attachments),
             ),
           );
           didAdd = true;
@@ -591,12 +604,184 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     });
   }
 
-  void _sendMessage() {
+  void _openAttachmentSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _AttachmentAction(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Gallery',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickFromGallery();
+                  },
+                ),
+                _AttachmentAction(
+                  icon: Icons.camera_alt_outlined,
+                  label: 'Camera',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickFromCamera();
+                  },
+                ),
+                _AttachmentAction(
+                  icon: Icons.insert_drive_file_outlined,
+                  label: 'File',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickFiles();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickFromGallery() async {
+    final images = await _imagePicker.pickMultiImage(imageQuality: 80);
+    if (images.isEmpty) return;
+    for (final image in images) {
+      final bytes = await image.readAsBytes();
+      _addPendingAttachment(
+        _MessageAttachment(
+          id: 'local-${DateTime.now().microsecondsSinceEpoch}-${image.name}',
+          name: image.name,
+          bytes: bytes,
+          path: image.path,
+          mimeType: 'image/${image.name.split('.').last.toLowerCase()}',
+          size: bytes.lengthInBytes,
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+    if (image == null) return;
+    final bytes = await image.readAsBytes();
+    _addPendingAttachment(
+      _MessageAttachment(
+        id: 'local-${DateTime.now().microsecondsSinceEpoch}-${image.name}',
+        name: image.name,
+        bytes: bytes,
+        path: image.path,
+        mimeType: 'image/${image.name.split('.').last.toLowerCase()}',
+        size: bytes.lengthInBytes,
+      ),
+    );
+  }
+
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      withData: true,
+      type: FileType.any,
+    );
+    if (result == null || result.files.isEmpty) return;
+    for (final file in result.files) {
+      _addPendingAttachment(
+        _MessageAttachment(
+          id: 'local-${DateTime.now().microsecondsSinceEpoch}-${file.name}',
+          name: file.name,
+          bytes: file.bytes,
+          path: file.path ?? '',
+          mimeType: _guessMimeType(file.name),
+          size: file.size,
+        ),
+      );
+    }
+  }
+
+  void _addPendingAttachment(_MessageAttachment attachment) {
+    if (!mounted) return;
+    setState(() => _pendingAttachments.add(attachment));
+  }
+
+  void _removePendingAttachment(String id) {
+    setState(() => _pendingAttachments.removeWhere((item) => item.id == id));
+  }
+
+  String _formatBytes(int? bytes) {
+    if (bytes == null || bytes <= 0) return '';
+    const kb = 1024;
+    const mb = kb * 1024;
+    if (bytes >= mb) {
+      return '${(bytes / mb).toStringAsFixed(1)} MB';
+    }
+    if (bytes >= kb) {
+      return '${(bytes / kb).toStringAsFixed(1)} KB';
+    }
+    return '$bytes B';
+  }
+
+  String _guessMimeType(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.pdf')) return 'application/pdf';
+    if (lower.endsWith('.doc')) return 'application/msword';
+    if (lower.endsWith('.docx')) {
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+    if (lower.endsWith('.ppt')) return 'application/vnd.ms-powerpoint';
+    if (lower.endsWith('.pptx')) {
+      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    }
+    if (lower.endsWith('.xls')) return 'application/vnd.ms-excel';
+    if (lower.endsWith('.xlsx')) {
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    }
+    if (lower.endsWith('.txt')) return 'text/plain';
+    return '';
+  }
+
+  List<_MessageAttachment> _mapMessageAttachments(
+    List<MessageAttachment> items,
+  ) {
+    return items
+        .map(
+          (item) => _MessageAttachment(
+            id: item.id,
+            name: item.name,
+            url: item.url,
+            path: '',
+            bytes: item.bytes,
+            mimeType: item.mimeType,
+            size: item.size,
+          ),
+        )
+        .toList();
+  }
+
+  void _sendMessage() async {
     final text = _composerController.text.trim();
-    if (text.isEmpty || widget.chatId.isEmpty) return;
+    if ((text.isEmpty && _pendingAttachments.isEmpty) || widget.chatId.isEmpty) {
+      return;
+    }
 
     final now = DateTime.now();
     final localId = 'local-${now.microsecondsSinceEpoch}';
+    final attachments = List<_MessageAttachment>.from(_pendingAttachments);
     setState(() {
       _messages.add(
         _ChatMessage(
@@ -607,12 +792,19 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
           time: _formatTime(now),
           isMe: true,
           createdAt: now,
+          attachments: attachments,
         ),
       );
       _sortMessages();
+      _pendingAttachments.clear();
     });
     _scrollToBottom();
     _composerController.clear();
+
+    if (attachments.isNotEmpty) {
+      await _sendMessageWithAttachments(text, attachments);
+      return;
+    }
 
     Get.find<AppPigeon>().emit('message:send', {
       'chatId': widget.chatId,
@@ -620,6 +812,73 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
       'attachments': [],
       'replyTo': null,
     });
+  }
+
+  Future<void> _sendMessageWithAttachments(
+    String text,
+    List<_MessageAttachment> attachments,
+  ) async {
+    final formData = dio.FormData();
+    for (final attachment in attachments) {
+      if (attachment.bytes != null) {
+        formData.files.add(
+          MapEntry(
+            'attachments',
+            dio.MultipartFile.fromBytes(
+              attachment.bytes!,
+              filename: attachment.name,
+            ),
+          ),
+        );
+      } else if (attachment.path.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            'attachments',
+            await dio.MultipartFile.fromFile(
+              attachment.path,
+              filename: attachment.name,
+            ),
+          ),
+        );
+      }
+    }
+
+    try {
+      final uploadResponse = await Get.find<AppPigeon>().post(
+        ApiEndpoints.uploadMessageAttachments(),
+        data: formData,
+      );
+      final uploaded = _extractAttachments(uploadResponse.data);
+      Get.find<AppPigeon>().emit('message:send', {
+        'chatId': widget.chatId,
+        'content': text,
+        'attachments': uploaded,
+        'replyTo': null,
+      });
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send attachments.')),
+      );
+    }
+  }
+
+  List<Map<String, dynamic>> _extractAttachments(dynamic data) {
+    if (data is List) {
+      return data.whereType<Map>().map((e) {
+        return Map<String, dynamic>.from(e);
+      }).toList();
+    }
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final payload = map['data'] ?? map['attachments'] ?? map['files'];
+      if (payload is List) {
+        return payload.whereType<Map>().map((e) {
+          return Map<String, dynamic>.from(e);
+        }).toList();
+      }
+    }
+    return <Map<String, dynamic>>[];
   }
 
   void _scrollToBottom() {
@@ -680,7 +939,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                       final message = _messages[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
-                        duration: Duration(milliseconds: 280 + index * 60),
+                        duration: const Duration(milliseconds: 140),
                         builder: (context, value, child) {
                           return Opacity(
                             opacity: value,
@@ -695,9 +954,16 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                     },
                   ),
                 ),
+                if (_pendingAttachments.isNotEmpty)
+                  _AttachmentPreviewBar(
+                    attachments: _pendingAttachments,
+                    onRemove: _removePendingAttachment,
+                    formatBytes: _formatBytes,
+                  ),
                 _ChatComposer(
                   controller: _composerController,
                   onSend: _sendMessage,
+                  onAttachmentTap: _openAttachmentSheet,
                 ),
               ],
             ),
@@ -860,11 +1126,19 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
-              Text(
-                message.text,
-                style: const TextStyle(color: Colors.white70, fontSize: 15),
-              ),
-              const SizedBox(height: 10),
+              if (message.attachments.isNotEmpty) ...[
+                _AttachmentGrid(
+                  attachments: message.attachments,
+                ),
+                if (message.text.isNotEmpty) const SizedBox(height: 8),
+              ],
+              if (message.text.isNotEmpty) ...[
+                Text(
+                  message.text,
+                  style: const TextStyle(color: Colors.white70, fontSize: 15),
+                ),
+                const SizedBox(height: 10),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -895,10 +1169,12 @@ class _ChatComposer extends StatelessWidget {
   const _ChatComposer({
     required this.controller,
     required this.onSend,
+    required this.onAttachmentTap,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final VoidCallback onAttachmentTap;
 
   @override
   Widget build(BuildContext context) {
@@ -907,9 +1183,7 @@ class _ChatComposer extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            onPressed: () {
-              
-            },
+            onPressed: onAttachmentTap,
             icon: _roundIcon(
               icon: Icons.attach_file,
               backgroundColor: Colors.white.withOpacity(0.9),
@@ -966,6 +1240,243 @@ class _ChatComposer extends StatelessWidget {
   }
 }
 
+class _AttachmentPreviewBar extends StatelessWidget {
+  const _AttachmentPreviewBar({
+    required this.attachments,
+    required this.onRemove,
+    required this.formatBytes,
+  });
+
+  final List<_MessageAttachment> attachments;
+  final ValueChanged<String> onRemove;
+  final String Function(int?) formatBytes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 96,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: attachments.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final attachment = attachments[index];
+          return Stack(
+            children: [
+              Container(
+                width: 86,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: attachment.isImage
+                      ? _AttachmentImage(attachment: attachment)
+                      : _AttachmentFileTile(
+                          attachment: attachment,
+                          formatBytes: formatBytes,
+                        ),
+                ),
+              ),
+              Positioned(
+                top: 2,
+                right: 2,
+                child: InkWell(
+                  onTap: () => onRemove(attachment.id),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.55),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AttachmentGrid extends StatelessWidget {
+  const _AttachmentGrid({
+    required this.attachments,
+  });
+
+  final List<_MessageAttachment> attachments;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: attachments.map((attachment) {
+        if (attachment.isImage) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 150,
+              height: 110,
+              child: _AttachmentImage(attachment: attachment),
+            ),
+          );
+        }
+        return _AttachmentFileChip(
+          attachment: attachment,
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _AttachmentImage extends StatelessWidget {
+  const _AttachmentImage({required this.attachment});
+
+  final _MessageAttachment attachment;
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = attachment.bytes;
+    if (bytes != null) {
+      return Image.memory(bytes, fit: BoxFit.cover);
+    }
+    final url = _resolveRemoteUrl(attachment.url.trim());
+    if (url.isNotEmpty && (url.startsWith('http://') || url.startsWith('https://'))) {
+      return Image.network(url, fit: BoxFit.cover);
+    }
+    if (attachment.path.isNotEmpty) {
+      return Image.file(File(attachment.path), fit: BoxFit.cover);
+    }
+    return Container(
+      color: Colors.white.withOpacity(0.08),
+      alignment: Alignment.center,
+      child: const Icon(Icons.image, color: Colors.white70),
+    );
+  }
+}
+
+String _resolveRemoteUrl(String url) {
+  if (url.isEmpty) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  if (!url.startsWith('/')) return url;
+  final base = ApiEndpoints.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
+  return '$base$url';
+}
+
+class _AttachmentFileTile extends StatelessWidget {
+  const _AttachmentFileTile({
+    required this.attachment,
+    required this.formatBytes,
+  });
+
+  final _MessageAttachment attachment;
+  final String Function(int?) formatBytes;
+
+  @override
+  Widget build(BuildContext context) {
+    final sizeLabel = formatBytes(attachment.size);
+    return Container(
+      padding: const EdgeInsets.all(8),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.insert_drive_file, color: Colors.white70, size: 22),
+          const SizedBox(height: 6),
+          Text(
+            attachment.shortName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70, fontSize: 10),
+          ),
+          if (sizeLabel.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              sizeLabel,
+              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 9),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentFileChip extends StatelessWidget {
+  const _AttachmentFileChip({
+    required this.attachment,
+  });
+
+  final _MessageAttachment attachment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.insert_drive_file, color: Colors.white70, size: 18),
+          const SizedBox(width: 6),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: Text(
+              attachment.shortName,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentAction extends StatelessWidget {
+  const _AttachmentAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: Colors.black87),
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class _ThreadPreview {
   final String chatId;
   final String avatarUrl;
@@ -984,6 +1495,46 @@ class _ThreadPreview {
   });
 }
 
+class _MessageAttachment {
+  final String id;
+  final String name;
+  final String url;
+  final String path;
+  final Uint8List? bytes;
+  final String mimeType;
+  final int? size;
+
+  const _MessageAttachment({
+    required this.id,
+    required this.name,
+    this.url = '',
+    required this.path,
+    required this.bytes,
+    required this.mimeType,
+    required this.size,
+  });
+
+  bool get isImage {
+    if (mimeType.startsWith('image/')) return true;
+    final lower = name.isNotEmpty ? name.toLowerCase() : url.toLowerCase();
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.webp');
+  }
+
+  String get shortName {
+    if (name.length <= 16) return name;
+    final extIndex = name.lastIndexOf('.');
+    if (extIndex <= 0) {
+      return '${name.substring(0, 12)}...';
+    }
+    final ext = name.substring(extIndex);
+    return '${name.substring(0, 10)}...$ext';
+  }
+}
+
 class _ChatMessage {
   final String id;
   final String sender;
@@ -992,6 +1543,7 @@ class _ChatMessage {
   final String time;
   final bool isMe;
   final DateTime? createdAt;
+  final List<_MessageAttachment> attachments;
 
   const _ChatMessage({
     required this.id,
@@ -1001,5 +1553,6 @@ class _ChatMessage {
     required this.time,
     required this.isMe,
     required this.createdAt,
+    required this.attachments,
   });
 }
