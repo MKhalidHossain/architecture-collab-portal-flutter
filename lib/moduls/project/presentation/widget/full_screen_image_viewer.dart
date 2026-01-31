@@ -1,3 +1,4 @@
+import 'package:dana_bozzetto/core/helpers/file_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart'; // Add this package to pubspec.yaml
 
@@ -27,10 +28,7 @@ class FullScreenImageViewer extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download_rounded, color: Colors.white, size: 26),
             onPressed: () {
-              // TODO: Implement actual image download logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Download started...")),
-              );
+              _handleDownload(context);
             },
           ),
           const SizedBox(width: 8),
@@ -74,5 +72,33 @@ class FullScreenImageViewer extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleDownload(BuildContext context) async {
+    if (isAsset) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("This image is bundled with the app.")),
+      );
+      return;
+    }
+    try {
+      final filePath = await FileDownloader.download(
+        url: imagePath,
+        filenameHint: 'image',
+      );
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Saved to $filePath")),
+      );
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Download failed. Please try again.")),
+      );
+    }
   }
 }

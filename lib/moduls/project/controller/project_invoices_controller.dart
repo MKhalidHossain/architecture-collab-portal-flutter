@@ -12,12 +12,15 @@ class ProjectInvoicesController extends ChangeNotifier {
   String get errorMessage => _errorMessage;
   List<ProjectFinanceItem> get finances => _finances;
 
-  Future<void> fetchFinances() async {
+  Future<void> fetchFinances({String? projectId, String? type}) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
-    final result = await Get.find<ProjectInterface>().fetchFinances();
+    final result = await Get.find<ProjectInterface>().fetchFinances(
+      projectId: projectId,
+      type: type,
+    );
     result.fold(
       (failure) {
         _errorMessage = failure.uiMessage.isNotEmpty

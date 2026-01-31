@@ -1,14 +1,20 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:dana_bozzetto/core/helpers/file_downloader.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
 import 'package:dana_bozzetto/moduls/project/controller/project_invoices_controller.dart';
 import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/invoice_pdf_preview_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class ProjectInvoicesScreen extends StatefulWidget {
-  const ProjectInvoicesScreen({super.key});
+  final String? projectId;
+  final String? projectTitle;
+
+  const ProjectInvoicesScreen({super.key, this.projectId, this.projectTitle});
 
   @override
   State<ProjectInvoicesScreen> createState() => _ProjectInvoicesScreenState();
@@ -16,12 +22,16 @@ class ProjectInvoicesScreen extends StatefulWidget {
 
 class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
   late final ProjectInvoicesController _controller;
+  String _resolvedProjectTitle = '';
 
   @override
   void initState() {
     super.initState();
     _controller = ProjectInvoicesController();
-    _controller.fetchFinances();
+    _controller.fetchFinances(
+      projectId: widget.projectId,
+    );
+    _loadProjectTitle();
   }
 
   @override
@@ -30,17 +40,38 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     super.dispose();
   }
 
+  Future<void> _loadProjectTitle() async {
+    final fallback = widget.projectTitle?.trim() ?? '';
+    if (fallback.isNotEmpty) {
+      setState(() => _resolvedProjectTitle = fallback);
+      return;
+    }
+    final projectId = widget.projectId?.trim() ?? '';
+    if (projectId.isEmpty) {
+      return;
+    }
+    final result = await Get.find<ProjectInterface>()
+        .fetchProjectDetails(projectId: projectId);
+    result.fold((_) {}, (success) {
+      final name = success.data?.project.name.trim() ?? '';
+      if (name.isNotEmpty && mounted) {
+        setState(() => _resolvedProjectTitle = name);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
         final finances = _controller.finances;
-        final totals = _resolveTotals(finances);
+        final invoices = finances.where(_isInvoice).toList();
+        final totals = _resolveTotals(invoices);
         final totalAmount = totals.totalAmount;
         final totalPaid = totals.totalPaid;
         final totalUnpaid = totals.totalUnpaid;
-        final hasData = finances.isNotEmpty;
+        final hasData = invoices.isNotEmpty;
         final showLoading = _controller.isLoading && !hasData;
         final showError = _controller.errorMessage.isNotEmpty && !hasData;
 
@@ -72,7 +103,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
                                       _controller.errorMessage,
                                       onRetry: _controller.fetchFinances,
                                     )
-                                  : finances.isEmpty
+                                  : invoices.isEmpty
                                       ? const Center(
                                           child: Text(
                                             "No invoices found",
@@ -135,7 +166,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
                                                 ],
                                               ),
                                               const SizedBox(height: 32),
-                                              ...finances.map(
+                                              ...invoices.map(
                                                 (item) => _buildInvoiceCard(
                                                   invoiceNumber:
                                                       item.customId ??
@@ -215,8 +246,8 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
-            "Modern Villa Design",
+          Text(
+            _headerTitle(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 26,
@@ -282,6 +313,11 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
         ),
       ),
     );
+  }
+
+  String _headerTitle() {
+    final title = _resolvedProjectTitle.trim();
+    return title.isNotEmpty ? title : 'Project Invoices';
   }
 
   Widget _buildInvoiceCard({
@@ -468,6 +504,12 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     );
   }
 
+  bool _isInvoice(ProjectFinanceItem item) {
+    final type = item.type?.toLowerCase().trim() ?? '';
+    if (type.isEmpty) return false;
+    return type == 'invoice' || type.contains('invoice');
+  }
+
   _FinanceTotals _resolveTotals(List<ProjectFinanceItem> items) {
     num total = 0;
     num paid = 0;
@@ -606,7 +648,7 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
     required ProjectFinanceItem item,
   }) async {
     try {
-      final filePath = await _saveInvoicePdf(item, isPreview: false);
+      final filePath = await _downloadInvoice(item);
       if (!context.mounted) {
         return;
       }
@@ -617,6 +659,17 @@ class _ProjectInvoicesScreenState extends State<ProjectInvoicesScreen> {
       }
       _showMessage(context, "Download failed. Please try again.");
     }
+  }
+
+  Future<String> _downloadInvoice(ProjectFinanceItem item) async {
+    final url = item.fileUrl?.trim() ?? '';
+    if (url.isNotEmpty) {
+      return FileDownloader.download(
+        url: url,
+        filenameHint: item.customId ?? item.id ?? 'invoice',
+      );
+    }
+    return _saveInvoicePdf(item, isPreview: false);
   }
 
   Future<String> _saveInvoicePdf(

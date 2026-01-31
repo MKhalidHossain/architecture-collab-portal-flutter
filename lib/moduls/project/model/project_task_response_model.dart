@@ -2,6 +2,7 @@ class ProjectTaskResponseModel {
   final String id;
   final String name;
   final String projectId;
+  final TaskProject? project;
   final String milestoneId;
   final TaskAssignee? assignedTo;
   final String status;
@@ -16,6 +17,7 @@ class ProjectTaskResponseModel {
     required this.id,
     required this.name,
     required this.projectId,
+    required this.project,
     required this.milestoneId,
     required this.assignedTo,
     required this.status,
@@ -28,10 +30,15 @@ class ProjectTaskResponseModel {
   });
 
   factory ProjectTaskResponseModel.fromJson(Map<String, dynamic> json) {
+    final project = TaskProject.fromDynamic(json['project']);
+    final projectId = _readProjectId(json);
     return ProjectTaskResponseModel(
       id: _readId(json),
       name: _readString(json['name']),
-      projectId: _readString(json['project'] ?? json['projectId']),
+      projectId: projectId,
+      project: project.id.isNotEmpty || project.name.isNotEmpty
+          ? project
+          : null,
       milestoneId: _readString(json['milestoneId'] ?? json['milestone']),
       assignedTo: TaskAssignee.fromDynamic(json['assignedTo']),
       status: _readString(json['status']),
@@ -54,6 +61,32 @@ class ProjectTaskResponseModel {
           .toList();
     }
     return <ProjectTaskResponseModel>[];
+  }
+
+  String get projectName => project?.name ?? '';
+}
+
+class TaskProject {
+  final String id;
+  final String name;
+
+  const TaskProject({
+    required this.id,
+    required this.name,
+  });
+
+  factory TaskProject.fromDynamic(dynamic value) {
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      return TaskProject(
+        id: _readString(map['_id'] ?? map['id']),
+        name: _readString(map['name']),
+      );
+    }
+    if (value is String) {
+      return TaskProject(id: value, name: '');
+    }
+    return const TaskProject(id: '', name: '');
   }
 }
 
@@ -208,4 +241,16 @@ String _readId(Map<String, dynamic> json) {
     }
   }
   return '';
+}
+
+String _readProjectId(Map<String, dynamic> json) {
+  final project = json['project'];
+  if (project is Map) {
+    final projectMap = Map<String, dynamic>.from(project);
+    final id = _readString(projectMap['_id'] ?? projectMap['id']);
+    if (id.isNotEmpty) {
+      return id;
+    }
+  }
+  return _readString(json['projectId'] ?? json['project']);
 }

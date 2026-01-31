@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:dana_bozzetto/core/notifiers/snackbar_notifier.dart';
 import 'package:dana_bozzetto/core/services/app_pigeon/app_pigeon.dart';
+import 'package:dana_bozzetto/core/utils/helpers/network_image_helper.dart';
 import 'package:dana_bozzetto/moduls/auth/interface/auth_interface.dart';
 import 'package:dana_bozzetto/moduls/auth/model/logout_request_model.dart';
 import 'package:dana_bozzetto/moduls/auth/presentation/screen/login_screen.dart';
@@ -12,12 +13,14 @@ class SideMenu extends StatelessWidget {
   final MenuType selectedMenu;
   final Function(MenuType) onSelect;
   final bool showCalendar;
+  final Future<Map<String, dynamic>>? profileFuture;
 
   const SideMenu({
     super.key,
     required this.selectedMenu,
     required this.onSelect,
     this.showCalendar = true,
+    this.profileFuture,
   });
 
   @override
@@ -56,14 +59,7 @@ class SideMenu extends StatelessWidget {
                             children: [
                               Stack(
                                 children: [
-                                  CircleAvatar(
-                                    radius: 26,
-                                    backgroundColor:
-                                        Colors.white.withOpacity(0.15),
-                                    backgroundImage: const AssetImage(
-                                      "assets/image/aa.png",
-                                    ),
-                                  ),
+                                  _profileAvatar(),
                                   Positioned(
                                     right: 2,
                                     bottom: 2,
@@ -142,7 +138,7 @@ class SideMenu extends StatelessWidget {
                               _menuItem(
                                 context,
                                 Icons.settings_outlined,
-                                'Setting',
+                                'Settings',
                                 MenuType.settings,
                               ),
                             ],
@@ -201,6 +197,48 @@ class SideMenu extends StatelessWidget {
     );
   }
 
+  Widget _profileAvatar() {
+    const fallbackImage = AssetImage('assets/image/aa.png');
+
+    if (profileFuture == null) {
+      return CircleAvatar(
+        radius: 26,
+        backgroundColor: Colors.white.withOpacity(0.15),
+        backgroundImage: fallbackImage,
+      );
+    }
+
+    return FutureBuilder<Map<String, dynamic>>(
+      future: profileFuture,
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? const <String, dynamic>{};
+
+        String readAvatarUrl() {
+          final avatar = data['avatar'];
+          if (avatar is Map) {
+            final url = avatar['url']?.toString() ?? '';
+            if (url.isNotEmpty) {
+              return url;
+            }
+          }
+          return '';
+        }
+
+        final avatarUrl = readAvatarUrl();
+        final safeAvatarUrl = safeNetworkImageUrl(avatarUrl);
+        final avatarImage = safeAvatarUrl != null
+            ? NetworkImage(safeAvatarUrl)
+            : fallbackImage as ImageProvider;
+
+        return CircleAvatar(
+          radius: 26,
+          backgroundColor: Colors.white.withOpacity(0.15),
+          backgroundImage: avatarImage,
+        );
+      },
+    );
+  }
+
   Future<void> _handleLogout(BuildContext context) async {
     final snackbarNotifier = SnackbarNotifier(context: context);
     final appPigeon = Get.find<AppPigeon>();
@@ -214,15 +252,13 @@ class SideMenu extends StatelessWidget {
       final result = await authInterface.logout(
         param: LogoutRequestModel(refreshToken: refreshToken),
       );
-      result.fold(
-        (failure) {
-          snackbarNotifier.notifyError(
-            message:
-                failure.uiMessage.isNotEmpty ? failure.uiMessage : 'Logout failed',
-          );
-        },
-        (_) {},
-      );
+      result.fold((failure) {
+        snackbarNotifier.notifyError(
+          message: failure.uiMessage.isNotEmpty
+              ? failure.uiMessage
+              : 'Logout failed',
+        );
+      }, (_) {});
     } else {
       await appPigeon.logOut();
     }
@@ -266,9 +302,10 @@ class SideMenu extends StatelessWidget {
     BuildContext context,
     IconData icon,
     String title,
-    MenuType type,
-    {String? badge, bool showDot = false}
-  ) {
+    MenuType type, {
+    String? badge,
+    bool showDot = false,
+  }) {
     final isActive = selectedMenu == type;
 
     return InkWell(
@@ -285,10 +322,7 @@ class SideMenu extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: isActive
               ? const Border(
-                  left: BorderSide(
-                    color: Color(0xFF00D4AA),
-                    width: 3,
-                  ),
+                  left: BorderSide(color: Color(0xFF00D4AA), width: 3),
                 )
               : null,
         ),
@@ -312,8 +346,7 @@ class SideMenu extends StatelessWidget {
             ),
             if (badge != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00D4AA),
                   borderRadius: BorderRadius.circular(12),

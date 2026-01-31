@@ -11,6 +11,10 @@ import 'package:dana_bozzetto/moduls/notification/interface/notification_interfa
 import 'package:dana_bozzetto/moduls/notification/service/notification_interface_impl.dart';
 import 'package:dana_bozzetto/moduls/message/interface/message_interface.dart';
 import 'package:dana_bozzetto/moduls/message/service/message_interface_impl.dart';
+import 'package:dana_bozzetto/moduls/search/interface/search_interface.dart';
+import 'package:dana_bozzetto/moduls/search/service/search_interface_impl.dart';
+import 'package:dana_bozzetto/moduls/setting/interface/settings_interface.dart';
+import 'package:dana_bozzetto/moduls/setting/service/settings_interface_impl.dart';
 import 'package:get/get.dart';
 
 void initServices() {
@@ -48,6 +52,18 @@ void initServices() {
   if (!Get.isRegistered<MessageInterface>()) {
     Get.put<MessageInterface>(
       MessageInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
+    );
+  }
+
+  if (!Get.isRegistered<SearchInterface>()) {
+    Get.put<SearchInterface>(
+      SearchInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
+    );
+  }
+
+  if (!Get.isRegistered<SettingsInterface>()) {
+    Get.put<SettingsInterface>(
+      SettingsInterfaceImpl(appPigeon: Get.find<AppPigeon>()),
     );
   }
   

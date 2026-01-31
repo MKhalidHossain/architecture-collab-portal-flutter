@@ -13,6 +13,7 @@ import 'package:dana_bozzetto/moduls/project/model/create_task_request_model.dar
 import 'package:dana_bozzetto/moduls/project/model/project_task_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/task_submit_request_model.dart';
 import 'package:dana_bozzetto/moduls/project/model/task_submit_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/team_portal_approvals_response_model.dart';
 import 'package:dartz/dartz.dart';
 
 abstract base class ProjectInterface extends BaseRepository {
@@ -27,6 +28,9 @@ abstract base class ProjectInterface extends BaseRepository {
 
   Future<Either<DataCRUDFailure, Success<List<ClientGetApprovalsResponseModel>>>>
       fetchClientApprovals();
+
+  Future<Either<DataCRUDFailure, Success<TeamPortalApprovalsResponse>>>
+      fetchTeamApprovals();
 
   Future<Either<DataCRUDFailure, Success<ClientApprovalDetailsResponseModel>>>
       updateClientApproval({
@@ -45,7 +49,7 @@ abstract base class ProjectInterface extends BaseRepository {
       fetchTeamMemberDocuments();
 
   Future<Either<DataCRUDFailure, Success<List<ProjectFinanceItem>>>>
-      fetchFinances();
+      fetchFinances({String? projectId, String? type});
   Future<Either<DataCRUDFailure, Success<ProjectTaskResponseModel>>>
       createTask({required CreateTaskRequestModel param});
 

@@ -27,6 +27,7 @@ class _HomeScreenTState extends State<HomeScreenT> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _newProjectsController = ScrollController();
   HomeDashboardResponse? _cachedDashboard;
+  final Map<String, String> _manualProjectStatus = {};
 
   void _scrollLeft() {
     if (_scrollController.hasClients) {
@@ -309,7 +310,7 @@ class _HomeScreenTState extends State<HomeScreenT> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ProjectInvoicesScreen(),
+                        builder: (_) => const ProjectInvoicesScreen(),
                       ),
                     );
                   },
@@ -372,8 +373,9 @@ class _HomeScreenTState extends State<HomeScreenT> {
                   scrollDirection: Axis.horizontal,
                   itemCount: projectModels.length,
                   itemBuilder: (context, index) {
+                    final cardWidth = MediaQuery.of(context).size.width - 32;
                     return Container(
-                      width: 340,
+                      width: cardWidth,
                       margin: const EdgeInsets.only(right: 16),
                       child: ProjectCard(
                         project: projectModels[index],
@@ -490,7 +492,13 @@ class _HomeScreenTState extends State<HomeScreenT> {
     final subtitle = project?.subtitle.isNotEmpty == true
         ? project!.subtitle
         : 'Assigned project';
-    final status = _formatStatus(project?.status ?? '');
+    final statusOptions = _statusOptionsFor(project);
+    final storedStatus =
+        project == null ? null : _manualProjectStatus[project.id];
+    final status = storedStatus ?? _formatStatus(project?.status ?? '');
+    final statusValue =
+        statusOptions.contains(status) ? status : statusOptions.first;
+    final isEnabled = project != null;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -537,28 +545,45 @@ class _HomeScreenTState extends State<HomeScreenT> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white.withOpacity(isEnabled ? 0.95 : 0.75),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    status,
-                    style: const TextStyle(
-                      color: Color(0xFF3B3B3B),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: statusValue,
+                  items: statusOptions
+                      .map(
+                        (option) => DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(
+                            option,
+                            style: const TextStyle(
+                              color: Color(0xFF3B3B3B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: isEnabled
+                      ? (value) {
+                          if (value == null || project == null) return;
+                          setState(() {
+                            _manualProjectStatus[project.id] = value;
+                          });
+                        }
+                      : null,
+                  icon: const Icon(
                     Icons.keyboard_arrow_down_rounded,
                     size: 16,
                     color: Colors.black54,
                   ),
-                ],
+                  isDense: true,
+                  dropdownColor: Colors.white,
+                ),
               ),
             ),
           ],
@@ -576,6 +601,15 @@ class _HomeScreenTState extends State<HomeScreenT> {
       return trimmed.toUpperCase();
     }
     return '${trimmed[0].toUpperCase()}${trimmed.substring(1)}';
+  }
+
+  List<String> _statusOptionsFor(ProjectModel? project) {
+    final options = <String>['Active', 'Pending', 'Completed', 'Wip', 'On hold'];
+    final current = _formatStatus(project?.status ?? '');
+    if (current.isNotEmpty && !options.contains(current)) {
+      options.insert(0, current);
+    }
+    return options;
   }
 
   Widget _activityContainer(List<Widget> tiles) {

@@ -151,8 +151,11 @@ class _TeamTabState extends State<TeamTab> {
         orElse: () => chat.users.first,
       );
     }
-    final title = chat.chatName.trim().isNotEmpty
-        ? chat.chatName.trim()
+    final chatName = chat.chatName.trim();
+    final hasRealChatName =
+        chatName.isNotEmpty && chatName.toLowerCase() != 'sender';
+    final title = hasRealChatName
+        ? chatName
         : otherUser?.name.trim().isNotEmpty == true
             ? otherUser!.name.trim()
             : member.user.name.trim().isNotEmpty

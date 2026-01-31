@@ -16,6 +16,7 @@ class ProjectFinanceItem {
   String? notes;
   DateTime? createdAt;
   DateTime? updatedAt;
+  String? fileUrl;
 
   ProjectFinanceItem({
     this.id,
@@ -35,6 +36,7 @@ class ProjectFinanceItem {
     this.notes,
     this.createdAt,
     this.updatedAt,
+    this.fileUrl,
   });
 
   factory ProjectFinanceItem.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@ class ProjectFinanceItem {
       notes: json['notes'] as String?,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      fileUrl: _readFileUrl(json['file']),
     );
   }
 
@@ -82,6 +85,7 @@ class ProjectFinanceItem {
       'notes': notes,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'file': fileUrl == null ? null : {'url': fileUrl},
     };
   }
 
@@ -119,6 +123,17 @@ class ProjectFinanceItem {
         if (parsed != null) {
           return parsed;
         }
+      }
+    }
+    return null;
+  }
+
+  static String? _readFileUrl(dynamic value) {
+    if (value is Map) {
+      final map = Map<String, dynamic>.from(value);
+      final url = map['url']?.toString();
+      if (url != null && url.isNotEmpty) {
+        return url;
       }
     }
     return null;

@@ -38,7 +38,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final initialMonth = widget.initialMonth ?? now;
     final initialDate = widget.initialSelectedDate ?? now;
     _focusedMonth = DateTime(initialMonth.year, initialMonth.month, 1);
-    _selectedDate = DateTime(initialDate.year, initialDate.month, initialDate.day);
+    _selectedDate = DateTime(
+      initialDate.year,
+      initialDate.month,
+      initialDate.day,
+    );
+    _controller.setSelectedDate(_selectedDate);
   }
 
   @override
@@ -60,6 +65,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         incomingDate.month,
         incomingDate.day,
       );
+      _controller.setSelectedDate(_selectedDate);
     }
   }
 
@@ -69,6 +75,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       backgroundColor: Colors.transparent,
       body: Obx(() {
         final days = _controller.calendarDays;
+        final isLoading = _controller.isLoading.value;
+        final errorMessage = _controller.errorMessage.value;
         return ListView(
           padding: const EdgeInsets.symmetric(vertical: 12),
           children: [
@@ -76,6 +84,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
               _calendarCard(),
               const SizedBox(height: 16),
             ],
+            if (errorMessage.isNotEmpty)
+              _errorCard(errorMessage, onRetry: _controller.fetchTasks),
+            if (isLoading && days.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+            if (!isLoading && days.isEmpty && errorMessage.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'No tasks for this date.',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ),
             ...days.map((item) => CalendarRow(item: item)),
           ],
         );
@@ -184,18 +211,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
           return const SizedBox.shrink();
         }
         final isSunday = index % 7 == 0;
-        final isSelected = _selectedDate.year == year &&
+        final isSelected =
+            _selectedDate.year == year &&
             _selectedDate.month == month &&
             _selectedDate.day == dayNumber;
-        final textColor = isSunday
-            ? const Color(0xFFFF3B30)
-            : Colors.white;
+        final textColor = isSunday ? const Color(0xFFFF3B30) : Colors.white;
 
         return GestureDetector(
           onTap: () {
             setState(() {
               _selectedDate = DateTime(year, month, dayNumber);
             });
+            _controller.setSelectedDate(_selectedDate);
             widget.onDateSelected?.call(_selectedDate);
           },
           child: Container(
@@ -224,6 +251,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1, 1);
       _selectedDate = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
     });
+    _controller.setSelectedDate(_selectedDate);
     widget.onMonthChanged?.call(_focusedMonth);
     widget.onDateSelected?.call(_selectedDate);
   }
@@ -233,37 +261,126 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1, 1);
       _selectedDate = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
     });
+    _controller.setSelectedDate(_selectedDate);
     widget.onMonthChanged?.call(_focusedMonth);
     widget.onDateSelected?.call(_selectedDate);
   }
 
   Future<void> _pickMonthYear() async {
-    final picked = await showDatePicker(
+    final picked = await _showMonthYearPicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        if (child == null) return const SizedBox.shrink();
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0C7A7E),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
+      firstYear: 2000,
+      lastYear: 2100,
+    );
+    if (picked == null) return;
+    final maxDay = DateUtils.getDaysInMonth(picked.year, picked.month);
+    final safeDay =
+        _selectedDate.day > maxDay ? maxDay : _selectedDate.day;
+    setState(() {
+      _focusedMonth = DateTime(picked.year, picked.month, 1);
+      _selectedDate = DateTime(picked.year, picked.month, safeDay);
+    });
+    _controller.setSelectedDate(_selectedDate);
+    widget.onMonthChanged?.call(_focusedMonth);
+    widget.onDateSelected?.call(_selectedDate);
+  }
+
+  Future<DateTime?> _showMonthYearPicker({
+    required BuildContext context,
+    required DateTime initialDate,
+    required int firstYear,
+    required int lastYear,
+  }) async {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    int selectedMonth = initialDate.month;
+    int selectedYear = initialDate.year;
+
+    return showDialog<DateTime>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: child,
+          title: const Text('Select month & year'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<int>(
+                    value: selectedMonth,
+                    isExpanded: true,
+                    items: List.generate(
+                      12,
+                      (index) => DropdownMenuItem(
+                        value: index + 1,
+                        child: Text(months[index]),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedMonth = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButton<int>(
+                    value: selectedYear,
+                    isExpanded: true,
+                    items: List.generate(
+                      lastYear - firstYear + 1,
+                      (index) {
+                        final year = firstYear + index;
+                        return DropdownMenuItem(
+                          value: year,
+                          child: Text(year.toString()),
+                        );
+                      },
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        selectedYear = value;
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(
+                context,
+                DateTime(selectedYear, selectedMonth, 1),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
         );
       },
     );
-    if (picked == null) return;
-    setState(() {
-      _focusedMonth = DateTime(picked.year, picked.month, 1);
-      _selectedDate = DateTime(picked.year, picked.month, picked.day);
-    });
-    widget.onMonthChanged?.call(_focusedMonth);
-    widget.onDateSelected?.call(_selectedDate);
   }
 
   String _monthTitle(DateTime date) {
@@ -283,6 +400,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
     ];
     final monthName = months[date.month - 1];
     return '$monthName ${date.year}';
+  }
+
+  Widget _errorCard(String message, {required VoidCallback onRetry}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                message.isNotEmpty ? message : 'Failed to load tasks.',
+                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+              ),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text(
+                'Retry',
+                style: TextStyle(color: Color(0xFF00D4AA)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -308,10 +456,7 @@ class CalendarRow extends StatelessWidget {
               children: [
                 Text(
                   item.day,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Text(

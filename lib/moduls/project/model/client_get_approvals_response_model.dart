@@ -1,6 +1,7 @@
 class ClientGetApprovalsResponseModel {
   final String? id;
   final String? title;
+  final String? projectId;
   final String? projectName;
   final String? description;
   final String? requestedBy;
@@ -12,6 +13,7 @@ class ClientGetApprovalsResponseModel {
   ClientGetApprovalsResponseModel({
     this.id,
     this.title,
+    this.projectId,
     this.projectName,
     this.description,
     this.requestedBy,
@@ -25,6 +27,7 @@ class ClientGetApprovalsResponseModel {
     return ClientGetApprovalsResponseModel(
       id: json['_id'] as String?,
       title: json['title'] as String?,
+      projectId: _readProjectId(json),
       projectName: json['projectName'] as String?,
       description: json['description'] as String?,
       requestedBy: json['requestedBy'] as String?,
@@ -51,4 +54,24 @@ class ClientGetApprovalsResponseModel {
     }
     return <ClientGetApprovalsResponseModel>[];
   }
+}
+
+String? _readProjectId(Map<String, dynamic> json) {
+  final direct = json['projectId']?.toString();
+  if (direct != null && direct.isNotEmpty) {
+    return direct;
+  }
+  final snake = json['project_id']?.toString();
+  if (snake != null && snake.isNotEmpty) {
+    return snake;
+  }
+  final project = json['project'];
+  if (project is Map) {
+    final map = Map<String, dynamic>.from(project);
+    final nested = map['_id']?.toString() ?? map['id']?.toString();
+    if (nested != null && nested.isNotEmpty) {
+      return nested;
+    }
+  }
+  return null;
 }

@@ -86,14 +86,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   _ThreadPreview _buildThreadPreview(ChatModel chat) {
     final otherUser = _resolveOtherUser(chat);
+    final chatName = chat.chatName.trim();
+    final hasRealChatName =
+        chatName.isNotEmpty && chatName.toLowerCase() != 'sender';
     final name = otherUser?.name.trim().isNotEmpty == true
         ? otherUser!.name.trim()
-        : chat.chatName.trim().isNotEmpty
-            ? chat.chatName.trim()
+        : hasRealChatName
+            ? chatName
             : 'Chat';
     final avatarUrl = otherUser?.avatar.url ?? '';
     final latestText = chat.latestMessage?.content ?? 'No messages yet';
-    final latestTime = chat.latestMessage?.createdAt ?? chat.updatedAt ?? chat.createdAt;
+    final latestTime =
+        chat.latestMessage?.createdAt ?? chat.updatedAt ?? chat.createdAt;
     return _ThreadPreview(
       chatId: chat.id,
       avatarUrl: avatarUrl,
@@ -111,7 +115,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
       builder: (context, _) {
         final threads = _controller.chats.map(_buildThreadPreview).toList();
         final showLoading = _controller.isLoading && threads.isEmpty;
-        final showError = _controller.errorMessage.isNotEmpty && threads.isEmpty;
+        final showError =
+            _controller.errorMessage.isNotEmpty && threads.isEmpty;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -143,9 +148,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   if (showLoading)
                     const Expanded(
                       child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white70,
-                        ),
+                        child: CircularProgressIndicator(color: Colors.white70),
                       ),
                     )
                   else if (showError)
@@ -406,9 +409,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.22),
-                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.22)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.18),
@@ -456,8 +457,9 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
       Get.find<AppPigeon>().emit('join chat', widget.chatId);
     }
     _loadHistory();
-    _messageSubscription =
-        Get.find<MessageInterface>().subscribeToMessages().listen(_handleMessage);
+    _messageSubscription = Get.find<MessageInterface>()
+        .subscribeToMessages()
+        .listen(_handleMessage);
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
@@ -493,7 +495,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     if (message.id.isNotEmpty) {
       _messageIds.add(message.id);
     }
-    final isMe = widget.currentUserId.isNotEmpty &&
+    final isMe =
+        widget.currentUserId.isNotEmpty &&
         widget.currentUserId == message.senderId;
     if (isMe) {
       final localIndex = _messages.indexWhere(
@@ -550,8 +553,9 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
   Future<void> _loadHistory() async {
     if (_isLoadingHistory || widget.chatId.isEmpty) return;
     _isLoadingHistory = true;
-    final result = await Get.find<MessageInterface>()
-        .fetchMessages(chatId: widget.chatId);
+    final result = await Get.find<MessageInterface>().fetchMessages(
+      chatId: widget.chatId,
+    );
     if (!mounted) return;
     result.fold(
       (_) {
@@ -571,7 +575,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
           if (message.id.isNotEmpty) {
             _messageIds.add(message.id);
           }
-          final isMe = widget.currentUserId.isNotEmpty &&
+          final isMe =
+              widget.currentUserId.isNotEmpty &&
               widget.currentUserId == message.senderId;
           _messages.add(
             _ChatMessage(
@@ -600,7 +605,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     _messages.sort((a, b) {
       final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      return aTime.compareTo(bTime);
+      return bTime.compareTo(aTime);
     });
   }
 
@@ -886,8 +891,8 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 260),
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
     });
@@ -929,6 +934,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                 Expanded(
                   child: ListView.separated(
                     controller: _scrollController,
+                    reverse: true,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 12,
@@ -939,7 +945,11 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                       final message = _messages[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
+<<<<<<< HEAD
                         duration: const Duration(milliseconds: 140),
+=======
+                        duration: Duration(milliseconds: 160 + index * 20),
+>>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
                         builder: (context, value, child) {
                           return Opacity(
                             opacity: value,
@@ -1000,10 +1010,7 @@ class _ChatHeader extends StatelessWidget {
           children: [
             IconButton(
               onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.white,
-              ),
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
             ),
             _AvatarRing(imageUrl: avatarUrl),
             const SizedBox(width: 12),
@@ -1108,10 +1115,7 @@ class _ChatBubble extends StatelessWidget {
               if (!message.isMe) ...[
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundImage: _resolveAvatar(),
-                    ),
+                    CircleAvatar(radius: 14, backgroundImage: _resolveAvatar()),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1126,6 +1130,7 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
+<<<<<<< HEAD
               if (message.attachments.isNotEmpty) ...[
                 _AttachmentGrid(
                   attachments: message.attachments,
@@ -1139,6 +1144,13 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
               ],
+=======
+              Text(
+                message.text,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+              const SizedBox(height: 10),
+>>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1166,11 +1178,15 @@ class _ChatBubble extends StatelessWidget {
 }
 
 class _ChatComposer extends StatelessWidget {
+<<<<<<< HEAD
   const _ChatComposer({
     required this.controller,
     required this.onSend,
     required this.onAttachmentTap,
   });
+=======
+  const _ChatComposer({required this.controller, required this.onSend});
+>>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
 
   final TextEditingController controller;
   final VoidCallback onSend;
@@ -1183,7 +1199,11 @@ class _ChatComposer extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
+<<<<<<< HEAD
             onPressed: onAttachmentTap,
+=======
+            onPressed: () {},
+>>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
             icon: _roundIcon(
               icon: Icons.attach_file,
               backgroundColor: Colors.white.withOpacity(0.9),

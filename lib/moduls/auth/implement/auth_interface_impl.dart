@@ -12,6 +12,7 @@ import '../model/register_request_model.dart';
 import '../model/reset_password_request_model.dart';
 import '../model/verify_email_request_model.dart';
 import '../model/verify_email_register_request_model.dart';
+import '../model/change_password_request_model.dart';
 import '../../profile/model/update_profile_request_model.dart';
 
 final class AuthInterfaceImpl extends AuthInterface {
@@ -49,6 +50,26 @@ final class AuthInterfaceImpl extends AuthInterface {
         await appPigeon.logOut();
         return Success(message: 'Logout Succesfuly', data: "Logged out");
         
+      },
+    );
+  }
+
+  @override
+  Future<Either<DataCRUDFailure, Success<String>>> changePassword({
+    required ChangePasswordRequestModel param,
+  }) async {
+    return asyncTryCatch(
+      tryFunc: () async {
+        final response = await appPigeon.put(
+          ApiEndpoints.changePassword,
+          data: param.toJson(),
+        );
+        final data = response.data;
+        String message = 'Password updated successfully';
+        if (data is Map && data['message'] != null) {
+          message = data['message'].toString();
+        }
+        return Success(message: message);
       },
     );
   }

@@ -1,14 +1,17 @@
 import 'dart:ui';
 
 import 'package:dana_bozzetto/moduls/project/model/project_details_response_model.dart';
+import 'package:dana_bozzetto/moduls/project/model/project_finance_item.dart';
 import 'package:dana_bozzetto/moduls/project/model/projects_response_model.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_base_Approval.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_documents.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/screen/project_based_invoices.dart';
 import 'package:dana_bozzetto/moduls/project/presentation/widget/circular_progress_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:dana_bozzetto/moduls/project/interface/project_interface.dart';
 
-class OverviewTab extends StatelessWidget {
+class OverviewTab extends StatefulWidget {
   final ProjectDetailsModel project;
   final bool isTeamMember;
 
@@ -17,6 +20,98 @@ class OverviewTab extends StatelessWidget {
     required this.project,
     this.isTeamMember = false,
   });
+
+  @override
+  State<OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<OverviewTab> {
+  late Future<int> _invoiceCountFuture;
+
+  ProjectDetailsModel get _project => widget.project;
+
+  @override
+  void initState() {
+    super.initState();
+    _invoiceCountFuture = _fetchInvoiceCount();
+  }
+
+  @override
+  void didUpdateWidget(covariant OverviewTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.project.id != widget.project.id) {
+      _invoiceCountFuture = _fetchInvoiceCount();
+    }
+  }
+
+  Future<int> _fetchInvoiceCount() async {
+    final projectId = _project.id.trim();
+    if (projectId.isEmpty) {
+      return 0;
+    }
+    final result = await Get.find<ProjectInterface>()
+        .fetchFinances(projectId: projectId);
+    return result.fold(
+      (_) => 0,
+      (success) {
+        final items = success.data ?? <ProjectFinanceItem>[];
+        return items.where(_isInvoiceType).length;
+      },
+    );
+  }
+
+  bool _isInvoiceType(ProjectFinanceItem item) {
+    final type = item.type?.toLowerCase().trim() ?? '';
+    if (type.isEmpty) return false;
+    return type == 'invoice' || type.contains('invoice');
+  }
+
+  String _formatCount(int value) => value.toString().padLeft(2, '0');
+
+  int _countClientApprovals(List<dynamic> documents) {
+    return _countByStatus(documents, const {'review', 'pending'});
+  }
+
+  int _countTeamApprovals(List<dynamic> tasks, List<dynamic> documents) {
+    final taskCount =
+        _countByStatus(tasks, const {'waiting for approval', 'waiting'});
+    final docCount = _countByStatus(documents, const {'review'});
+    return taskCount + docCount;
+  }
+
+  int _countTeamReviews(List<dynamic> tasks, List<dynamic> documents) {
+    var count = 0;
+    for (final entry in tasks) {
+      if (entry is Map) {
+        final feedback = entry['adminFeedback']?.toString().trim() ?? '';
+        if (feedback.isNotEmpty) {
+          count += 1;
+        }
+      }
+    }
+    count += _countByStatus(documents, const {'revision requested', 'revision'});
+    return count;
+  }
+
+  int _countByStatus(List<dynamic> items, Set<String> statuses) {
+    var count = 0;
+    for (final item in items) {
+      if (item is Map) {
+        final status =
+            item['status']?.toString().toLowerCase().trim() ?? '';
+        if (status.isEmpty) {
+          continue;
+        }
+        for (final candidate in statuses) {
+          if (status == candidate || status.contains(candidate)) {
+            count += 1;
+            break;
+          }
+        }
+      }
+    }
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +130,12 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _progressCard() {
-    final milestones = project.milestones;
+    final milestones = _project.milestones;
     final activeMilestone = _activeMilestone(milestones);
     final progressSubtitle = activeMilestone?.name.trim().isNotEmpty == true
         ? '${activeMilestone!.name} in progress'
-        : project.status.trim().isNotEmpty
-        ? project.status.trim()
+        : _project.status.trim().isNotEmpty
+        ? _project.status.trim()
         : 'Project status';
 
     return _glassCard(
@@ -138,9 +233,9 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _infoGrid() {
-    final type = project.type.trim().isNotEmpty ? project.type.trim() : '-';
-    final location = project.location.trim().isNotEmpty
-        ? project.location.trim()
+    final type = _project.type.trim().isNotEmpty ? _project.type.trim() : '-';
+    final location = _project.location.trim().isNotEmpty
+        ? _project.location.trim()
         : '-';
 
     return GridView.count(
@@ -154,12 +249,12 @@ class OverviewTab extends StatelessWidget {
         _InfoTile(
           icon: Icons.calendar_today_outlined,
           title: "Start Date",
-          value: _formatDate(project.startDate),
+          value: _formatDate(_project.startDate),
         ),
         _InfoTile(
           icon: Icons.calendar_today_outlined,
           title: "End Date",
-          value: _formatDate(project.endDate),
+          value: _formatDate(_project.endDate),
         ),
         _InfoTile(icon: Icons.home_work_outlined, title: "Type", value: type),
         _InfoTile(
@@ -172,10 +267,13 @@ class OverviewTab extends StatelessWidget {
   }
 
   Widget _quickActions() {
-    final documentsCount = project.documents.length;
-    final approvalsCount = 2;
-    final reviewCount = 2;
-    final invoicesCount = 2;
+    final documentsCount = _project.documents.length;
+    final approvalsCount = widget.isTeamMember
+        ? _countTeamApprovals(_project.tasks, _project.documents)
+        : _countClientApprovals(_project.documents);
+    final reviewCount = widget.isTeamMember
+        ? _countTeamReviews(_project.tasks, _project.documents)
+        : 0;
 
     return _glassCard(
       child: Column(
@@ -193,46 +291,63 @@ class OverviewTab extends StatelessWidget {
           _ActionTile(
             title: "Documents",
             icon: Icons.description_outlined,
-            count: documentsCount.toString().padLeft(2, '0'),
+            count: _formatCount(documentsCount),
             badgeColor: const Color(0xFF0C7A7E),
-            navigateTo: ProjectBasedDocuments(projectId: project.id),
+            navigateTo: ProjectBasedDocuments(
+              projectId: _project.id,
+              projectTitle: _project.name,
+              projectSubtitle: _project.client.name,
+              projectStatus: _project.status,
+              coverImageUrl: _project.coverImage.url,
+            ),
           ),
           const SizedBox(height: 10),
           _ActionTile(
             title: "Approvals",
             icon: Icons.check_box_outlined,
-            count: approvalsCount.toString().padLeft(2, '0'),
+            count: _formatCount(approvalsCount),
             badgeColor: const Color(0xFFE74C3C),
             navigateTo: ProjectBaseApproval(
-              isTeamMember: isTeamMember,
-              projectTitle: project.name,
-              projectSubtitle: project.client.name,
-              projectStatus: project.status,
-              coverImageUrl: project.coverImage.url,
+              isTeamMember: widget.isTeamMember,
+              projectId: _project.id,
+              projectTitle: _project.name,
+              projectSubtitle: _project.client.name,
+              projectStatus: _project.status,
+              coverImageUrl: _project.coverImage.url,
             ),
           ),
           const SizedBox(height: 10),
-          if (isTeamMember)
+          if (widget.isTeamMember)
             _ActionTile(
               title: "Review",
               icon: Icons.fact_check_outlined,
-              count: reviewCount.toString().padLeft(2, '0'),
+              count: _formatCount(reviewCount),
               badgeColor: const Color(0xFFE74C3C),
               navigateTo: ProjectBaseApproval(
-                isTeamMember: isTeamMember,
-                projectTitle: project.name,
-                projectSubtitle: project.client.name,
-                projectStatus: project.status,
-                coverImageUrl: project.coverImage.url,
+                isTeamMember: widget.isTeamMember,
+                projectId: _project.id,
+                projectTitle: _project.name,
+                projectSubtitle: _project.client.name,
+                projectStatus: _project.status,
+                coverImageUrl: _project.coverImage.url,
               ),
             )
           else
-            _ActionTile(
-              title: "Invoices",
-              icon: Icons.attach_money,
-              count: invoicesCount.toString().padLeft(2, '0'),
-              badgeColor: const Color(0xFF0C7A7E),
-              navigateTo: const ProjectInvoicesScreen(),
+            FutureBuilder<int>(
+              future: _invoiceCountFuture,
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return _ActionTile(
+                  title: "Invoices",
+                  icon: Icons.attach_money,
+                  count: _formatCount(count),
+                  badgeColor: const Color(0xFF0C7A7E),
+                  navigateTo: ProjectInvoicesScreen(
+                    projectId: _project.id,
+                    projectTitle: _project.name,
+                  ),
+                );
+              },
             ),
         ],
       ),
@@ -292,11 +407,11 @@ class OverviewTab extends StatelessWidget {
   }
 
   double _progressPercent() {
-    final overall = project.overallProgress;
+    final overall = _project.overallProgress;
     if (overall > 0) {
       return overall.clamp(0, 100) / 100;
     }
-    final milestones = project.milestones;
+    final milestones = _project.milestones;
     if (milestones.isEmpty) return 0;
     final completed = milestones.where((m) => m.isCompleted).length;
     return completed / milestones.length;
@@ -336,7 +451,7 @@ class OverviewTab extends StatelessWidget {
 
   List<_RecentActivityItem> _buildActivities() {
     final items = <_RecentActivityItem>[];
-    for (final entry in project.documents) {
+    for (final entry in _project.documents) {
       final map = _mapOrEmpty(entry);
       if (map.isEmpty) continue;
       final title = _firstNonEmpty(map, [
@@ -358,7 +473,7 @@ class OverviewTab extends StatelessWidget {
         ),
       );
     }
-    for (final entry in project.tasks) {
+    for (final entry in _project.tasks) {
       final map = _mapOrEmpty(entry);
       if (map.isEmpty) continue;
       final title = _firstNonEmpty(map, ['title', 'name', 'taskName']);
