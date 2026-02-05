@@ -945,11 +945,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                       final message = _messages[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
-<<<<<<< HEAD
-                        duration: const Duration(milliseconds: 140),
-=======
                         duration: Duration(milliseconds: 160 + index * 20),
->>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
                         builder: (context, value, child) {
                           return Opacity(
                             opacity: value,
@@ -973,7 +969,7 @@ class _ProjectChatBodyState extends State<_ProjectChatBody> {
                 _ChatComposer(
                   controller: _composerController,
                   onSend: _sendMessage,
-                  onAttachmentTap: _openAttachmentSheet,
+                  // onAttachmentTap: _openAttachmentSheet,
                 ),
               ],
             ),
@@ -1130,7 +1126,6 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
-<<<<<<< HEAD
               if (message.attachments.isNotEmpty) ...[
                 _AttachmentGrid(
                   attachments: message.attachments,
@@ -1144,13 +1139,6 @@ class _ChatBubble extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
               ],
-=======
-              Text(
-                message.text,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              const SizedBox(height: 10),
->>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1178,19 +1166,11 @@ class _ChatBubble extends StatelessWidget {
 }
 
 class _ChatComposer extends StatelessWidget {
-<<<<<<< HEAD
-  const _ChatComposer({
-    required this.controller,
-    required this.onSend,
-    required this.onAttachmentTap,
-  });
-=======
   const _ChatComposer({required this.controller, required this.onSend});
->>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
 
   final TextEditingController controller;
   final VoidCallback onSend;
-  final VoidCallback onAttachmentTap;
+  // final VoidCallback onAttachmentTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1199,11 +1179,7 @@ class _ChatComposer extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-<<<<<<< HEAD
-            onPressed: onAttachmentTap,
-=======
             onPressed: () {},
->>>>>>> 3aba76dc5b84b8f83b2ac444b36eaff0c0fe4215
             icon: _roundIcon(
               icon: Icons.attach_file,
               backgroundColor: Colors.white.withOpacity(0.9),
