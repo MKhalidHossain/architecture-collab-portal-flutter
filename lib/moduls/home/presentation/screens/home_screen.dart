@@ -199,8 +199,15 @@ class _HomeScreenTState extends State<HomeScreenT> {
           _cachedDashboard = snapshot.data;
         }
         final stats = dashboard?.stats ?? const HomeStats.empty();
-        final projectModels =
-            _buildProjectModels(dashboard?.projects ?? const []);
+        final allProjects = dashboard?.projects ?? const <HomeProject>[];
+        final visibleProjects = widget.isTeamMember
+            ? allProjects
+                .where(
+                  (project) => project.status.trim().toLowerCase() == 'active',
+                )
+                .toList()
+            : allProjects;
+        final projectModels = _buildProjectModels(visibleProjects);
         final activityTiles =
             _buildActivityTiles(dashboard?.recentActivity ?? const []);
 
