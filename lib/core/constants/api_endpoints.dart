@@ -205,7 +205,7 @@ class _RemoteServer {
 }
 
 class _LocalHostWifi {
-  static const String socketUrl = 'http://localhost:5000';
+  static const String socketUrl = 'https://backend-dana-bozzetto-51u6.onrender.com';
   static const String baseUrl = 'https://backend-dana-bozzetto-51u6.onrender.com/api';
   // static const String socketUrl = 'http://localhost:5000';
   // static const String baseUrl = 'http://10.10.5.94:5000/api';
